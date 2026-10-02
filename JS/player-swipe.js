@@ -36,8 +36,6 @@
           if (!p) return [];
           return [
             { kind: "edit", run: function () { if (row._qnEdit) row._qnEdit(); } },
-            { kind: "mskip", on: !!p.skip, run: function () { toggleSkipPin(p); } },
-            { kind: "hide", on: !p.enabled, run: function () { var b = row.querySelector(".toggle-btn"); if (b && !b.disabled) b.click(); } },
             { kind: "del", run: function () { var d = row.querySelector(".del-btn"); if (d) { d.click(); d.click(); } } }
           ];
         }

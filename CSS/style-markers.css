@@ -116,8 +116,8 @@
 
 .pin-color-mark {
   display: block;
-  width: 14px;
-  height: 14px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   flex-shrink: 0;
   padding: 0;
@@ -391,9 +391,9 @@
 .pinItem button.qn-ab-block.qn-skip-block.is-skip, .qn-skip-block.is-skip { background: #6b4e16; color: #fff; }
 .pinItem button.qn-ab-block.qn-skip-block.is-skip:hover { background: #6b4e16; }
 
-/* ---------- PLAYERマーカー行の操作ボタン(v3.51.0) ----------
-   通常=SKIP/HIDE、EDIT=編集/SKIP/HIDE+選択(〇)。見た目はスワイプトレイ(.qn-swipe-btn)と同じ□(アイコン+ラベル)で、行の高さいっぱいに隙間なく並べる。
-   アイコン・ラベルはplayer-markers.jsのQN_ROW_ACTが決める。A/Bボタンは撤去(YouTube側の.qn-ab-blockは別) */
+/* ---------- PLAYERマーカー行の操作ボタン(v3.51.0→v3.52.0で整理) ----------
+   通常=SKIP/HIDE(背景なし・区切り線のみ。ON中はアイコンを薄暗く)。EDIT=SKIP/HIDE/編集(背景付き)/削除選択タイル(背景付き・選択=赤)。
+   アイコン・ラベルはplayer-markers.jsのQN_ROW_ACTが決める(スワイプトレイは編集/削除のみ)。A/Bボタンは撤去(YouTube側の.qn-ab-blockは別) */
 #pcV2PanelBody #pinList .pin-act-cell {
   display: flex;
   align-items: stretch;
@@ -414,9 +414,10 @@
   margin: 0;
   padding: 0;
   border: none;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 0;
-  background: #2f3a52;
-  color: #fff;
+  background: transparent;
+  color: var(--text-bright, #e8e8ee);
   font-family: var(--font-display, 'Instrument Sans'), sans-serif;
   font-size: 10px;
   font-weight: 700;
@@ -425,17 +426,50 @@
   flex-shrink: 0;
   opacity: 1;
 }
+#pcV2PanelBody #pinList .pin-act-cell .pin-act-btn:first-child { border-left: none; }
 #pcV2PanelBody #pinList .pin-act-cell .pin-act-btn svg { width: 22px; height: 22px; fill: currentColor; }
-#pcV2PanelBody #pinList .pin-act-cell .pin-act-btn span { color: #fff; font-size: 10px; }
-#pcV2PanelBody #pinList .pin-act-cell .pin-act-btn.is-edit { background: var(--accent-primary); }
-#pcV2PanelBody #pinList .pin-act-cell .pin-act-btn.is-mskip,
-#pcV2PanelBody #pinList .pin-act-cell .pin-act-btn.is-hide { background: #b45309; }
-#pcV2PanelBody #pinList .pin-act-cell .pin-act-btn:hover { filter: brightness(1.12); }
-#pcV2PanelBody #pinList .pin-act-cell .pin-act-btn:active { filter: brightness(0.85); }
-#pcV2PanelBody #pinList .pin-act-cell .pin-act-btn:disabled { opacity: 0.35; cursor: not-allowed; filter: none; }
-/* 編集ボタンはEDITモードのみ */
+#pcV2PanelBody #pinList .pin-act-cell .pin-act-btn span { color: inherit; font-size: 10px; }
+/* ON(SKIP中/HIDE中)はアイコンとラベルを薄暗く */
+#pcV2PanelBody #pinList .pin-act-cell .pin-act-btn.is-on svg,
+#pcV2PanelBody #pinList .pin-act-cell .pin-act-btn.is-on span { opacity: 0.35; }
+#pcV2PanelBody #pinList .pin-act-cell .pin-act-btn:hover { background: rgba(255, 255, 255, 0.06); }
+#pcV2PanelBody #pinList .pin-act-cell .pin-act-btn:active { background: rgba(255, 255, 255, 0.12); }
+#pcV2PanelBody #pinList .pin-act-cell .pin-act-btn:disabled { opacity: 0.35; cursor: not-allowed; background: transparent; }
+/* 編集ボタンはEDITモードのみ。背景付き */
 #pcV2PanelBody #pinList .pin-act-cell .pin-edit-btn { display: none; }
 #pcV2PanelBody.markers-edit-mode #pinList .pin-act-cell .pin-edit-btn { display: flex; }
+#pcV2PanelBody #pinList .pin-act-cell .pin-act-btn.is-edit { background: var(--accent-primary); color: #fff; border-left-color: transparent; }
+#pcV2PanelBody #pinList .pin-act-cell .pin-act-btn.is-edit:hover { background: var(--accent-primary); filter: brightness(1.12); }
+#pcV2PanelBody #pinList .pin-act-cell .pin-act-btn.is-edit:active { background: var(--accent-primary); filter: brightness(0.85); }
+/* EDITモードの削除選択タイル: .pin-del-zone自体を□にする(選択のクリックは従来どおりゾーンが受ける)。選択中=赤 */
+#pcV2PanelBody.markers-edit-mode #pinList .pinItem .pin-del-zone {
+  flex-direction: column;
+  width: 52px;
+  min-width: 52px;
+  margin: -10px -12px -10px 0;
+  padding: 0;
+  background: #3a2328;
+  color: #fff;
+  box-sizing: border-box;
+}
+#pcV2PanelBody.markers-edit-mode #pinList .pin-del-zone .del-btn { display: none; }
+#pinList .pin-del-tile { display: none; }
+#pcV2PanelBody.markers-edit-mode #pinList .pin-del-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #f0a0a8;
+}
+#pcV2PanelBody.markers-edit-mode #pinList .pin-del-tile svg { width: 22px; height: 22px; fill: currentColor; }
+#pcV2PanelBody.markers-edit-mode #pinList .del-btn.pcv2-selected + .pin-del-tile { background: var(--danger, #ef4444); color: #fff; }
 /* HIDE中の行は、色丸とラベルだけ薄くする(ボタンは常に読める) */
 #pinList .pinItem.disabled { opacity: 1; }
 #pinList .pinItem.disabled .pin-leading-cell,

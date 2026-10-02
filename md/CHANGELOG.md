@@ -50,3 +50,4 @@
 - 3.49.0 下部バーのVolume/Speed/Key/EQボタンを撤去(操作はControlパネルのみ。関連JS/CSSも削除)。SPアイコンバーは非選択ラベルを`visibility:hidden`にして選択でバー高さが変わらないように。アプリ一覧表示中にホストを下げた隙間を背景色で塞ぎPLAYERの映り込みを解消。
 - 3.50.0 ヘッダーのロゴをアプリ切替に(`#qnAppLogoBtn`: QN色付き+アプリ名+V。PC/SP共通)。一覧は直下のドロップダウン(QNPLAYER/QNVIDEO/QNTUNER/QNPITCH。名前は`qn-apps.js`のBRAND)。サイドバーのPLAYERバッジとSPの切替ボタンを撤去。幕は暗くしない。
 - 3.51.0 PLAYERのMarkersパネルを再構成。A/Bボタンと+MARKERボタンを撤去。行のボタンはスワイプトレイと同じ□(アイコン+ラベル): 通常=SKIP/HIDE、EDIT=編集/SKIP/HIDE+選択〇、スワイプ=編集/SKIP/HIDE/DELETE。色丸のタップは編集(メモ+プリセット)と同じ表示。アイコン/ラベルは`window.QN_ROW_ACT`に一元化。
+- 3.52.0 Markers行を調整。スワイプは編集/削除のみ。SKIP/HIDEは背景なし+区切り線(ON中はアイコンを薄暗く)。EDIT=SKIP/HIDE/編集/DELETE(ゴミ箱タイル。選択トグル、選択中は赤)。FABはDeleteの位置がCancel、選択1件以上でOKがDeleteに。色丸を20pxに拡大。

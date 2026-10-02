@@ -706,3 +706,17 @@
   background: #1c1c24;
   border-color: var(--border-subtle);
 }
+
+
+/* 【v3.52.0】Markers編集中のCancel(削除ボタンの位置)と、選択ありの時にDeleteへ変わる下のボタン */
+.panel-fab-cancel-btn {
+  display: none;
+  background: #2f3a52;
+}
+.panel-fab-cancel-btn:hover { background: #3b4866; }
+.panel-fab-btn.panel-edit-btn.is-delete,
+.panel-fab-btn.panel-edit-btn.is-delete:hover,
+.panel-fab-btn.panel-edit-btn.is-delete.active {
+  background: var(--danger, #ef4444);
+  color: #fff;
+}

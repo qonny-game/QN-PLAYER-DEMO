@@ -114,3 +114,9 @@
 - ボタン/スワイプトレイのアイコン・ラベルは`window.QN_ROW_ACT`(player-markers.js)だけで決める(qn-apps.jsのトレイも読む)。kind: edit / skip(曲) / mskip(マーカー区間) / hide / del。
 - 行には`data-pin-index`と`row._qnEdit`(編集の起動)を持たせ、スワイプ(player-swipe.js)と色丸タップが同じ処理を呼ぶ。player-swipe.jsでDOM変数名に`pins`を使わない(グローバルのマーカー配列を隠す)。
 - 削除用の選択中は`.pin-act-btn`を全部disabled(再描画で選択表示が消えるため)。YouTube側のマーカー行(`.qn-ab-block`等)は未変更。
+
+## Markersパネルの行(v3.52.0の変更)
+- 並びは`.pin-act-cell`内でSKIP→HIDE→編集、その右の`.pin-del-zone`が削除選択タイル(中に`.del-btn`+`.pin-del-tile`。`.del-btn`はEDIT中は非表示で`pcv2-selected`の持ち主、タイルは兄弟結合子`.del-btn.pcv2-selected + .pin-del-tile`で赤になる)。選択のクリックは従来通り`.pin-del-zone`をキャプチャで拾う。
+- SKIP/HIDEは背景なし+`border-left`の区切り線。ON(`.is-on`)はsvg/spanをopacity .35。編集/削除タイルだけ背景付き。
+- スワイプトレイ(player-swipe.jsのmarkers)は編集+削除のみ。`mskip`/`hide`のトレイ用スタイルは未使用(QN_ROW_ACT自体はボタン用に使用)。
+- FAB(Markers): `#pcV2DeleteSelectedBtn`は作らず、同じ位置に`#pcV2MarkersCancelBtn`。`#pcV2MarkersEditBtn`は編集中に選択0=OK/1以上=Delete(`syncMarkersEditBtn`、`syncSelectionButtons`から呼ぶ)。Playlist側のFABは従来通り。

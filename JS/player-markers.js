@@ -521,7 +521,7 @@ function renderPinList() {
     function makeActBtn(kind, on, cls, title) {
       const b = document.createElement("button");
       b.type = "button";
-      b.className = "pin-act-btn is-" + kind + " " + cls;
+      b.className = "pin-act-btn is-" + kind + (on ? " is-on" : "") + " " + cls;
       b.title = title;
       b.innerHTML = window.QN_ROW_ACT.html(kind, on);
       b.disabled = markersHasSelection;
@@ -538,7 +538,6 @@ function renderPinList() {
     div._qnEdit = editAction;
     const editBtn = makeActBtn("edit", false, "pin-edit-btn", "Edit memo");
     editBtn.onclick = (e) => { e.stopPropagation(); editAction(); };
-    actCell.appendChild(editBtn);
 
     // Skip: この区間(次のマーカーまで)を再生中に飛ばす。トグル
     const skipBtn = makeActBtn("mskip", !!pinObj.skip, "pin-skip-btn" + (pinObj.skip ? " is-on" : ""), pinObj.skip ? "Skip ON: 次のマーカーまで飛ばして再生" : "Skip OFF: 押すとこの区間(次のマーカーまで)を飛ばして再生");
@@ -565,6 +564,7 @@ function renderPinList() {
       savePins();
     };
     actCell.appendChild(toggleBtn);
+    actCell.appendChild(editBtn); // 【v3.52.0】並びはSKIP/HIDE/編集(編集はEDITモードのみ表示)。その右が削除選択タイル(.pin-del-zone)
     div.appendChild(actCell);
 
     const delBtn = document.createElement("button");
@@ -595,6 +595,11 @@ function renderPinList() {
     const delZone = document.createElement("div");
     delZone.className = "pin-del-zone";
     delZone.appendChild(delBtn);
+    // 【v3.52.0】EDITモードの削除選択タイル(ゴミ箱+DELETE)。選択状態は直前の.del-btn.pcv2-selectedに連動(CSS兄弟結合子)。通常時は非表示
+    const delTile = document.createElement("span");
+    delTile.className = "pin-del-tile";
+    delTile.innerHTML = window.QN_ROW_ACT.html("del");
+    delZone.appendChild(delTile);
     div.appendChild(delZone);
 
     if (list) {

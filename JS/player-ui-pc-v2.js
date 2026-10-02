@@ -777,6 +777,17 @@
       '</button>'
     );
     deleteBtn.addEventListener("click", () => deleteSelectedItems(panelId));
+    // 【v3.52.0】Markers: 削除ボタンの位置はCancel(編集を抜ける)。選択が1件以上ある間は下のOKが「Delete」になり一括削除を実行する(syncMarkersEditBtn)
+    let cancelBtn = null;
+    if (panelId === "markers") {
+      cancelBtn = el(
+        '<button type="button" class="panel-fab-btn panel-fab-cancel-btn" id="pcV2MarkersCancelBtn">' +
+          '<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
+          '<span>Cancel</span>' +
+        '</button>'
+      );
+      cancelBtn.addEventListener("click", () => { if (editModeState.markers) toggleEditMode("markers"); });
+    }
     if (panelId === "playlist") {
       // 【v3.24.0】選択した曲をフォルダへ移動(編集モードのみ表示。Deleteと同じ選択を使う)
       const moveBtn = el(
@@ -788,7 +799,7 @@
       moveBtn.addEventListener("click", () => moveSelectedItems(moveBtn));
       fab.appendChild(moveBtn);
     }
-    fab.appendChild(deleteBtn);
+    fab.appendChild(cancelBtn || deleteBtn);
 
     const editBtn = el(
       '<button type="button" class="panel-fab-btn panel-edit-btn" id="pcV2' + (panelId === "markers" ? "Markers" : "Playlist") + 'EditBtn" title="Edit ' + panelId + '">' +
@@ -796,7 +807,10 @@
         '<span>EDIT</span>' +
       '</button>'
     );
-    editBtn.addEventListener("click", () => toggleEditMode(panelId));
+    editBtn.addEventListener("click", () => {
+      if (panelId === "markers" && editModeState.markers && selectedIndices.markers.size > 0) { deleteSelectedItems("markers"); return; }
+      toggleEditMode(panelId);
+    });
     fab.appendChild(editBtn);
 
     return fab;
@@ -1007,6 +1021,9 @@
       const editBtnLabel = editBtn.querySelector("span");
       if (editBtnLabel) editBtnLabel.textContent = editModeState[panelId] ? "OK" : "EDIT";
     }
+    const cancelBtnEl = document.getElementById("pcV2MarkersCancelBtn");
+    if (cancelBtnEl) cancelBtnEl.style.display = (panelId === "markers" && editModeState.markers) ? "flex" : "none";
+    if (panelId === "markers") syncMarkersEditBtn();
     if (addGroup) {
       addGroup.style.display = editModeState[panelId] ? "none" : "flex";
     }
@@ -1063,8 +1080,23 @@
     return items.indexOf(row);
   }
 
+  // 【v3.52.0】Markers編集中のFAB下ボタン: 選択0件=「OK」(編集を抜ける) / 1件以上=「Delete」(選択を一括削除)
+  const ICON_OK_EDIT = '<path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>';
+  const ICON_TRASH = '<path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>';
+  function syncMarkersEditBtn() {
+    const btn = document.getElementById("pcV2MarkersEditBtn");
+    if (!btn) return;
+    const del = editModeState.markers && selectedIndices.markers.size > 0;
+    btn.classList.toggle("is-delete", del);
+    const label = btn.querySelector("span");
+    if (label) label.textContent = editModeState.markers ? (del ? "Delete" : "OK") : "EDIT";
+    const path = btn.querySelector("svg");
+    if (path) path.innerHTML = del ? ICON_TRASH : ICON_OK_EDIT;
+  }
+
   function syncSelectionButtons(panelId) {
     const n = selectedIndices[panelId].size;
+    if (panelId === "markers") syncMarkersEditBtn();
     const deleteBtn = document.getElementById("pcV2DeleteSelectedBtn");
     if (deleteBtn) deleteBtn.disabled = n === 0;
     if (panelId === "playlist") {
