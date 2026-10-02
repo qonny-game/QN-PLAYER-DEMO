@@ -89,6 +89,7 @@ favicon/  md/  pricing*.html  QUICK_START.md
 | シークバー1本の秒数 | localStorage | `qn_bar_sec`（5/10/15/30/60、既定5） |
 | シークバー追従ON/OFF | localStorage | `qn_bar_follow`（"0"でOFF、既定ON） |
 | 手動スクロール後の追従停止秒数 | localStorage | `qn_bar_follow_pause`（1〜30、既定6） |
+| 送り戻しボタンの秒数 | localStorage | `qn_skip_sec`（5/10/15/30/60、既定10） |
 | 速度±ボタンの刻み(%) | localStorage | `qn_speed_step_pct`（1/2/5/10、既定5） |
 | パネル格納／最後のアプリ | localStorage | `qn_panel_collapsed`（PLAYER）／`qn_yt_panel_collapsed`／`qn_last_app` |
 | TUNER | localStorage | `qn_tuner_display` `qn_tuner_sens` `qn_tuner_smooth` `qn_tuner_panel_collapsed`（詳細は`TUNER_APP.md`） |

@@ -367,8 +367,7 @@ html {
 
 #pcV2BottomBar .pcv2-step-btn { font-size: 18px; min-height: 0; align-self: center; }
 #pcV2BottomBar #setABtn .top-controls-btn-label,
-#pcV2BottomBar #setBBtn .top-controls-btn-label,
-#pcV2BottomBar #clearABBtn .top-controls-btn-label { display: block; white-space: nowrap; }
+#pcV2BottomBar #setBBtn .top-controls-btn-label { display: block; white-space: nowrap; }
 
 #pcV2BottomBar .pcv2-stepper { gap: 0; margin: 0 2px; }
 #pcV2BottomBar .pcv2-stepper > .pcv2-ctrl-btn:not(.pcv2-step-btn) { padding-left: 0; padding-right: 0; }

@@ -194,11 +194,11 @@
             '<span class="top-controls-btn-label">' + label + '</span>' +
           '</button>'
         );
-        btn.addEventListener("click", () => pcv2SkipBy(sec));
+        btn.addEventListener("click", () => pcv2SkipBy(sec * skipSec));
         return btn;
       }
-      const skipBackBtn = makeSkipBtn("pcV2SkipBackBtn", "back", "-10s", "10秒戻る", -10);
-      const skipFwdBtn = makeSkipBtn("pcV2SkipFwdBtn", "fwd", "+10s", "10秒進む", 10);
+      const skipBackBtn = makeSkipBtn("pcV2SkipBackBtn", "back", "-10s", "10秒戻る", -1);
+      const skipFwdBtn = makeSkipBtn("pcV2SkipFwdBtn", "fwd", "+10s", "10秒進む", 1);
       const playToggleEl = playbackTripleBtn ? playbackTripleBtn.querySelector("#playToggle") : null;
       if (playbackTripleBtn && playToggleEl) {
         playbackTripleBtn.insertBefore(skipBackBtn, playToggleEl.previousElementSibling || playToggleEl);
@@ -223,10 +223,7 @@
         markerNavBtn.appendChild(loopToggleBtn);
       }
       // 【v3.37.0】loopPreRollControlは下部バーに置かない(設定パネルへ移設。要素は#topControlsに残し、設定パネルを作る時に移す)
-      // v3.10.1〜: Clear AB(プリロールの右。A/B両方クリア)
-      const clearABBtn = el('<button type="button" id="clearABBtn" class="loopbtn ab-set-btn" title="A/B点をクリア"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg><span class="top-controls-btn-label">Clear AB</span></button>');
-      clearABBtn.addEventListener("click", () => { if (typeof clearAB === "function") clearAB(); });
-      if (markerNavBtn) markerNavBtn.appendChild(clearABBtn);
+      // 【v3.38.0】Clear ABボタンは撤去(A/Bのクリアはマーカー操作側)
 
       function appendShortcutToTitle(btn, actionLabel) {
         if (!btn || typeof window.QN_SHORTCUTS === "undefined") return;
@@ -443,6 +440,20 @@
     const waveFabRow = el('<div id="pcV2WaveFabRow"></div>');
     waveFabRow.appendChild(waveAddAudioBtn);
     waveFabRow.appendChild(waveAddMarkerBtn);
+    // 【v3.38.0】MARKERの右に再生/停止ボタン(#playToggleを押すのと同じ。アイコンはaudioのplay/pauseに追従)
+    const waveFabPlayBtn = el(
+      '<button type="button" class="panel-fab-btn panel-fab-play-btn" id="pcV2WaveFabPlayBtn" title="Play / Pause">' +
+        '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>' +
+      '</button>'
+    );
+    waveFabPlayBtn.addEventListener("click", () => { if (typeof togglePlay === "function") togglePlay(); });
+    const syncFabPlay = () => {
+      const playing = !audio.paused;
+      waveFabPlayBtn.classList.toggle("is-playing", playing);
+      waveFabPlayBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="' + (playing ? "M6 19h4V5H6v14zm8-14v14h4V5h-4z" : "M8 5v14l11-7z") + '"/></svg>';
+    };
+    ["play", "pause", "ended", "emptied", "loadedmetadata"].forEach(n => audio.addEventListener(n, syncFabPlay));
+    waveFabRow.appendChild(waveFabPlayBtn);
     waveArea.appendChild(waveFabRow);
 
     const basicPanelBox = document.querySelector(".basic-panel-box");
@@ -598,6 +609,35 @@
     }
     if (fullscreenBtn) holder.appendChild(fullscreenBtn);
   }
+
+  // 【v3.38.0】送り戻しボタンの秒数(設定パネルで5/10/15/30/60。localStorage qn_skip_sec、既定10)。ボタンのラベル/タイトルもここで更新
+  const SKIP_OPTIONS = [5, 10, 15, 30, 60];
+  let skipSec = 10;
+  try {
+    const v = parseInt(localStorage.getItem("qn_skip_sec"), 10);
+    if (SKIP_OPTIONS.indexOf(v) >= 0) skipSec = v;
+  } catch (e) {}
+  function applySkipLabels() {
+    const bk = document.getElementById("pcV2SkipBackBtn");
+    const fw = document.getElementById("pcV2SkipFwdBtn");
+    if (bk) {
+      const l = bk.querySelector(".top-controls-btn-label");
+      if (l) l.textContent = "-" + skipSec + "s";
+      bk.title = skipSec + "秒戻る";
+    }
+    if (fw) {
+      const l = fw.querySelector(".top-controls-btn-label");
+      if (l) l.textContent = "+" + skipSec + "s";
+      fw.title = skipSec + "秒進む";
+    }
+  }
+  function setSkipSec(v) {
+    if (SKIP_OPTIONS.indexOf(v) < 0) return;
+    skipSec = v;
+    try { localStorage.setItem("qn_skip_sec", String(v)); } catch (e) {}
+    applySkipLabels();
+  }
+  requestAnimationFrame(applySkipLabels);
 
   function pcv2SkipBy(sec) {
     if (typeof audio === "undefined" || !audio || !isFinite(audio.duration) || audio.duration <= 0) return;
@@ -917,6 +957,12 @@
     const preCtl = document.getElementById("loopPreRollControl");
     if (preCtl) rPre.querySelector(".qn-set-ctl").appendChild(preCtl);
     sec2.appendChild(rPre);
+    const rSkip = settingsRow("Skip buttons", "Seconds for back / forward");
+    rSkip.querySelector(".qn-set-ctl").appendChild(settingsSeg("skip", SKIP_OPTIONS, v => v + "s"));
+    sec2.appendChild(rSkip);
+    const rScope = settingsRow("Library repeat range", "Auto Next / Repeat scope");
+    rScope.querySelector(".qn-set-ctl").appendChild(settingsSeg("scope", ["folder", "all"], v => v === "folder" ? "Folder" : "All"));
+    sec2.appendChild(rScope);
     const rSpd = settingsRow("Speed step", "For the speed − / ＋ buttons");
     const speedOpts = (typeof SPEED_STEP_OPTIONS !== "undefined") ? SPEED_STEP_OPTIONS : [1, 2, 5, 10];
     rSpd.querySelector(".qn-set-ctl").appendChild(settingsSeg("speed", speedOpts, v => v + "%"));
@@ -944,7 +990,13 @@
       if (seg && t.dataset.v) {
         if (typeof hapticTap === "function") hapticTap();
         const v = parseInt(t.dataset.v, 10);
-        if (seg.dataset.kind === "bar") QNBars.setSec(v);
+        if (seg.dataset.kind === "scope") {
+          if (typeof setAutoNextScope === "function") setAutoNextScope(t.dataset.v);
+          syncSettingsBody();
+          return;
+        }
+        if (seg.dataset.kind === "skip") setSkipSec(v);
+        else if (seg.dataset.kind === "bar") QNBars.setSec(v);
         else if (seg.dataset.kind === "speed" && typeof setSpeedStepPct === "function") setSpeedStepPct(v);
         syncSettingsBody();
         return;
@@ -970,9 +1022,10 @@
     if (!settingsBody) return;
     const curSpeed = (typeof getSpeedStepPct === "function") ? getSpeedStepPct() : 5;
     settingsBody.querySelectorAll(".qn-set-seg").forEach(seg => {
-      const cur = seg.dataset.kind === "bar" ? QNBars.getSec() : curSpeed;
+      const kind = seg.dataset.kind;
+      const cur = kind === "bar" ? QNBars.getSec() : kind === "skip" ? skipSec : kind === "scope" ? (typeof getAutoNextScope === "function" ? getAutoNextScope() : "folder") : curSpeed;
       seg.querySelectorAll(".qn-set-seg-btn").forEach(b => {
-        const on = parseInt(b.dataset.v, 10) === cur;
+        const on = (kind === "scope" ? b.dataset.v : parseInt(b.dataset.v, 10)) === cur;
         b.classList.toggle("is-on", on);
         b.setAttribute("aria-checked", on ? "true" : "false");
       });

@@ -21,7 +21,7 @@ grep -o 'id="[a-zA-Z0-9]*"' JS/player-ui-pc-v2.js | sed 's/id="//;s/"//' | sort 
 | `qn*` | ハンバーガーメニュー(`#qnMenuMount`配下、`player-theme.js`)。`qnMarkerPresetColorRows`＝Colorパネル内のMarker Memo Colors（`renderMarkerPresetColorSettings()`が中身を生成） |
 | `note*` | Textタブ（`player-text.js`） |
 | `splash*` | 起動スプラッシュ |
-| `vbarContainer` > `vbarScroll` > `vbarRows` | シークバー(`player-bars.js`のQNBars)。行`.vbar[data-row]`は仮想スクロールで動的生成・再利用（固定のbar1〜6は無い）。行の中身は`canvas.vwave`・`.vbar-time`＋装飾(`.vbar-line`/`.vbar-ab-pt`/`.segmentHighlight*`)。歯車は`#qnBarGearBtn`（`#pcV2WaveHead`内、押すと設定パネル`#pcV2SettingsBody`を開く。v3.37.0〜。中に`#qnSetFollowSwitch` `#qnSetPauseRow` `#qnSetPauseVal`、`#loopPreRollControl`（下部バーから移設）、`[data-panel-id=backup|import|transfer]`ボタン。サイドバーのBackup/Import/Transferは削除）。時刻表示`.time-controls-row`は`#pcV2WaveHead`内の歯車の左（`#pcV2TimeRow`は常時非表示の空コンテナ） |
+| `vbarContainer` > `vbarScroll` > `vbarRows` | シークバー(`player-bars.js`のQNBars)。行`.vbar[data-row]`は仮想スクロールで動的生成・再利用（固定のbar1〜6は無い）。行の中身は`canvas.vwave`・`.vbar-time`＋装飾(`.vbar-line`/`.vbar-ab-pt`/`.segmentHighlight*`)。歯車は`#qnBarGearBtn`（`#pcV2WaveHead`内、押すと設定パネル`#pcV2SettingsBody`を開く。v3.37.0〜。中に`#qnSetFollowSwitch` `#qnSetPauseRow` `#qnSetPauseVal`、`#loopPreRollControl`（下部バーから移設）、`[data-panel-id=backup|import|transfer]`ボタン。サイドバーのBackup/Import/Transferは削除。v3.38.0〜: 送り戻し秒数・Library repeat range(Folder/All)もここ。`#playlistScopeBtn`と`#clearABBtn`は撤去）。波形エリア右下`#pcV2WaveFabRow`に`#pcV2WaveFabPlayBtn`（再生/停止、MARKERの右）。時刻表示`.time-controls-row`は`#pcV2WaveHead`内の歯車の左（`#pcV2TimeRow`は常時非表示の空コンテナ） |
 | `appHeader` `appLogo` `appTitle`(`appTitleInner`>`appTitleText`) | ヘッダー／曲名。`#appTitle`はPC v2構築時に`#pcV2WaveArea`内へ移動 |
 
 ## 動的id（`player-ui-pc-v2.js`の`build()`が生成。`index.html`には無い）
