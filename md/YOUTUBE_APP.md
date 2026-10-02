@@ -2,7 +2,7 @@
 
 現行のYouTubeアプリの仕様書 兼 規約遵守ルール。
 
-- 実装：`JS/qn-app-youtube.js`（本体）／`CSS/style-youtube.css`（見た目）／`JS/qn-apps.js`（バッジ・フライアウト・表示領域）／`JS/qn-marker-core.js`（PLAYERと共通のループ判定）
+- 実装：`JS/qn-app-youtube.js`（本体）／`CSS/style-youtube.css`（見た目）／`JS/qn-apps.js`（ロゴ切替・フライアウト・表示領域）／`JS/qn-marker-core.js`（PLAYERと共通のループ判定）
 - **YouTube関連の変更をする時は、まず§2（規約遵守ルール）を読む。** 便利さのために§2を破る実装は入れない。
 
 ---
@@ -21,7 +21,7 @@
 ## 1. 現在の仕様
 
 ### 入口
-- サイドバー先頭のバッジ(＞)にホバー（SP/タッチはタップ）→フライアウトでYOUTUBEを選ぶ。サイドバーは上段「Library / Markers」、下段「Backup / Import / Keyboard / Color」（本体と同じ並び）。
+- ヘッダーのロゴ(V付き)を押す→一覧でQNVIDEOを選ぶ。サイドバーは上段「Library / Markers」、下段「Backup / Import / Keyboard / Color」（本体と同じ並び）。
 - アプリ表示中は`body.qn-app-open`：本体のaudio一時停止、下段バー非表示、本体のショートカットと曲追加D&Dを無効化。Colorは常駐（PLAYERと同じパネル。Marker Memo Colorsも表示）。
 
 ### URL読み込み

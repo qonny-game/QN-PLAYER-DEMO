@@ -6,7 +6,7 @@
 - 共通ルールは`AI_ASSISTANT_PROJECT_CONTEXT.md`§6。Color/Keyboardは本体の部品を借りる（アプリ側で別実装しない）。
 
 ## 現在の仕様
-- **入口**：サイドバー先頭のバッジ(＞)→TUNER。サイドバーは上段「Tone / Sensitivity / Display」、下段「Keyboard / Color」。Backup/Importは無し（保存するのは軽い設定だけ）。
+- **入口**：ヘッダーのロゴ(V付き)→TUNER。サイドバーは上段「Tone / Sensitivity / Display」、下段「Keyboard / Color」。Backup/Importは無し（保存するのは軽い設定だけ）。
 - **メイン画面**：マイクOFF中は案内文、ON中はメーター。表示は **Gauge** と **Guitar Meter**（Displayパネル or 下段バーの表示ボタン or `D`で切替）。ズレは3段階の色分け（±5¢=ジャスト緑／±20¢=もう少し琥珀／それ以外=`--danger`）。しきい値は`tuningState()`とCSSの`data-state`で一致させる。
 - **Tone**：Preset（Guitar/Bass/Ukulele/Wind）、Guitar/BassはRegular/Half Down/Whole Down/Drop D/Drop C#/Drop C。弦行を押すと発信音（triangle）、もう一度で停止。Now Playingカードに音名・周波数とSTOP。
 - **Sensitivity**：感度（無音とみなすまでの保持フレーム）とスムージング（周波数の追従）。下段バーの±10%ステッパーと連動。
@@ -14,7 +14,7 @@
 - **ショートカット**（表示中のみ）：Space/M=Mic、D=表示切替、1〜9=Toneの弦を鳴らす、Esc=発信音停止。
 - **PC幅**：サイドアイコン再押下でパネル格納（`qn_tuner_panel_collapsed`）。
 
-- **マイク使用中の表示**：`QNApps.setMic(on)`でアプリバッジに赤丸(`body.qn-mic-on`)、`.qn-mic-pill`(赤ピル+レベル5段。`QNApps.setMicLevel(pill,0〜5)`)をステージに置く。静止表示のみ。マイクを使うアプリは`onHide`で必ずOFFに戻す。
+- **マイク使用中の表示**：`QNApps.setMic(on)`でロゴ(アプリ切替)に赤丸(`body.qn-mic-on`)、`.qn-mic-pill`(赤ピル+レベル5段。`QNApps.setMicLevel(pill,0〜5)`)をステージに置く。静止表示のみ。マイクを使うアプリは`onHide`で必ずOFFに戻す。
 
 ## 規約（守る）
 - マイク・Tone・AudioContextは**表示中だけ**。`onHide`で必ず全停止して`AudioContext`をclose（PLAYER側との同時鳴りも防ぐ）。マイク用ContextはToneとは別。

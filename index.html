@@ -33,7 +33,7 @@
 <link rel="stylesheet" href="CSS/style-pitch.css">
 <script>
   // アプリバージョン一元管理(QN_APP_VERSION)。<title>はここで即更新、#splashVersion/#appVersionは各要素直後のinline scriptが反映
-  window.QN_APP_VERSION = "3.49.0";
+  window.QN_APP_VERSION = "3.50.0";
   document.title = "QNPLAYER " + window.QN_APP_VERSION;
 
   window.QN_SHORTCUTS = [
@@ -118,7 +118,7 @@
       </div>
     </div>
   </div>
-  <h1 id="appLogo"><span id="appLogoQN">QN</span>PLAYER <span id="appVersion">v</span></h1>
+  <h1 id="appLogo"><button type="button" id="qnAppLogoBtn" aria-haspopup="menu" aria-expanded="false" title="Switch app"><span id="appLogoQN">QN</span><span id="appLogoName">PLAYER</span><svg class="qn-logo-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></button><span id="appVersion">v</span></h1>
   <script>
     document.getElementById("appVersion").textContent = "v" + window.QN_APP_VERSION;
   </script>

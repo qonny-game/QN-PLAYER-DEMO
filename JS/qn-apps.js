@@ -1,5 +1,5 @@
-// qn-apps.js — アプリ名バッジ(#qnAppBadge)・アプリ一覧フライアウト(#qnAppFlyout)・アプリ表示領域(#qnAppHost)。
-// PC幅=バッジhover/クリックでフライアウト、SP/タッチ=タップでアイコンバー上に一覧(再タップ・外側タップ・Escで閉じる)。アプリ選択で#qnAppHostがそのアプリ画面に。PLAYER選択で本体へ戻る。
+// qn-apps.js — ヘッダーのロゴ兼アプリ切替(#qnAppLogoBtn)・アプリ一覧ドロップダウン(#qnAppFlyout)・アプリ表示領域(#qnAppHost)。
+// PC/SP共通: ロゴ(QN＋アプリ名＋V)を押すと直下にアプリ一覧(再押下・外側タップ・Escで閉じる)。アプリ名はBRAND(QNだけ色付き)。アプリ選択で#qnAppHostがそのアプリ画面に。PLAYER選択で本体へ戻る。
 // 【アプリ追加】JS/qn-app-xxx.jsでQNApps.register({id, label, icon(24x24 svg path), order(小さいほど上), ready(falseで準備中トースト), sidebar:[{id,label,icon}], onSidebar(itemId)(選択表示はQNApps.setSideActive(itemId|null)), settings:[{title,rows:[...]}](Settingsパネルの先頭に出る行。書式はJS/qn-settings-ui.jsのbuild。配列か、それを返す関数), shortcuts:[{key,action}]("Space / K"形式で複数キー可), shortcutsNote, mount(viewEl)(初回のみ), onShow(), onHide()})。Keyboardパネルの中身はQNApps.renderShortcuts(hostEl,"<id>")。index.htmlにqn-apps.jsより後で<script>追加。同idのregisterは置き換え。準備中アプリ(PITCH)は末尾のregister。
 // 【接点】#pcV2IconBar/#pcV2IconBarBottom/#pcV2IconBarSpacer/#pcV2Layout(player-ui-pc-v2.js build()が作る。出来上がるのを待つ)。アプリ表示中はbody.qn-app-open(player-ui-shared.jsのショートカット無効化に使う)。アプリを開く時QNPLAYERのaudioは一時停止
 (function () {
@@ -11,9 +11,14 @@
 
   var SP_QUERY = "(max-width: 900px)";
 
+  // 表示名(ヘッダーのロゴ・一覧)。先頭の「QN」は常に色付き。YouTubeアプリは規約上グレーになりうるため名前に「YouTube」を入れない(変えるならここだけ)
+  var BRAND = { player: "PLAYER", youtube: "VIDEO", tuner: "TUNER", pitch: "PITCH" };
+  function brandName(app) { return (app && BRAND[app.id]) || (app ? app.label.toUpperCase() : "PLAYER"); }
+  function brandHtml(app) { return '<span class="qn-brand-qn">QN</span>' + brandName(app); }
+
   var apps = [];
   var current = null;
-  var iconBar = null, host = null, badgeBtn = null, switchBtn = null, flyout = null, scrim = null, flyoutOpen = false, flyoutHideTimer = null, flyoutTimer = null, toastEl = null, toastTimer = null;
+  var iconBar = null, host = null, logoBtn = null, flyout = null, scrim = null, flyoutOpen = false, flyoutHideTimer = null, flyoutTimer = null, toastEl = null, toastTimer = null;
   var views = {};
   var mounted = {};
   var resizeObs = null;
@@ -47,8 +52,6 @@
     flyout.hidden = true;
     flyout.setAttribute("role", "menu");
     document.body.appendChild(flyout);
-    flyout.addEventListener("mouseenter", cancelFlyoutClose);
-    flyout.addEventListener("mouseleave", scheduleFlyoutClose);
     return flyout;
   }
 
@@ -62,6 +65,7 @@
         app.ready ? app.label : app.label + " (coming soon)"
       );
       btn.setAttribute("role", "menuitem");
+      btn.querySelector("span").innerHTML = brandHtml(app);
       btn.addEventListener("click", function () {
         haptic();
         closeFlyout();
@@ -85,33 +89,23 @@
   function isSp() { return window.matchMedia(SP_QUERY).matches; }
   function canHover() { return window.matchMedia("(hover: hover) and (pointer: fine)").matches; }
 
+  // ロゴ(#qnAppLogoBtn)の真下に左揃えで出す(PC/SP共通)
   function positionFlyout() {
-    if (!flyout || !iconBar || !badgeBtn) return;
-    var br = iconBar.getBoundingClientRect();
-    var sp = isSp();
-    flyout.classList.toggle("qn-flyout-sp", sp);
-    if (scrim) scrim.classList.toggle("qn-scrim-sp", sp);
-    if (sp) {
-      // 【v3.48.0】SP: 押したヘッダーのボタン(#qnAppSwitchBtn)の真下にドロップダウン表示(アイコン＋文字の縦リスト)
-      var sb = switchBtn ? switchBtn.getBoundingClientRect() : null;
-      flyout.style.left = (sb ? Math.max(0, sb.left) : 0) + "px";
-      flyout.style.right = "auto";
-      flyout.style.top = (sb ? sb.bottom : 0) + "px";
-      flyout.style.bottom = "auto";
-    } else {
-      flyout.style.left = br.right + "px";
-      flyout.style.right = "auto";
-      flyout.style.top = br.top + "px";
-      flyout.style.bottom = Math.max(0, window.innerHeight - br.bottom) + "px";
-    }
+    if (!flyout || !logoBtn) return;
+    var lb = logoBtn.getBoundingClientRect();
+    var w = flyout.offsetWidth || 220;
+    flyout.style.left = Math.max(0, Math.min(lb.left, window.innerWidth - w - 4)) + "px";
+    flyout.style.right = "auto";
+    flyout.style.top = lb.bottom + "px";
+    flyout.style.bottom = "auto";
   }
 
-  // 【v3.48.0】SP: アプリ一覧の表示中はアプリ表示領域(#qnAppHost)をメニューの高さ分だけ下へずらし、YouTubeプレイヤーを覆わない(規約)。サイズは変えずtransformだけ、はみ出す下側はclip-pathで切る(アイコンバーに被らせない。プレイヤーは上側なので切れない)
+  // 【v3.48.0】PC/SP共通: アプリ一覧の表示中はアプリ表示領域(#qnAppHost)をメニューの高さ分だけ下へずらし、YouTubeプレイヤーを覆わない(規約)。サイズは変えずtransformだけ、はみ出す下側はclip-pathで切る(アイコンバーに被らせない。プレイヤーは上側なので切れない)
   var shiftCover = null, shiftCoverTimer = null;
   function shiftHostForFlyout(on) {
     if (!host) return;
     var h = 0;
-    if (on && isSp() && current && flyout) {
+    if (on && current && flyout) {
       // アニメ途中のtransformに左右されないよう、style値とoffsetHeightで計算
       h = Math.max(0, Math.ceil((parseFloat(flyout.style.top) || 0) + flyout.offsetHeight - (parseFloat(host.style.top) || 0)));
     }
@@ -128,6 +122,7 @@
     if (shiftCoverTimer) { clearTimeout(shiftCoverTimer); shiftCoverTimer = null; }
     if (h) {
       shiftCover.style.top = (parseFloat(host.style.top) || 0) + "px";
+      shiftCover.style.left = (parseFloat(host.style.left) || 0) + "px";
       shiftCover.style.height = h + "px";
       shiftCover.hidden = false;
     } else if (!shiftCover.hidden) {
@@ -157,11 +152,7 @@
     void flyout.offsetWidth;
     flyout.classList.add("qn-flyout-in");
     scrim.classList.add("qn-scrim-in");
-    if (badgeBtn) {
-      badgeBtn.classList.add("qn-badge-open");
-      badgeBtn.setAttribute("aria-expanded", "true");
-    }
-    if (switchBtn) { switchBtn.classList.add("qn-badge-open"); switchBtn.setAttribute("aria-expanded", "true"); }
+    if (logoBtn) { logoBtn.classList.add("qn-badge-open"); logoBtn.setAttribute("aria-expanded", "true"); }
     shiftHostForFlyout(true);
   }
 
@@ -171,11 +162,7 @@
     flyoutOpen = false;
     flyout.classList.remove("qn-flyout-in");
     if (scrim) scrim.classList.remove("qn-scrim-in");
-    if (badgeBtn) {
-      badgeBtn.classList.remove("qn-badge-open");
-      badgeBtn.setAttribute("aria-expanded", "false");
-    }
-    if (switchBtn) { switchBtn.classList.remove("qn-badge-open"); switchBtn.setAttribute("aria-expanded", "false"); }
+    if (logoBtn) { logoBtn.classList.remove("qn-badge-open"); logoBtn.setAttribute("aria-expanded", "false"); }
     shiftHostForFlyout(false);
     if (flyoutHideTimer) clearTimeout(flyoutHideTimer);
     flyoutHideTimer = setTimeout(function () {
@@ -186,11 +173,6 @@
     }, 280);
   }
 
-  function scheduleFlyoutClose() {
-    if (!canHover() || isSp()) return;
-    cancelFlyoutClose();
-    flyoutTimer = setTimeout(closeFlyout, 160);
-  }
   function cancelFlyoutClose() {
     if (flyoutTimer) { clearTimeout(flyoutTimer); flyoutTimer = null; }
   }
@@ -226,62 +208,24 @@
     }
   }
 
-  // ---------- アプリ名バッジ(サイドバー先頭。「＞」=サブメニューあり)。PC=hover/クリック、SP/タッチ=タップ開閉 ----------
+  // ---------- ヘッダーのロゴ兼アプリ切替(#qnAppLogoBtn。index.htmlにある)。押すと直下にアプリ一覧 ----------
   function buildBadge() {
-    if (!iconBar || $("qnAppBadge")) return;
-    badgeBtn = makeItemButton({ cls: "qn-app-badge" }, PLAYER_ICON, "Player", "Apps");
-    badgeBtn.id = "qnAppBadge";
-    badgeBtn.setAttribute("aria-haspopup", "menu");
-    badgeBtn.setAttribute("aria-expanded", "false");
-    var chev = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    chev.setAttribute("viewBox", "0 0 24 24");
-    chev.setAttribute("class", "qn-badge-chev");
-    chev.setAttribute("aria-hidden", "true");
-    chev.innerHTML = CHEVRON_ICON;
-    badgeBtn.appendChild(chev);
-
-    badgeBtn.addEventListener("mouseenter", function () {
-      if (canHover() && !isSp()) openFlyout();
-    });
-    badgeBtn.addEventListener("mouseleave", scheduleFlyoutClose);
-    badgeBtn.addEventListener("click", function () {
+    logoBtn = $("qnAppLogoBtn");
+    if (!logoBtn || logoBtn.__qnBound) return;
+    logoBtn.__qnBound = true;
+    logoBtn.addEventListener("click", function () {
       haptic();
-      if (flyoutOpen) {
-        if (!(canHover() && !isSp())) closeFlyout();
-      } else {
-        openFlyout();
-      }
+      if (flyoutOpen) closeFlyout(); else openFlyout();
     });
-    iconBar.insertBefore(badgeBtn, iconBar.firstChild);
-
-    // 【v3.47.0】SP: アプリ切替はヘッダー左のボタン(#qnAppSwitchBtn)から。SPでは#qnAppBadgeをCSSで隠す(DOMと挙動は残す=PC幅用)。開くフライアウトは共通
-    var hdr = $("appHeader"), logo = $("appLogo");
-    if (hdr && !$("qnAppSwitchBtn")) {
-      switchBtn = document.createElement("button");
-      switchBtn.type = "button";
-      switchBtn.id = "qnAppSwitchBtn";
-      switchBtn.setAttribute("aria-haspopup", "menu");
-      switchBtn.setAttribute("aria-expanded", "false");
-      switchBtn.innerHTML = '<svg class="qn-switch-ico" viewBox="0 0 24 24" aria-hidden="true"></svg><svg class="qn-switch-chev" viewBox="0 0 24 24" aria-hidden="true">' + CHEVRON_ICON + '</svg>';
-      switchBtn.addEventListener("click", function () {
-        haptic();
-        if (flyoutOpen) closeFlyout(); else openFlyout();
-      });
-      hdr.insertBefore(switchBtn, logo || hdr.firstChild);
-    }
   }
 
   function updateBadge() {
-    if (!badgeBtn) return;
+    if (!logoBtn) return;
     var app = current || findApp("player");
     if (!app) return;
-    badgeBtn.querySelector("svg").innerHTML = app.icon;
-    badgeBtn.querySelector("span").textContent = app.label.toUpperCase();
-    badgeBtn.title = app.label + " — switch app";
-    if (switchBtn) {
-      switchBtn.querySelector(".qn-switch-ico").innerHTML = app.icon;
-      switchBtn.title = app.label + " — switch app";
-    }
+    var nm = $("appLogoName");
+    if (nm && nm.textContent !== brandName(app)) nm.textContent = brandName(app);
+    logoBtn.title = "QN" + brandName(app) + " — switch app";
   }
 
   function refreshSidebar() {
@@ -586,7 +530,7 @@
     document.addEventListener("pointerdown", function (e) {
       if (!flyout || !flyoutOpen) return;
       var t = e.target;
-      if (t && t.closest && (t.closest("#qnAppFlyout") || t.closest("#qnAppBadge") || t.closest("#qnAppSwitchBtn"))) return;
+      if (t && t.closest && (t.closest("#qnAppFlyout") || t.closest("#qnAppLogoBtn"))) return;
       closeFlyout();
     }, true);
     document.addEventListener("keydown", function (e) {
@@ -594,10 +538,7 @@
     });
     window.addEventListener("resize", function () { if (flyoutOpen) { positionFlyout(); shiftHostForFlyout(true); } });
     window.addEventListener("orientationchange", closeFlyout);
-    iconBar.addEventListener("click", function (e) {
-      if (e.target.closest && e.target.closest("#qnAppBadge")) return;
-      closeFlyout();
-    });
+    iconBar.addEventListener("click", closeFlyout);
     iconBar.addEventListener("scroll", closeFlyout, { passive: true });
   }
 

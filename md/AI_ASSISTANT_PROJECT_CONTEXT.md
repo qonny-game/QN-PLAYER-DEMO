@@ -29,7 +29,7 @@ JS/
   player-text.js              Textタブ
   player-ui-pc-v2.js          【最大】唯一のUI実装。DOM組み立て・パネル・下段バー・波形（IIFE）。目次はPC_V2_FILE_INDEX.md
   qn-wakelock.js              再生中の画面スリープ防止 QNWake.set(key,on)
-  qn-apps.js                  アプリ枠：バッジ(＞)・フライアウト・#qnAppHost・Colorパネル借用・QNApps.register()
+  qn-apps.js                  アプリ枠：ヘッダーのロゴ切替・フライアウト・#qnAppHost・Colorパネル借用・QNApps.register()
   qn-app-youtube.js           YouTubeアプリ本体（IIFE）
   qn-pitch-core.js            TUNER/PITCH共通：マイク入力・ピッチ検出(自己相関)・音名変換（QNPitchCore。DOM操作なし）
   qn-app-tuner.js             TUNERアプリ本体（IIFE。Mic Tuner/Tone Generator/Sensitivity/Display）
@@ -46,7 +46,7 @@ CSS/
   style-layout-pc-v2-sp.css   上の続き：SP幅(≤900px)の縦積み組み替え＋下段バーの追記
   style-pcv2-panels.css       中央パネル(#pcV2PanelBody)の中身
   style-bars.css              シークバー行(#vbarScroll/#vbarRows/.vbar)・歯車・秒数ポップアップ。寸法は#vbarContainerの--qn-bar-*
-  style-apps.css              アプリ枠（バッジ・フライアウト・トースト・#qnAppHost）
+  style-apps.css              アプリ枠（ロゴ切替・フライアウト・トースト・#qnAppHost）
   style-youtube.css           YouTubeアプリ専用（.qn-yt*）
   style-tuner.css             TUNERアプリ専用（.qn-tn*）
   style-pitch.css             PITCHアプリ専用（.qn-pt*）
@@ -149,7 +149,7 @@ favicon/  md/  pricing*.html  QUICK_START.md
 
 `QNApps.register({id,label,icon,order,ready,sidebar,onSidebar,shortcuts,shortcutsNote,mount,onShow,onHide})`（`qn-apps.js`冒頭にコメントあり）で足す。共通部品：`QNApps.renderShortcuts(hostEl,id)` / `setSideActive` / `toast` / Colorパネル借用。
 
-- **サイドバー**：上段＝アプリ固有項目、下段＝Backup / Import / Keyboard / Color（本体と同じ並び）。アプリ切替はサイドバー先頭のバッジ`#qnAppBadge`(＞)のフライアウトから。
+- **サイドバー**：上段＝アプリ固有項目、下段＝Backup / Import / Keyboard / Color（本体と同じ並び）。アプリ切替はヘッダーのロゴ`#qnAppLogoBtn`(V付き)のドロップダウンから。
 - **Color**：アプリ側で別実装しない。`qn-apps.js`が本体のテーマ切替セクションを`#qnColorPop`へ借りて表示し、閉じたら戻す。
 - **Backup/Import/Keyboard**：本体の部品を借りる（`qnBackupMountInto`、`renderShortcuts`）。アプリ側はデータの出し入れ（YouTubeは`window.QNYouTubeBackup`）やショートカット一覧を渡すだけ。
 - **PLAYERと同じ部品・同じ操作**：リスト行・EDIT→OK・丸チェック削除・カラーパレット・プリセットチップ・シークバー(`.vbar`/`.vfill`)は本体のクラスを流用。本体CSSが`#pcV2PanelBody`スコープなら、アプリ側に同等ルールを写す。

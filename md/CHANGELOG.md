@@ -48,3 +48,4 @@
 - 3.47.0 SPのアイコンバー刷新。アプリ切替をヘッダー左の#qnAppSwitchBtnに移し(PC幅は従来の#qnAppBadge)、アイコンバーは横スクロールなしの等分(Seekbar/Library/Markers/Text/Control/Settings)、ラベルは選択中のタブだけ表示。SPヘッダーのバージョン表記は省き、設定の最下段に「QNPLAYER vX」を表示。
 - 3.48.0 SPアイコンバーからSeekbarタブを撤去(5タブ等分)。アプリ切替メニューをSPはヘッダーの切替ボタン直下のドロップダウン(アイコン＋文字の縦リスト・暗幕なし)に変更。表示中はアプリ表示領域をメニュー高さ分だけ下へずらしYouTubeプレイヤーを覆わない。
 - 3.49.0 下部バーのVolume/Speed/Key/EQボタンを撤去(操作はControlパネルのみ。関連JS/CSSも削除)。SPアイコンバーは非選択ラベルを`visibility:hidden`にして選択でバー高さが変わらないように。アプリ一覧表示中にホストを下げた隙間を背景色で塞ぎPLAYERの映り込みを解消。
+- 3.50.0 ヘッダーのロゴをアプリ切替に(`#qnAppLogoBtn`: QN色付き+アプリ名+V。PC/SP共通)。一覧は直下のドロップダウン(QNPLAYER/QNVIDEO/QNTUNER/QNPITCH。名前は`qn-apps.js`のBRAND)。サイドバーのPLAYERバッジとSPの切替ボタンを撤去。幕は暗くしない。

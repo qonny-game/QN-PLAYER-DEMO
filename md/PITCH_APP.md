@@ -6,7 +6,7 @@
 - 共通ルールは`AI_ASSISTANT_PROJECT_CONTEXT.md`§6。Color/Keyboardは本体の部品を借りる。
 
 ## 現在の仕様
-- **入口**：サイドバー先頭のバッジ(＞)→PITCH。サイドバーは上段「Filters / Recordings」、下段「Keyboard / Color」。Backup / Importは本体共通画面を借りる（YouTubeアプリと同じ）。
+- **入口**：ヘッダーのロゴ(V付き)→PITCH。サイドバーは上段「Filters / Recordings」、下段「Keyboard / Color」。Backup / Importは本体共通画面を借りる（YouTubeアプリと同じ）。
 - **メイン画面**：上=音名・セント（±12¢=緑／±30¢=琥珀／それ以外=`--danger`）とヒント文、中央=ピッチロール（C線はテーマ色・鍵盤ラベルは左固定）、下=音量ライン、再生中は再生情報行（名前/SCORE/時間/シークバー/✕）。
 - **録音**：Recで開始/停止。点列は`{t,midi,cents,rms,voiced}`。停止すると未保存の録音として読み込まれ（自動再生はしない）、Playで再生、Saveで保存。
 - **Save**：左パネルに一時パネル「Save Recording」（名前入力、既定`REC MM/DD HH:MM`）。Cancel/Saveでパネルを元に戻す。
@@ -22,7 +22,7 @@
 - 同一性は`createdAt`。Importの重複は上書き/スキップ（共通の切替）。上書き＝古いレコードを消して新規add（再putしない）。音声なしJSONは「既存録音の名前の上書き」だけ可能、新規は「音声なしのためスキップ」。
 - `QNPitchBackup`: `list()`(同期・キャッシュ) / `refresh()`(IndexedDBから読み直し) / `buildExport(ids,withAudio)`(async) / `parseImport(raw)` / `exists(key)` / `titleOf(key)` / `applyImport(list,audioMap,choices)`(async)。アプリを一度も開いていなくても、共通画面を開く時に`refresh()`される。
 
-- **マイク使用中の表示**：`QNApps.setMic(on)`でアプリバッジに赤丸(`body.qn-mic-on`)、`.qn-mic-pill`(赤ピル+レベル5段。`QNApps.setMicLevel(pill,0〜5)`)をステージに置く。静止表示のみ。マイクを使うアプリは`onHide`で必ずOFFに戻す。
+- **マイク使用中の表示**：`QNApps.setMic(on)`でロゴ(アプリ切替)に赤丸(`body.qn-mic-on`)、`.qn-mic-pill`(赤ピル+レベル5段。`QNApps.setMicLevel(pill,0〜5)`)をステージに置く。静止表示のみ。マイクを使うアプリは`onHide`で必ずOFFに戻す。
 
 ## 規約（守る）
 - マイク・録音・再生は**表示中だけ**。`onHide`で録音を止め（未保存の録音はメモリに残りSaveできる）、再生は一時停止。マイクは1回の`getUserMedia`を解析とMediaRecorderで共有（`createAnalysisSession().stream`）。

@@ -58,7 +58,7 @@
 `player-ui-pc-v2.js`の`build()`が作った`#pcV2IconBar`に**後から**項目を差し込む（`waitForSidebar`でMutationObserver）。`player-ui-pc-v2.js`は変更していない。
 
 - `register(def)` / `open(id)` / `close()` — アプリ登録・表示・本体へ戻る。`layoutHost()`が`#qnAppHost`(fixed)の位置を実測で決める（PC=アイコンバーの右〜下端、SP=ヘッダー直下〜アイコンバー直上）。
-- `buildBadge()` / `updateBadge()` — サイドバー先頭の`#qnAppBadge`。`ensureFlyout()` / `renderAppItems()` / `positionFlyout()` / `openFlyout()` / `closeFlyout()` / `bindFlyoutGlobal()` — フライアウト（PCはhoverで開く、SP/タッチはタップ開閉。閉じる経路は外側タップ・Esc・項目選択・スクロール・resize）。開閉状態は`flyoutOpen`変数。
+- `buildBadge()` / `updateBadge()` — ヘッダーのロゴ`#qnAppLogoBtn`(押下で開閉・アプリ名表示)。`ensureFlyout()` / `renderAppItems()` / `positionFlyout()` / `openFlyout()` / `closeFlyout()` / `bindFlyoutGlobal()` — フライアウト（PCはhoverで開く、SP/タッチはタップ開閉。閉じる経路は外側タップ・Esc・項目選択・スクロール・resize）。開閉状態は`flyoutOpen`変数。
 - `renderAppSideItems()` / `setSideActive(id|null)` / `refreshSidebar()` — アプリ表示中のサイドバー（`#pcV2IconBar.qn-app-sidebar`。選択は`.qn-app-active`）。
 - `initColorKeeper()` / `openColorPop()` / `closeColorPop()` / `positionColorPop()` — アプリ中のColorパネル(`#qnColorPop`)。本体のテーマ切替セクションを借りて閉じたら戻す。
 - `renderShortcuts(hostEl, id)` / `fillShortcutRows()` — 共通のKeyboard表。`toast(text)` — 共通トースト。`saveLastApp` / `scheduleRestore` — 再読み込み時の復元（`qn_last_app`）。

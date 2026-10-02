@@ -1,8 +1,8 @@
-/* style-apps.css — アプリ名バッジ/フライアウト(#qnAppFlyout)/アプリ表示領域(#qnAppHost)/トースト。JSはqn-apps.js、YouTube専用はstyle-youtube.css。項目は.pcv2-icon-itemを流用。配色はstyle-core.cssの:rootトークン(テーマ追従) */
+/* style-apps.css — ヘッダーのロゴ兼アプリ切替/アプリ一覧ドロップダウン(#qnAppFlyout)/アプリ表示領域(#qnAppHost)/トースト。JSはqn-apps.js、YouTube専用はstyle-youtube.css。項目は.pcv2-icon-itemを流用。配色はstyle-core.cssの:rootトークン(テーマ追従) */
 
 /* ---------- サイドバー: アプリ表示中 ---------- */
 
-#pcV2IconBar.qn-app-sidebar > .pcv2-icon-item:not(.qn-appside-item):not(#qnAppBadge) {
+#pcV2IconBar.qn-app-sidebar > .pcv2-icon-item:not(.qn-appside-item) {
   display: none;
 }
 
@@ -10,39 +10,20 @@
   display: none;
 }
 
-/* ---------- アプリ一覧フライアウト ----------
-body直下fixed。PC=サイドバー右に重ねる(clip-pathで縁から出る)、SP=アイコンバー真上。位置はJSが実測。#qnAppScrimで暗幕 */
+/* ---------- アプリ一覧ドロップダウン(v3.50.0 PC/SP共通) ----------
+body直下fixed。ヘッダーのロゴ(#qnAppLogoBtn)の真下・左揃え。位置はJSが実測。表示中はJSが#qnAppHostを下へずらす(YouTubeプレイヤーを覆わない)。幕(#qnAppScrim)は暗くしない */
 #qnAppFlyout {
   position: fixed;
-  z-index: 320; /* z-index: #qnColorPop(300)・幕(310)より上 */
+  z-index: 450; /* サイドバー(400)・吸着タブ(410)より上 */
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  width: 84px;
-  padding: 16px 0;
-  gap: 4px;
-  background: color-mix(in srgb, var(--accent-primary) 7%, #050507);
-  border-right: 2px solid var(--accent-primary);
-  box-shadow: 14px 0 36px rgba(0, 0, 0, 0.6);
-  transform: translateX(-100%);
-  clip-path: inset(0 -48px 0 100%);
-  transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
-              clip-path 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-#qnAppFlyout[hidden] { display: none; }
-#qnAppFlyout.qn-flyout-in {
-  transform: none;
-  clip-path: inset(0 -48px 0 0);
-}
-
-/* v3.48.0 SP: ヘッダーの切替ボタン直下に出るドロップダウン(上から開く)。幕は暗くせず外側タップ判定だけ */
-#qnAppFlyout.qn-flyout-sp {
-  width: 200px;
+  width: 240px;
   max-width: calc(100vw - 8px);
   padding: 6px 0;
   gap: 0;
-  border-right: none;
+  background: color-mix(in srgb, var(--accent-primary) 7%, #050507);
   border-bottom: 2px solid var(--accent-primary);
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.6);
   transform: translateY(-8px);
@@ -52,7 +33,8 @@ body直下fixed。PC=サイドバー右に重ねる(clip-pathで縁から出る)
               clip-path 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
               opacity 160ms ease;
 }
-#qnAppFlyout.qn-flyout-sp.qn-flyout-in {
+#qnAppFlyout[hidden] { display: none; }
+#qnAppFlyout.qn-flyout-in {
   transform: none;
   opacity: 1;
   clip-path: inset(0 -48px -48px -48px);
@@ -66,43 +48,15 @@ body直下fixed。PC=サイドバー右に重ねる(clip-pathで縁から出る)
   position: fixed;
   inset: 0;
   z-index: 310;
-  background: rgba(0, 0, 0, 0.42);
+  background: transparent;
   pointer-events: none;
   opacity: 0;
   transition: opacity 220ms ease;
 }
 #qnAppScrim[hidden] { display: none; }
 #qnAppScrim.qn-scrim-in { opacity: 1; }
-#qnAppScrim.qn-scrim-sp { background: transparent; }
 
 /* v3.11.1: OS視覚効果低減でもtransition:noneにしない(Windowsでフライアウトが一瞬でパッと出る原因だった) */
-
-#pcV2IconBar #qnAppBadge {
-  position: relative;
-}
-#qnAppBadge .qn-badge-chev {
-  position: absolute;
-  right: 3px;
-  top: 50%;
-  width: 14px;
-  height: 14px;
-  margin-top: -7px;
-  fill: currentColor;
-  opacity: 0.85;
-  transition: transform 120ms ease;
-}
-@media screen and (max-width: 900px) {
-  #qnAppBadge .qn-badge-chev {
-    right: 50%;
-    top: 2px;
-    margin-top: 0;
-    margin-right: -7px;
-    width: 12px;
-    height: 12px;
-    transform: rotate(-90deg);
-  }
-  #qnAppBadge.qn-badge-open .qn-badge-chev { transform: rotate(90deg); }
-}
 
 #qnColorPop {
   position: fixed;
@@ -162,25 +116,9 @@ body直下fixed。PC=サイドバー右に重ねる(clip-pathで縁から出る)
 }
 
 /* ---------- ホバー/バッジ色(v2.18.1) ----------
-ホバー=背景テーマ色+文字白(#fff)。ホバー可能端末のみ(タッチは:hoverが残る)。#qnAppBadgeは常にテーマ背景+白文字 */
+ホバー=背景テーマ色+文字白(#fff)。ホバー可能端末のみ(タッチは:hoverが残る) */
 :root {
   --sidebar-on-accent: #fff;
-}
-
-#pcV2IconBar #qnAppBadge {
-  background: var(--accent-primary);
-  color: var(--sidebar-on-accent);
-}
-
-#pcV2IconBar #qnAppBadge {
-  margin-bottom: 8px;
-}
-
-@media screen and (max-width: 900px) {
-  #pcV2IconBar #qnAppBadge {
-    margin-bottom: 0;
-    margin-right: 6px;
-  }
 }
 
 @media (hover: hover) {
@@ -197,14 +135,6 @@ body直下fixed。PC=サイドバー右に重ねる(clip-pathで縁から出る)
     color: var(--sidebar-on-accent);
   }
 
-  #pcV2IconBar #qnAppBadge:hover {
-    background: var(--accent-hover-1);
-    color: var(--sidebar-on-accent);
-  }
-}
-
-#pcV2IconBar #qnAppBadge:active {
-  background: var(--accent-hover-1);
 }
 
 @media screen and (max-width: 900px) {
@@ -330,38 +260,79 @@ body.qn-app-open #pcV2TimeRow {
 .qn-mic-lv b:nth-child(5) { height: 12px; }
 .qn-mic-lv b.on { background: var(--danger); }
 
-/* どの画面でもわかるように、アプリ名バッジにも赤丸 */
-body.qn-mic-on #qnAppBadge::after {
+/* どの画面でもわかるように、ロゴ(アプリ切替)にも赤丸 */
+body.qn-mic-on #qnAppLogoBtn::after {
   content: "";
   position: absolute;
-  left: 8px;
-  top: 8px;
+  right: 0;
+  top: 0;
   width: 9px;
   height: 9px;
   border-radius: var(--radius-round);
   background: var(--danger);
-  box-shadow: 0 0 0 2px var(--accent-primary);
+  box-shadow: 0 0 0 2px var(--bg-base, #0a0a0c);
 }
 
 
-/* v3.32.0 アプリ一覧(フライアウト)だけ「アイコン＋文字」の1行・広め(v3.48.0でSPにも適用)。サイドバー本体/バッジは従来のまま */
-@media screen and (min-width: 0) {
-  #qnAppFlyout .qn-flyout-item {
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 16px 14px 18px;
-  }
-  #qnAppFlyout .qn-flyout-item svg { width: 24px; height: 24px; flex-shrink: 0; }
-  #qnAppFlyout .qn-flyout-item span {
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.4px;
-    white-space: nowrap;
-  }
-  #qnAppFlyout:not(.qn-flyout-sp) { width: 190px; }
+/* アプリ一覧の項目は「アイコン＋文字」の1行。名前の先頭「QN」だけテーマ色(.qn-brand-qn) */
+#qnAppFlyout .qn-flyout-item {
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
 }
+#qnAppFlyout .qn-flyout-item svg { width: 24px; height: 24px; flex-shrink: 0; }
+#qnAppFlyout .qn-flyout-item span {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.qn-brand-qn, #appLogoQN {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+@media (hover: hover) {
+  /* ホバー時は背景がテーマ色になるので、QNも白に戻して読めるようにする */
+  #qnAppFlyout .pcv2-icon-item:hover .qn-brand-qn,
+  #qnAppFlyout .pcv2-icon-item.qn-app-active:hover .qn-brand-qn { background: none; -webkit-text-fill-color: currentColor; color: inherit; }
+}
+
+/* ヘッダーのロゴ兼アプリ切替(v3.50.0)。QN(色)＋アプリ名＋V。広がっても可 */
+#qnAppLogoBtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  margin: 0;
+  padding: 4px 6px 4px 0;
+  background: none;
+  border: none;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+#qnAppLogoBtn .qn-logo-chev {
+  width: 0.75em;
+  height: 0.75em;
+  flex-shrink: 0;
+  margin-left: 0.3em;
+  fill: currentColor;
+  opacity: 0.85;
+  transition: transform 160ms ease;
+}
+#qnAppLogoBtn.qn-badge-open .qn-logo-chev { transform: rotate(180deg); }
+@media (hover: hover) and (pointer: fine) {
+  #qnAppLogoBtn:hover .qn-logo-chev { opacity: 1; }
+}
+#appLogo { overflow: visible; }
 
 /* v3.33.0 SP: リスト行の横スワイプで出る□アイコンボタン(編集/SKIP(HIDE)/削除)。ボタン群は行の右外(left:100%)に置き、行を左へずらして見せる。はみ出しはリスト側でclip */
 @media screen and (max-width: 900px) {
@@ -423,45 +394,9 @@ body.qn-mic-on #qnAppBadge::after {
 #pinList .pinItem, .qn-yt-pinbox .pinItem { padding-left: 20px; }
 #markersNowPlaying .playlistItem.is-nowplaying { padding-left: 20px; }
 
-/* ---------- SPのアプリ切替・アイコンバー(v3.47.0) ----------
-   アプリ切替=ヘッダー左の#qnAppSwitchBtn(アクセント色の角ボタン。PC幅は非表示で従来の#qnAppBadge)。
+/* ---------- SPのアイコンバー(v3.47.0) ----------
    アイコンバーは横スクロールなしの等分(Library/Markers/Text/Control/Settings)。ラベルは選択中のタブだけ表示。 */
-#qnAppSwitchBtn { display: none; }
 @media screen and (max-width: 900px) {
-  #qnAppSwitchBtn {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    margin-right: -4px;
-    background: var(--accent-primary);
-    color: var(--sidebar-on-accent, #fff);
-    border: none;
-    border-radius: 0;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
-  #qnAppSwitchBtn .qn-switch-ico { width: 22px; height: 22px; fill: currentColor; }
-  #qnAppSwitchBtn .qn-switch-chev { position: absolute; right: 1px; bottom: 1px; width: 12px; height: 12px; fill: currentColor; opacity: 0.9; transform: rotate(90deg); transition: transform 120ms ease; }
-  #qnAppSwitchBtn.qn-badge-open .qn-switch-chev { transform: rotate(-90deg); }
-  #qnAppSwitchBtn:active { background: var(--accent-hover-1); }
-  body.qn-mic-on #qnAppSwitchBtn::after {
-    content: "";
-    position: absolute;
-    left: 3px;
-    top: 3px;
-    width: 9px;
-    height: 9px;
-    border-radius: var(--radius-round);
-    background: var(--danger);
-    box-shadow: 0 0 0 2px var(--accent-primary);
-  }
-
-  #pcV2IconBar #qnAppBadge { display: none; }
   #pcV2IconBar { overflow-x: hidden; gap: 0; padding-left: 4px; padding-right: 4px; }
   #pcV2IconBar > .pcv2-icon-item { flex: 1 1 0; min-width: 0; padding: 12px 2px; justify-content: center; }
   #pcV2IconBarBottom { flex: 1 1 0; min-width: 0; margin-left: 0; padding-left: 0; border-left: none; gap: 0; }
