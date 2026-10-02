@@ -374,6 +374,10 @@
           '<section class="qn-yt-sec qn-yt-sec-library">' +
             '<div class="qn-yt-sec-head"><h3>Library</h3><span class="qn-yt-count" data-yt="listCount">0</span></div>' +
             '<div class="qn-yt-input-block">' +
+              '<ol class="qn-yt-hint" data-yt="emptyHint">' +
+                '<li class="qn-yt-hint-1"><b>1</b><span>YouTubeのURLを下の欄に貼り付け</span></li>' +
+                '<li class="qn-yt-hint-2"><b>2</b><span>Saveを押すとLibraryに保存されます</span></li>' +
+              '</ol>' +
               '<div class="qn-yt-row">' +
                 '<input data-yt="urlInput" class="qn-yt-input" type="text" placeholder="YouTube URL" autocomplete="off" spellcheck="false">' +
               '</div>' +
@@ -385,7 +389,7 @@
               '<div class="qn-yt-sync" data-yt="syncStatus"></div>' +
             '</div>' +
             '<div class="qn-yt-libbox" data-yt="itemList"></div>' +
-            '<p class="qn-yt-empty" data-yt="emptyList">まだ保存されていません</p>' +
+            '<p class="qn-yt-empty" data-yt="emptyList">保存した動画がここに並びます</p>' +
           '</section>' +
           '<section class="qn-yt-sec qn-yt-sec-markers">' +
             '<div class="qn-yt-sec-head"><h3>Markers</h3><span class="qn-yt-count" data-yt="markerCount">0</span></div>' +
@@ -1095,7 +1099,11 @@
       });
     });
     // URL欄をユーザーが編集したらタイトル欄を空にする(別動画のタイトルが残らないように)。プログラムからのvalue代入ではinputは発火しない
-    refs.urlInput.addEventListener("input", function () { refs.titleInput.value = ""; });
+    refs.urlInput.addEventListener("input", function () {
+      refs.titleInput.value = "";
+      var libSec = refs.emptyHint.closest(".qn-yt-sec-library");
+      if (libSec) libSec.classList.toggle("has-url", !!refs.urlInput.value.trim());
+    });
     refs.urlInput.addEventListener("keydown", function (e) {
       if (e.key === "Enter") { e.preventDefault(); refs.titleInput.focus(); }
     });
@@ -1454,6 +1462,12 @@
     if (!root) return;
     refs.itemList.textContent = "";
     refs.emptyList.style.display = items.length ? "none" : "";
+    // 0件の間はURL入力→Saveの手順を目立たせる(.is-empty)。URL入力済みなら手順2を強調(.has-url)
+    var libSec = refs.emptyHint.closest(".qn-yt-sec-library");
+    if (libSec) {
+      libSec.classList.toggle("is-empty", !items.length);
+      libSec.classList.toggle("has-url", !!refs.urlInput.value.trim());
+    }
     refs.listCount.textContent = String(items.length);
     updatePanelTitle();
     var edit = editMode === "library";
@@ -2718,7 +2732,7 @@
     bindSpace(true);
     ensureTitles();
     syncIfStale();
-    var want = panelState || (isSp() ? "none" : "library");
+    var want = panelState || "library";   // v3.39.0: 初回はSPでもLibraryパネルを開く(閉じた後はその状態を保つ)
     setPanel(want);
     applyCollapse();
     renderMarkers();

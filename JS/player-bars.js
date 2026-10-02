@@ -6,6 +6,9 @@
 const QNBars = (function () {
   const OPTIONS = [5, 10, 15, 30, 60];
   const STORE_KEY = "qn_bar_sec";
+  const ROWS_KEY = "qn_bar_rows";
+  const ROWS_OPTIONS = [0, 3, 4, 5, 6, 8];   // 0=自動(CSSの既定寸法)。1画面に並べる本数
+  const GAP_RATIO = 28 / 44;
   const DEFAULT_SEC = 5;
   const BUFFER_ROWS = 2;
   const BAR_STEP_CSS = 1.5;
@@ -23,6 +26,7 @@ const QNBars = (function () {
   const rowsEl = document.getElementById("vbarRows");
 
   let sec = readSec();
+  let rowsVisible = readRows();
   let followOn = readFollow();
   let pauseSec = readPause();
   let dur = 0;
@@ -55,6 +59,14 @@ const QNBars = (function () {
       if (OPTIONS.indexOf(v) >= 0) return v;
     } catch (e) {}
     return DEFAULT_SEC;
+  }
+
+  function readRows() {
+    try {
+      const v = parseInt(localStorage.getItem(ROWS_KEY), 10);
+      if (ROWS_OPTIONS.indexOf(v) >= 0) return v;
+    } catch (e) {}
+    return 0;
   }
 
   function readFollow() {
@@ -95,6 +107,21 @@ const QNBars = (function () {
   // ---------- 寸法 ----------
   function measure() {
     if (!scrollEl || !scrollEl.clientWidth) { geomDirty = true; return false; }
+    // 本数指定: 画面の高さにN本ちょうど収まるよう、バー高と行間をカスタムプロパティで上書き(指定なしなら上書きを外してCSS既定へ)
+    if (rowsVisible > 0 && scrollEl.clientHeight > 0) {
+      const cs0 = getComputedStyle(containerEl);
+      const pt = parseFloat(cs0.getPropertyValue("--qn-bar-pad-top")) || 26;
+      const pb = parseFloat(cs0.getPropertyValue("--qn-bar-pad-bottom")) || 12;
+      const avail = scrollEl.clientHeight - pt - pb;
+      const n = rowsVisible;
+      const bh = Math.max(14, Math.floor(avail / (n + (n - 1) * GAP_RATIO)));
+      const gp = n > 1 ? Math.max(8, Math.floor((avail - n * bh) / (n - 1))) : 0;
+      containerEl.style.setProperty("--qn-bar-h", bh + "px");
+      containerEl.style.setProperty("--qn-bar-gap", gp + "px");
+    } else {
+      containerEl.style.removeProperty("--qn-bar-h");
+      containerEl.style.removeProperty("--qn-bar-gap");
+    }
     const cs = getComputedStyle(containerEl);
     const num = (name, def) => {
       const v = parseFloat(cs.getPropertyValue(name));
@@ -450,6 +477,18 @@ const QNBars = (function () {
   // ---------- 設定 ----------
   function getSec() { return sec; }
 
+  function getRows() { return rowsVisible; }
+
+  function setRows(n) {
+    if (ROWS_OPTIONS.indexOf(n) < 0 || n === rowsVisible) return;
+    rowsVisible = n;
+    try { localStorage.setItem(ROWS_KEY, String(n)); } catch (e) {}
+    geomDirty = true;
+    draw(true);
+    if (dur && scrollEl.clientHeight) scrollEl.scrollTop = Math.max(0, playheadScrollTarget(audio.currentTime || 0));
+    resumeFollow();
+  }
+
   function setSec(n) {
     if (OPTIONS.indexOf(n) < 0 || n === sec) return;
     sec = n;
@@ -555,6 +594,9 @@ const QNBars = (function () {
     OPTIONS,
     getSec,
     setSec,
+    ROWS_OPTIONS,
+    getRows,
+    setRows,
     sync: syncDur,
     draw,
     markGeomDirty() { geomDirty = true; },

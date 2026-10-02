@@ -1236,3 +1236,30 @@
 .qn-yt-pllist .playlistItem.qn-yt-pllistrow { grid-template-columns: auto 1fr auto; }
 .qn-yt-plicon { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; color: var(--icon-muted); }
 .qn-yt-plicon svg { width: 22px; height: 22px; fill: currentColor; }
+
+
+/* Libraryが0件の間の案内(v3.39.0): 手順1(URL貼り付け)→2(Save)。URL入力欄を脈動させ、入力済みなら手順2とSaveを強調 */
+.qn-yt-hint { display: none; margin: 0 0 12px; padding: 0; list-style: none; flex-direction: column; gap: 8px; }
+.qn-yt-sec-library.is-empty .qn-yt-hint { display: flex; }
+.qn-yt-hint li { display: flex; align-items: center; gap: 10px; font-size: var(--fs-body); color: var(--icon-muted); }
+.qn-yt-hint li b {
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #1c1c24; border: 1px solid var(--border-subtle);
+  font-size: var(--fs-small); font-weight: 700; color: var(--text-bright);
+}
+.qn-yt-sec-library.is-empty .qn-yt-hint-1 { color: var(--text-bright); }
+.qn-yt-sec-library.is-empty .qn-yt-hint-1 b { background: var(--accent-primary); border-color: var(--accent-primary); color: var(--text-pure-white); }
+.qn-yt-sec-library.is-empty.has-url .qn-yt-hint-1 { color: var(--icon-muted); }
+.qn-yt-sec-library.is-empty.has-url .qn-yt-hint-1 b { background: #1c1c24; border-color: var(--border-subtle); color: var(--text-bright); }
+.qn-yt-sec-library.is-empty.has-url .qn-yt-hint-2 { color: var(--text-bright); }
+.qn-yt-sec-library.is-empty.has-url .qn-yt-hint-2 b { background: var(--accent-primary); border-color: var(--accent-primary); color: var(--text-pure-white); }
+@keyframes qn-yt-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-primary) 0%, transparent); }
+  50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-primary) 35%, transparent); }
+}
+.qn-yt-sec-library.is-empty:not(.has-url) .qn-yt-input[data-yt="urlInput"]:not(:focus) { border-color: var(--accent-primary); animation: qn-yt-pulse 1.8s ease-in-out infinite; }
+.qn-yt-sec-library.is-empty.has-url .qn-yt-btn.primary[data-yt="saveBtn"] { animation: qn-yt-pulse 1.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .qn-yt-sec-library.is-empty .qn-yt-input[data-yt="urlInput"], .qn-yt-sec-library.is-empty .qn-yt-btn.primary[data-yt="saveBtn"] { animation: none !important; }
+}

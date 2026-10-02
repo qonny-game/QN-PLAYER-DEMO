@@ -940,6 +940,10 @@
     rBar.querySelector(".qn-set-ctl").appendChild(settingsSeg("bar", QNBars.OPTIONS, v => v + "s"));
     sec1.appendChild(rBar);
 
+    const rRows = settingsRow("Bars on screen", "Rows shown at once");
+    rRows.querySelector(".qn-set-ctl").appendChild(settingsSeg("rows", QNBars.ROWS_OPTIONS, v => v === 0 ? "Auto" : String(v)));
+    sec1.appendChild(rRows);
+
     const rFollow = settingsRow("Follow playhead", "Auto-scroll while playing");
     const sw = el('<button type="button" class="qn-set-switch" id="qnSetFollowSwitch" role="switch" aria-checked="true"><span></span></button>');
     rFollow.querySelector(".qn-set-ctl").appendChild(sw);
@@ -995,7 +999,8 @@
           syncSettingsBody();
           return;
         }
-        if (seg.dataset.kind === "skip") setSkipSec(v);
+        if (seg.dataset.kind === "rows") QNBars.setRows(v);
+        else if (seg.dataset.kind === "skip") setSkipSec(v);
         else if (seg.dataset.kind === "bar") QNBars.setSec(v);
         else if (seg.dataset.kind === "speed" && typeof setSpeedStepPct === "function") setSpeedStepPct(v);
         syncSettingsBody();
@@ -1023,7 +1028,7 @@
     const curSpeed = (typeof getSpeedStepPct === "function") ? getSpeedStepPct() : 5;
     settingsBody.querySelectorAll(".qn-set-seg").forEach(seg => {
       const kind = seg.dataset.kind;
-      const cur = kind === "bar" ? QNBars.getSec() : kind === "skip" ? skipSec : kind === "scope" ? (typeof getAutoNextScope === "function" ? getAutoNextScope() : "folder") : curSpeed;
+      const cur = kind === "bar" ? QNBars.getSec() : kind === "rows" ? QNBars.getRows() : kind === "skip" ? skipSec : kind === "scope" ? (typeof getAutoNextScope === "function" ? getAutoNextScope() : "folder") : curSpeed;
       seg.querySelectorAll(".qn-set-seg-btn").forEach(b => {
         const on = (kind === "scope" ? b.dataset.v : parseInt(b.dataset.v, 10)) === cur;
         b.classList.toggle("is-on", on);
