@@ -386,3 +386,7 @@
 .pinItem button.qn-ab-block:hover { background: #2f3a52; filter: brightness(1.15); }
 .pinItem button.qn-ab-block.active-a:hover { background: var(--accent-primary); }
 .pinItem button.qn-ab-block.active-b:hover { background: #b45309; }
+
+/* Skipボタン(v3.46.0): マーカー一覧のA/Bと同じ角ブロック。ON=アンバー */
+.pinItem button.qn-ab-block.qn-skip-block.is-skip, .qn-skip-block.is-skip { background: #6b4e16; color: #fff; }
+.pinItem button.qn-ab-block.qn-skip-block.is-skip:hover { background: #6b4e16; }

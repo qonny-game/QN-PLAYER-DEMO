@@ -43,3 +43,6 @@
 - 3.43.0 設定パネルのデザイン統一。複数選択肢の項目(バー長/本数/追従停止秒/プリロード/スキップ秒/Library範囲/速度刻み)は全て「‹ 値 ›」の同一部品`.qn-stepper`に統一(端で矢印が薄くなる)。ルール: 行高56px・操作部高40px・枠1px・背景#1c1c24・角丸0(ON/OFFスイッチのみピル)・階層に入る行は右に›。項目の定義は`SETTING_DEFS`(player-ui-pc-v2.js)に集約。`#loopPreRollControl`のマークアップを`.qn-stepper`系に変更し、旧`.loop-preroll-*`のCSSを削除。
 - 3.44.0 設定UIを共通化。部品=JS/qn-settings-ui.js(QNSettingsUI.build/list/backButton)、CSS=CSS/style-settings.css(style-bars.cssから移動)。PLAYER設定とアプリのSettingsが同じ部品で、アプリは`register({settings})`で固有の行を足す。YouTubeはSkip buttons(5/10/15/30/60、qn_yt_skip_sec)とLoop pre/post-rollを設定へ移設(バー内のプリロール撤去、J/Lも同秒数)。MOREの下層から戻るとスクロール位置を復元。PITCH/TUNERは固有設定なし(Moreのみ)。
 - 3.45.0 SPの操作性改善。下部にメインドック(#pcV2SpDock: 前マーカー/Loop/再生/+Marker/次マーカー/More)を新設、既存の下段バーはMoreで開閉(既定は閉)。波形に長押し=マーカー追加・横スワイプ=スクラブ・再生中ダブルタップ=その位置で停止。シークバーのポップアップにLoop(その区間をSectionループ)を追加。SPでは波形右下のMARKER/再生FABを非表示。
+- 3.46.0 マーカーのスキップ機能(PLAYER)。マーカーに skip を付けると、そのマーカーから次のマーカーまでを再生中に飛ばす(例: 1-2-3(skip)-4 → 3の区間を飛ばして4から続く)。ポップアップの「Skip」/マーカー一覧の「S」で切替、波形は斜線表示、前後マーカー移動もskipマーカーを飛ばす。ループ中・タップで直接入った区間は対象外。バックアップ/同期にも含む。
+- 3.46.1 波形ポップアップのLoopをトグル化(Sectionループ中は「Loop ON」表示で、押すとOFF)。
+- 3.47.0 SPのアイコンバー刷新。アプリ切替をヘッダー左の#qnAppSwitchBtnに移し(PC幅は従来の#qnAppBadge)、アイコンバーは横スクロールなしの等分(Seekbar/Library/Markers/Text/Control/Settings)、ラベルは選択中のタブだけ表示。SPヘッダーのバージョン表記は省き、設定の最下段に「QNPLAYER vX」を表示。

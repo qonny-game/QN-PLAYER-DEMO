@@ -398,3 +398,49 @@ body.qn-mic-on #qnAppBadge::after {
 /* マーカー行・再生中の曲の左端をパネルタイトル(左20px)に揃える */
 #pinList .pinItem, .qn-yt-pinbox .pinItem { padding-left: 20px; }
 #markersNowPlaying .playlistItem.is-nowplaying { padding-left: 20px; }
+
+/* ---------- SPのアプリ切替・アイコンバー(v3.47.0) ----------
+   アプリ切替=ヘッダー左の#qnAppSwitchBtn(アクセント色の角ボタン。PC幅は非表示で従来の#qnAppBadge)。
+   アイコンバーは横スクロールなしの等分(Seekbar/Library/Markers/Text/Control/Settings)。ラベルは選択中のタブだけ表示。 */
+#qnAppSwitchBtn { display: none; }
+@media screen and (max-width: 900px) {
+  #qnAppSwitchBtn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    margin-right: -4px;
+    background: var(--accent-primary);
+    color: var(--sidebar-on-accent, #fff);
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #qnAppSwitchBtn .qn-switch-ico { width: 22px; height: 22px; fill: currentColor; }
+  #qnAppSwitchBtn .qn-switch-chev { position: absolute; right: 1px; bottom: 1px; width: 12px; height: 12px; fill: currentColor; opacity: 0.9; transform: rotate(90deg); transition: transform 120ms ease; }
+  #qnAppSwitchBtn.qn-badge-open .qn-switch-chev { transform: rotate(-90deg); }
+  #qnAppSwitchBtn:active { background: var(--accent-hover-1); }
+  body.qn-mic-on #qnAppSwitchBtn::after {
+    content: "";
+    position: absolute;
+    left: 3px;
+    top: 3px;
+    width: 9px;
+    height: 9px;
+    border-radius: var(--radius-round);
+    background: var(--danger);
+    box-shadow: 0 0 0 2px var(--accent-primary);
+  }
+
+  #pcV2IconBar #qnAppBadge { display: none; }
+  #pcV2IconBar { overflow-x: hidden; gap: 0; padding-left: 4px; padding-right: 4px; }
+  #pcV2IconBar > .pcv2-icon-item { flex: 1 1 0; min-width: 0; padding: 12px 2px; justify-content: center; }
+  #pcV2IconBarBottom { flex: 1 1 0; min-width: 0; margin-left: 0; padding-left: 0; border-left: none; gap: 0; }
+  #pcV2IconBarBottom > .pcv2-icon-item { flex: 1 1 0; min-width: 0; padding: 12px 2px; justify-content: center; }
+  #pcV2IconBar .pcv2-icon-item:not(.active):not(.qn-app-active) > span { display: none; }
+}

@@ -562,6 +562,29 @@ function updateBars() {
     }
   }
 
+  // 【v3.46.0】スキップ区間: 再生が自然にスキップ開始マーカーを跨いだ時だけ、次の(スキップでない)マーカーへ飛ぶ。ループ中・シーク中・ジャンプ中は対象外(ユーザーがタップして入った区間はそのまま再生される)
+  if (!loopEnabled && !isSeeking && !isJumping && !audio.paused && typeof getSkipRanges === "function") {
+    const cur = audio.currentTime;
+    if (cur > prevTime && cur - prevTime < 0.5) {
+      const ranges = getSkipRanges();
+      let target = -1;
+      for (let k = 0; k < ranges.length; k++) {
+        if (prevTime < ranges[k].start && cur >= ranges[k].start && cur < ranges[k].end) { target = ranges[k].end; break; }
+      }
+      if (target >= 0) {
+        // 連続するスキップ区間(終点が次のスキップの始点)は続けて飛ぶ
+        let moved = true;
+        while (moved) { moved = false; for (let k = 0; k < ranges.length; k++) if (Math.abs(ranges[k].start - target) < 0.001) { target = ranges[k].end; moved = true; } }
+        audio.currentTime = target;
+        prevTime = target;
+        isJumping = true;
+        renderSegments();
+        setTimeout(() => { isJumping = false; }, 200);
+        return;
+      }
+    }
+  }
+
   prevTime = audio.currentTime;
 }
 

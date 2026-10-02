@@ -13,7 +13,7 @@
 
   var apps = [];
   var current = null;
-  var iconBar = null, host = null, badgeBtn = null, flyout = null, scrim = null, flyoutOpen = false, flyoutHideTimer = null, flyoutTimer = null, toastEl = null, toastTimer = null;
+  var iconBar = null, host = null, badgeBtn = null, switchBtn = null, flyout = null, scrim = null, flyoutOpen = false, flyoutHideTimer = null, flyoutTimer = null, toastEl = null, toastTimer = null;
   var views = {};
   var mounted = {};
   var resizeObs = null;
@@ -130,6 +130,7 @@
       badgeBtn.classList.add("qn-badge-open");
       badgeBtn.setAttribute("aria-expanded", "true");
     }
+    if (switchBtn) { switchBtn.classList.add("qn-badge-open"); switchBtn.setAttribute("aria-expanded", "true"); }
   }
 
   function closeFlyout() {
@@ -142,6 +143,7 @@
       badgeBtn.classList.remove("qn-badge-open");
       badgeBtn.setAttribute("aria-expanded", "false");
     }
+    if (switchBtn) { switchBtn.classList.remove("qn-badge-open"); switchBtn.setAttribute("aria-expanded", "false"); }
     if (flyoutHideTimer) clearTimeout(flyoutHideTimer);
     flyoutHideTimer = setTimeout(function () {
       flyoutHideTimer = null;
@@ -218,6 +220,22 @@
       }
     });
     iconBar.insertBefore(badgeBtn, iconBar.firstChild);
+
+    // 【v3.47.0】SP: アプリ切替はヘッダー左のボタン(#qnAppSwitchBtn)から。SPでは#qnAppBadgeをCSSで隠す(DOMと挙動は残す=PC幅用)。開くフライアウトは共通
+    var hdr = $("appHeader"), logo = $("appLogo");
+    if (hdr && !$("qnAppSwitchBtn")) {
+      switchBtn = document.createElement("button");
+      switchBtn.type = "button";
+      switchBtn.id = "qnAppSwitchBtn";
+      switchBtn.setAttribute("aria-haspopup", "menu");
+      switchBtn.setAttribute("aria-expanded", "false");
+      switchBtn.innerHTML = '<svg class="qn-switch-ico" viewBox="0 0 24 24" aria-hidden="true"></svg><svg class="qn-switch-chev" viewBox="0 0 24 24" aria-hidden="true">' + CHEVRON_ICON + '</svg>';
+      switchBtn.addEventListener("click", function () {
+        haptic();
+        if (flyoutOpen) closeFlyout(); else openFlyout();
+      });
+      hdr.insertBefore(switchBtn, logo || hdr.firstChild);
+    }
   }
 
   function updateBadge() {
@@ -227,6 +245,10 @@
     badgeBtn.querySelector("svg").innerHTML = app.icon;
     badgeBtn.querySelector("span").textContent = app.label.toUpperCase();
     badgeBtn.title = app.label + " — switch app";
+    if (switchBtn) {
+      switchBtn.querySelector(".qn-switch-ico").innerHTML = app.icon;
+      switchBtn.title = app.label + " — switch app";
+    }
   }
 
   function refreshSidebar() {
@@ -465,6 +487,7 @@
         if (id === "transfer") { if (window.QNP2P) window.QNP2P.open(); return; }
         showSetView(id);
       }));
+      host.appendChild(QNSettingsUI.versionLine());
       body.appendChild(host);
     } else if (name === "color") {
       var sec = findColorSection();
@@ -530,7 +553,7 @@
     document.addEventListener("pointerdown", function (e) {
       if (!flyout || !flyoutOpen) return;
       var t = e.target;
-      if (t && t.closest && (t.closest("#qnAppFlyout") || t.closest("#qnAppBadge"))) return;
+      if (t && t.closest && (t.closest("#qnAppFlyout") || t.closest("#qnAppBadge") || t.closest("#qnAppSwitchBtn"))) return;
       closeFlyout();
     }, true);
     document.addEventListener("keydown", function (e) {

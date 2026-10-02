@@ -90,7 +90,7 @@
       ti: t.title || "", ar: t.artist || "", en: t.enabled !== false, fv: !!t.favorite,
       fo: typeof trackFolderId === "function" ? trackFolderId(t) : (t.folder || null),
       pn: Array.isArray(pins) ? pins.map(function (p) {
-        return typeof p === "number" ? { t: p, e: 1, m: "", c: "" } : (p && typeof p === "object" ? { t: p.t, e: p.enabled === false ? 0 : 1, m: p.memo || "", c: p.color || "" } : null);
+        return typeof p === "number" ? { t: p, e: 1, m: "", c: "" } : (p && typeof p === "object" ? { t: p.t, e: p.enabled === false ? 0 : 1, m: p.memo || "", c: p.color || "", k: p.skip ? 1 : 0 } : null);
       }).filter(Boolean) : [],
       ab: ab && typeof ab === "object" ? { a: ab.a, b: ab.b } : null,
       tx: tx
@@ -281,7 +281,7 @@
     }
     var hasPins = localStorage.getItem("mp3_pins_" + name) !== null;
     if (st.pn.length || hasPins) {
-      origSetItem.call(localStorage, "mp3_pins_" + name, JSON.stringify(st.pn.map(function (p) { return { t: p.t, enabled: p.e !== 0, memo: p.m, color: p.c || null }; })));
+      origSetItem.call(localStorage, "mp3_pins_" + name, JSON.stringify(st.pn.map(function (p) { return { t: p.t, enabled: p.e !== 0, memo: p.m, color: p.c || null, skip: p.k ? true : undefined }; })));
     }
     if (st.ab || localStorage.getItem("mp3_ab_" + name) !== null) {
       origSetItem.call(localStorage, "mp3_ab_" + name, JSON.stringify({ a: st.ab ? st.ab.a : null, b: st.ab ? st.ab.b : null }));

@@ -138,3 +138,7 @@
 .qn-stepper-unit { font-size: inherit; font-weight: inherit; }
 .qn-set-row { min-height: 56px; padding: 8px 0; }
 .qn-set-list-item { min-height: 56px; padding-top: 0; padding-bottom: 0; }
+.qn-set-version { padding: 16px 0 8px; font-size: var(--fs-micro); color: var(--icon-muted); letter-spacing: 0.4px; }
+@media screen and (max-width: 900px) {
+  body.pc-v2-active #appHeader #appVersion { display: none; }
+}

@@ -109,5 +109,12 @@ window.QNSettingsUI = (function () {
     return back;
   }
 
-  return { build: build, list: list, backButton: backButton, LABELS: LABELS, ICONS: ICONS };
+  // 設定の最下段に出すバージョン表記(SPではヘッダーのバージョンを省くため、ここで確認できる)
+  function versionLine() {
+    var d = make('<div class="qn-set-version"></div>');
+    d.textContent = "QNPLAYER v" + (window.QN_APP_VERSION || "");
+    return d;
+  }
+
+  return { versionLine: versionLine, build: build, list: list, backButton: backButton, LABELS: LABELS, ICONS: ICONS };
 })();

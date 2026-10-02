@@ -36,3 +36,7 @@ grep -o 'id="[a-zA-Z0-9]*"' JS/player-ui-pc-v2.js | sed 's/id="//;s/"//' | sort 
 - v3.44.0: 設定UIの共通部品は`JS/qn-settings-ui.js`、CSSは`CSS/style-settings.css`。YouTubeのバー内プリロール(`.qn-yt-preroll`/preDown/preUp/preVal)は撤去、設定の行へ移動。
 
 - v3.45.0: SPメインドック`#pcV2SpDock`(`#pcV2DockPrevMarker` `#pcV2DockLoop` `#pcV2DockPlay` `#pcV2DockAdd` `#pcV2DockNextMarker` `#pcV2DockMore`)。PC幅は非表示。ポップアップ`.qn-pl-seekpop`に`[data-pop="L"]`(Loop)。
+
+- v3.46.0: マーカー一覧に`.qn-skip-block`(S)、波形に`.segmentSkip`(斜線)、マーカー線`.vbar-line.is-skip`、ポップアップ`[data-pop="K"]`(Skip)。
+
+- v3.47.0: ヘッダー`#qnAppSwitchBtn`(SPのアプリ切替。中に`.qn-switch-ico`/`.qn-switch-chev`)。設定の最下段`.qn-set-version`。

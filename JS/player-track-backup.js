@@ -367,7 +367,8 @@ async function runTrackBackup() {
             time: p.t,
             enabled: p.enabled !== false,
             color: p.color || null,
-            memo: p.memo || ""
+            memo: p.memo || "",
+            skip: p.skip ? true : undefined
           }));
           const storedAB = loadStoredABFor(track.name);
           trackData.abA = storedAB.a;
@@ -918,7 +919,8 @@ function applyImportedMarkersAndText(name, trackData) {
       t: typeof m.time === "number" ? m.time : 0,
       enabled: m.enabled !== false,
       memo: m.memo || "",
-      color: m.color || null
+      color: m.color || null,
+      skip: m.skip ? true : undefined
     }));
     try {
       localStorage.setItem("mp3_pins_" + name, JSON.stringify(pinsToSave));

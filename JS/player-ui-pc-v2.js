@@ -1030,6 +1030,7 @@
     const tr = more.querySelector('[data-panel-id="transfer"]');
     if (tr && !(window.QNLibSync && window.QNLibSync.isActive())) tr.style.display = "none";
     body.appendChild(more);
+    body.appendChild(QNSettingsUI.versionLine());
     settingsBody = body;
     return body;
   }

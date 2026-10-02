@@ -1069,3 +1069,18 @@ input[type="text"], input[type="number"], textarea {
   }
 }
 
+
+/* スキップ区間(v3.46.0): 斜線。クリックは通す。マーカー線は破線で示す */
+.segmentSkip {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: repeating-linear-gradient(135deg, rgba(0, 0, 0, 0.55) 0 4px, rgba(255, 255, 255, 0.07) 4px 8px);
+  border-top: 1px dashed #6b6b7b;
+  border-bottom: 1px dashed #6b6b7b;
+  pointer-events: none;
+  z-index: 1;
+}
+#pcV2WaveArea .vbar-line.is-skip::before {
+  background: repeating-linear-gradient(to bottom, var(--marker-color, var(--accent-primary)) 0 4px, transparent 4px 7px);
+}

@@ -99,3 +99,12 @@
 - `#pcV2SpDock`は既存ボタン(`#playToggle` `#loopToggleBtn` `#addPinBtn` `#prevMarkerBtn` `#nextMarkerBtn`)への中継とミラーだけ。ハンドラやidは既存側に残す。ドックは既存ボタンがdocumentに接続された後(`buildSpDock()`はroot挿入後)に作ること。
 - 下段バー(`#pcV2BottomBar`)は`#pcV2Root.qn-sp-more-open`の時だけ表示(SP)。パネル高さ変数`--pcv2-bottom-bars-height`にはドックの高さも含める。アプリ表示中は`body.qn-app-open`でドックも非表示。
 - 波形ジェスチャー(player-ui-shared.js)は`#vbarRows`で受ける。`touch-action: pan-y`(SPのCSS)が前提。マーカー線・A/B旗の上から始めた操作は対象外。長押し/スクラブ直後のclickは`suppressUntil`で無効化。ダブルタップ停止は再生中のみ。
+
+## マーカーのスキップ(v3.46.0)
+- `pins[i].skip=true` = そのマーカーから次の有効マーカーまでを飛ばす区間(`getSkipRanges()`)。再生側は`updateBars()`末尾で「自然に開始点を跨いだ時だけ」次へ飛ぶ(`prevTime<start<=currentTime`、差0.5秒未満)。シーク/ジャンプ中・ループ中は発火しない=ユーザーがタップして入った区間はそのまま再生。
+- skipは`savePins`(localStorage)/トラックバックアップ(`skip`)/同期(`k`)に含める。新しいマーカー項目を足す時はこの3箇所とplayer-sync.jsの復元側を揃える。YouTubeアプリのマーカーは未対応。
+
+## SPのアイコンバーとアプリ切替(v3.47.0)
+- SPでは`#qnAppBadge`をCSSで隠し、ヘッダーの`#qnAppSwitchBtn`が同じフライアウトを開く(DOMは両方残す。PC幅は`#qnAppBadge`)。フライアウトの位置はアイコンバー基準なのでバッジが非表示でも崩れない。外側タップ判定の除外に`#qnAppSwitchBtn`を含めること。
+- SPのアイコンバーは`overflow-x:hidden`+各タブ`flex:1 1 0`。ラベル(span)は`.active`/`.qn-app-active`以外を非表示。タブを増やす時は幅(6〜7個まで)を確認。
+- SPヘッダーのバージョン表記(`#appVersion`)はCSSで非表示。確認は設定の最下段(`QNSettingsUI.versionLine()`)。

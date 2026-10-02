@@ -43,7 +43,7 @@ function getMarkerNavReferenceTime() {
 function jumpToNextMarker() {
   const activePins = pins
     .map((p, i) => ({ p, i }))
-    .filter(({ p, i }) => p.enabled && !(typeof isUnlocked === "function" && !isUnlocked() && i >= SW_LIMITS.MARKER_MAX_ACTIVE))
+    .filter(({ p, i }) => p.enabled && !p.skip && !(typeof isUnlocked === "function" && !isUnlocked() && i >= SW_LIMITS.MARKER_MAX_ACTIVE))
     .map(({ p }) => p);
   if (activePins.length === 0) return;
   hapticTap();
@@ -64,7 +64,7 @@ function jumpToNextMarker() {
 function jumpToPrevMarker() {
   const activePins = pins
     .map((p, i) => ({ p, i }))
-    .filter(({ p, i }) => p.enabled && !(typeof isUnlocked === "function" && !isUnlocked() && i >= SW_LIMITS.MARKER_MAX_ACTIVE))
+    .filter(({ p, i }) => p.enabled && !p.skip && !(typeof isUnlocked === "function" && !isUnlocked() && i >= SW_LIMITS.MARKER_MAX_ACTIVE))
     .map(({ p }) => p);
   if (activePins.length === 0) return;
   hapticTap();
@@ -102,6 +102,7 @@ function createPinLine(pinObj, i) {
   if (!pinObj.enabled) {
     line.classList.add("disabled");
   }
+  if (pinObj.skip) line.classList.add("is-skip");
   const isLockedMarker = typeof isUnlocked === "function" && !isUnlocked() && i >= SW_LIMITS.MARKER_MAX_ACTIVE;
   if (isLockedMarker) {
     line.classList.add("sw-locked");
@@ -247,38 +248,57 @@ function paintSegmentsOnRow(rowEl, row) {
   });
 }
 
+// 【v3.46.0】スキップ区間: 有効なマーカーのうち skip=true のものから、次の有効マーカーまで(次が無ければ対象外)。再生は自然にその開始点を跨いだ時に次のマーカーへ飛ぶ(updateBars)
+function getSkipRanges() {
+  const act = pins.filter(p => p.enabled);
+  const out = [];
+  for (let i = 0; i < act.length - 1; i++) if (act[i].skip) out.push({ start: act[i].t, end: act[i + 1].t });
+  return out;
+}
+
+function toggleSkipPin(pinObj) {
+  if (!pinObj) return;
+  pinObj.skip = !pinObj.skip;
+  if (!pinObj.skip) delete pinObj.skip;
+  loopActiveMarkerIndex = null;
+  renderPins();
+  renderSegments();
+  renderPinList();
+  savePins();
+}
+
 function renderSegments(overrideSegment) {
   const dur = audio.duration;
   if (!dur) return;
 
   QNBars.eachRow(rowEl => {
-    rowEl.querySelectorAll(".segmentHighlight, .segmentHighlight-preroll").forEach(s => s.remove());
+    rowEl.querySelectorAll(".segmentHighlight, .segmentHighlight-preroll, .segmentSkip").forEach(s => s.remove());
   });
   segSpec = null;
 
-  if (!loopEnabled) return;
+  // スキップ区間(マーカーの skip=true → 次のマーカーまで)。ループ状態に関係なく常に斜線で表示(クリック不可)
+  const skipSpec = typeof getSkipRanges === "function" ? getSkipRanges().map(r => ({ start: r.start, end: r.end, className: "segmentSkip" })) : [];
 
-  const active = overrideSegment || getActiveSegment();
-  if (!active) return;
+  const spec = skipSpec.slice();
+  const active = loopEnabled ? (overrideSegment || getActiveSegment()) : null;
+  if (active) {
+    const colorHex = active.color && MARKER_COLOR_PALETTE[active.color] ? MARKER_COLOR_PALETTE[active.color] : null;
+    spec.push({ start: active.start, end: active.end, className: "segmentHighlight", colorHex: colorHex, onClickSeek: active.start, colorKey: active.color });
 
-  const colorHex = active.color && MARKER_COLOR_PALETTE[active.color] ? MARKER_COLOR_PALETTE[active.color] : null;
-
-  const spec = [
-    { start: active.start, end: active.end, className: "segmentHighlight", colorHex: colorHex, onClickSeek: active.start, colorKey: active.color }
-  ];
-
-  // プリロール/ポストロール(薄い破線)。ステッパー0なら描画しない
-  const preroll = typeof loopPreRollSeconds === "number" ? loopPreRollSeconds : 0;
-  if (preroll > 0) {
-    const prerollStart = Math.max(0, active.start - preroll);
-    const postrollEnd = Math.min(dur, active.end + preroll);
-    if (prerollStart < active.start) {
-      spec.push({ start: prerollStart, end: active.start, className: "segmentHighlight-preroll", colorHex: colorHex });
-    }
-    if (active.end < postrollEnd) {
-      spec.push({ start: active.end, end: postrollEnd, className: "segmentHighlight-preroll", colorHex: colorHex });
+    // プリロール/ポストロール(薄い破線)。ステッパー0なら描画しない
+    const preroll = typeof loopPreRollSeconds === "number" ? loopPreRollSeconds : 0;
+    if (preroll > 0) {
+      const prerollStart = Math.max(0, active.start - preroll);
+      const postrollEnd = Math.min(dur, active.end + preroll);
+      if (prerollStart < active.start) {
+        spec.push({ start: prerollStart, end: active.start, className: "segmentHighlight-preroll", colorHex: colorHex });
+      }
+      if (active.end < postrollEnd) {
+        spec.push({ start: active.end, end: postrollEnd, className: "segmentHighlight-preroll", colorHex: colorHex });
+      }
     }
   }
+  if (!spec.length) return;
 
   segSpec = spec;
   QNBars.eachRow((rowEl, row) => paintSegmentsOnRow(rowEl, row));
@@ -511,6 +531,22 @@ function renderPinList() {
       };
       abCell.appendChild(b);
     });
+    // Skip: この区間(次のマーカーまで)を再生中に飛ばす。トグル
+    const skipBtn = document.createElement("button");
+    skipBtn.type = "button";
+    skipBtn.className = "qn-ab-block qn-skip-block" + (pinObj.skip ? " is-skip" : "");
+    skipBtn.textContent = "S";
+    skipBtn.title = pinObj.skip ? "Skip ON: 次のマーカーまで飛ばして再生" : "Skip OFF: 押すとこの区間(次のマーカーまで)を飛ばして再生";
+    skipBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (isLockedMarker) {
+        swShowUnlockToast(`無料版はマーカーの先頭${SW_LIMITS.MARKER_MAX_ACTIVE}個までしか使用できません。`);
+        return;
+      }
+      hapticTap();
+      toggleSkipPin(pinObj);
+    };
+    abCell.appendChild(skipBtn);
     labelRow.appendChild(abCell);
     updatePinABButtons(div);
 
@@ -607,6 +643,7 @@ function ensurePinPopup() {
       '<button type="button" class="qn-yt-seekpop-btn qn-yt-seekpop-del" data-pop="X" title="このA/B点を削除" hidden><b>－</b><span>Point</span></button>' +
       '<button type="button" class="qn-yt-seekpop-btn qn-yt-seekpop-del" data-pop="D" title="このマーカーを削除" hidden><b>－</b><span>Marker</span></button>' +
       '<button type="button" class="qn-yt-seekpop-btn" data-pop="C" title="マーカーの色を変える" hidden><b><i class="qn-yt-seekpop-dot"></i></b><span>Color</span></button>' +
+      '<button type="button" class="qn-yt-seekpop-btn" data-pop="K" title="このマーカーから次のマーカーまでを再生中に飛ばす" hidden><b><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></b><span>Skip</span></button>' +
       '<button type="button" class="qn-yt-seekpop-btn" data-pop="H" title="マーカーのON/OFF" hidden><b></b><span>Hide</span></button>' +
     '</div>';
   document.body.appendChild(pinPopEl);
@@ -623,6 +660,7 @@ function ensurePinPopup() {
     else if (k === "D") pinPopDelete();
     else if (k === "C") pinPopColor();
     else if (k === "H") pinPopToggle();
+    else if (k === "K") pinPopSkip();
   });
   document.addEventListener("pointerdown", e => {
     if (pinPopEl.hidden) return;
@@ -668,7 +706,10 @@ function showPinPopup(t, barEl, clientX, pinObj, abKind) {
   pop.querySelector('[data-pop="B"]').hidden = !!abKind;
   pop.querySelector('[data-pop="M"]').hidden = !!pinObj || !!abKind;
   pop.querySelector('[data-pop="L"]').hidden = !!abKind;
-  ["D", "C", "H"].forEach(k => { pop.querySelector(`[data-pop="${k}"]`).hidden = !pinObj; });
+  const loopOn = loopEnabled && loopMode === "sec";
+  pop.querySelector('[data-pop="L"]').classList.toggle("is-set", loopOn);
+  pop.querySelector('[data-pop="L"] span').textContent = loopOn ? "Loop ON" : "Loop";
+  ["D", "C", "H", "K"].forEach(k => { pop.querySelector(`[data-pop="${k}"]`).hidden = !pinObj; });
   pop.querySelector('[data-pop="A"]').classList.toggle("is-set", abA !== null && Math.abs(abA - pinPopTime) <= AB_SNAP_SEC);
   pop.querySelector('[data-pop="B"]').classList.toggle("is-set", abB !== null && Math.abs(abB - pinPopTime) <= AB_SNAP_SEC);
   if (pinObj) {
@@ -677,6 +718,9 @@ function showPinPopup(t, barEl, clientX, pinObj, abKind) {
     const hb = pop.querySelector('[data-pop="H"]');
     hb.querySelector("b").innerHTML = pinObj.enabled ? PINPOP_EYE_ON : PINPOP_EYE_OFF;
     hb.querySelector("span").textContent = pinObj.enabled ? "Hide" : "Show";
+    const kb = pop.querySelector('[data-pop="K"]');
+    kb.classList.toggle("is-set", !!pinObj.skip);
+    kb.querySelector("span").textContent = pinObj.skip ? "Skip ON" : "Skip";
   }
   pop.hidden = false;
   const rect = barEl.getBoundingClientRect();
@@ -695,6 +739,12 @@ function showPinPopup(t, barEl, clientX, pinObj, abKind) {
 function pinPopLoop() {
   const t = pinPopTime;
   hidePinPopup();
+  // Sectionループ中に押したらOFF(位置はそのまま再生を続ける)
+  if (loopEnabled && loopMode === "sec") {
+    hapticTap();
+    if (typeof setLoopModeState === "function") setLoopModeState("off", true);
+    return;
+  }
   hapticSuccess();
   if (typeof setLoopModeState === "function") setLoopModeState("sec", true);
   beginSeek();
@@ -704,6 +754,14 @@ function pinPopLoop() {
   updatePlayButtonState();
   renderSegments(getActiveSegment(t));
   setTimeout(() => { isSeeking = false; }, 150);
+}
+
+function pinPopSkip() {
+  const pin = pinPopPin;
+  hidePinPopup();
+  if (!pin) return;
+  hapticTap();
+  toggleSkipPin(pin);
 }
 
 function pinPopAB(kind) {
