@@ -7,7 +7,7 @@
   text-align: center;
   background: #1c1c24;
   border: 1px solid var(--border-subtle);
-  border-radius: 14px;
+  border-radius: 0;
   cursor: pointer;
   color: var(--text-pure-white);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
@@ -84,7 +84,7 @@
   padding: 4px;
   background: #1c1c24;
   border: 1px solid var(--border-subtle);
-  border-radius: 12px;
+  border-radius: 0;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   flex-shrink: 0;
 }
@@ -96,7 +96,7 @@
   padding: 0;
   background: transparent;
   border: none;
-  border-radius: 7px;
+  border-radius: 0;
   color: var(--text-pure-white);
   font-size: 14px;
   line-height: 1;

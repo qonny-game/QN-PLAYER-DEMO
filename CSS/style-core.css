@@ -334,7 +334,7 @@ body {
   padding: 13px 6px;
   background: transparent;
   border: none;
-  border-radius: 10px;
+  border-radius: 0;
   color: var(--icon-muted);
   font-family: var(--font-display, 'Instrument Sans'), sans-serif;
   font-size: 11px;
@@ -473,11 +473,11 @@ body {
 }
 
 .tripleNavBtn-left {
-  border-radius: 14px 0 0 14px;
+  border-radius: 0;
 }
 
 .tripleNavBtn-right {
-  border-radius: 0 14px 14px 0;
+  border-radius: 0;
 }
 
 .tripleNavBtn-divider {
@@ -609,7 +609,7 @@ body {
   padding: 10px 18px;
   background: #1c1c24;
   border: 1px solid color-mix(in srgb, var(--accent-primary) 22%, var(--border-subtle));
-  border-radius: 14px;
+  border-radius: 0;
   cursor: pointer;
   color: var(--text-bright);
   font-family: var(--font-display, 'Instrument Sans'), sans-serif;
@@ -853,7 +853,7 @@ body {
   justify-content: center;
   background: #1a1a22;
   border: 1px solid var(--border-subtle);
-  border-radius: 6px;
+  border-radius: 0;
   color: var(--icon-muted);
   font-family: inherit;
   font-size: 15px;

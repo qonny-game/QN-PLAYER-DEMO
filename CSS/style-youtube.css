@@ -1059,7 +1059,7 @@
 }
 .vbar-ab-pt.is-b .vbar-ab-flag { transform: translateX(calc(-100% - 3px)); }
 #pcV2BottomBar .ab-set-btn.has-point { color: var(--accent-primary); }
-.qn-yt-seekpop-btn.is-set { background: color-mix(in srgb, var(--accent-primary) 20%, transparent); border-radius: 8px; }
+.qn-yt-seekpop-btn.is-set { background: color-mix(in srgb, var(--accent-primary) 20%, transparent); border-radius: 0; }
 
 /* ---------- ポップアップColor: ラベル入力+プリセット+色(v3.9.0・PLAYER/YouTube共通) ---------- */
 .qn-style-pop {

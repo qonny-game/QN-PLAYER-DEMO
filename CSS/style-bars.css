@@ -145,13 +145,13 @@
 .qn-set-label span { font-size: var(--fs-body); color: var(--text-bright); }
 .qn-set-label small { font-size: var(--fs-micro); color: var(--icon-muted); }
 .qn-set-ctl { display: flex; align-items: center; flex-shrink: 0; }
-.qn-set-seg { display: flex; padding: 3px; gap: 2px; background: #1c1c24; border: 1px solid var(--border-subtle); border-radius: 10px; }
+.qn-set-seg { display: flex; padding: 3px; gap: 2px; background: #1c1c24; border: 1px solid var(--border-subtle); border-radius: 0; }
 .qn-set-seg-btn {
   min-width: 36px;
   padding: 6px 8px;
   background: none;
   border: none;
-  border-radius: 7px;
+  border-radius: 0;
   color: var(--icon-muted);
   font-family: inherit;
   font-size: var(--fs-body);
@@ -184,14 +184,14 @@
 }
 .qn-set-switch.is-on { background: var(--accent-primary); border-color: var(--accent-primary); }
 .qn-set-switch.is-on span { transform: translateX(18px); }
-.qn-set-step { display: flex; align-items: center; padding: 3px; background: #1c1c24; border: 1px solid var(--border-subtle); border-radius: 10px; }
+.qn-set-step { display: flex; align-items: center; padding: 3px; background: #1c1c24; border: 1px solid var(--border-subtle); border-radius: 0; }
 .qn-set-step-btn {
   width: 32px;
   height: 30px;
   padding: 0;
   background: none;
   border: none;
-  border-radius: 7px;
+  border-radius: 0;
   color: var(--text-pure-white);
   font-size: 16px;
   cursor: pointer;
@@ -212,7 +212,7 @@
   padding: 12px 10px;
   background: #1c1c24;
   border: 1px solid var(--border-subtle);
-  border-radius: 10px;
+  border-radius: 0;
   color: var(--text-bright);
   font-family: inherit;
   font-size: var(--fs-body);
