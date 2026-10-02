@@ -38,3 +38,4 @@
 - 3.38.0 Libraryの「NEXT: FOLDER/ALL」ボタンを撤去し設定パネルへ移設(Library repeat range: Folder/All)。送り戻しボタンの秒数を設定で5/10/15/30/60に変更可(`qn_skip_sec`、既定10、ボタンのラベル/タイトルも連動)。Clear ABボタン撤去。波形エリア右下のMARKERの右に再生/停止ボタン(`#pcV2WaveFabPlayBtn`)を追加。多言語化の引き継ぎメモ `md/I18N_HANDOFF.md` 追加。
 - 3.39.0 シークバーの「1画面の本数」を設定で変更可(Bars on screen: Auto/3/4/5/6/8、`qn_bar_rows`、画面の高さにN本ちょうど収まるようバー高と行間を自動計算)。YouTubeアプリを開いた時、SP幅でも初回からLibraryパネルを開く(閉じた後はその状態を保つ)。YouTubeのLibraryが0件の間、URL貼り付け→Saveの2ステップ案内を表示しURL入力欄を強調(URL入力後はSaveを強調)。
 - 3.40.0 ボタンの角丸を整理。中途半端な角丸(6〜14px)のボタン/ボタン群(設定パネルの選択肢・ステッパー・Backup類、プリロード、Loop系、タブ、速度ステッパー、三連ボタンの端など)を四角(0)に変更。円・ピル型のボタンはそのまま。入力欄・ポップアップは対象外。
+- 3.41.0 設定の再編。アイコンバー最下段(PC=Colorの下、SP=バー右端)に「Settings」ボタンを追加(波形ヘッダーの歯車と同じ設定パネルを開く。SPは上下に設定アイコン)。波形ヘッダーの歯車はSP幅で大きく(40px)。Backup/Import/Color/Keyboardは設定パネル内の「More」リストから下層ビューとして開き、ヘッダーの戻るボタンで設定に戻る(下層表示中もアイコンバーはSettingsが点灯)。PLAYER表示中はアイコンバーのKeyboard/Colorを非表示(CSS)。YouTube等のアプリ表示中はqn-apps.jsがColorボタンを使うためDOMとして残す。

@@ -202,27 +202,50 @@
 .qn-set-step-val { min-width: 38px; text-align: center; font-size: var(--fs-body); color: var(--text-pure-white); font-variant-numeric: tabular-nums; }
 .qn-set-step-val b { font-weight: 700; }
 .qn-set-step-val i { font-style: normal; opacity: 0.7; margin-left: 1px; }
-.qn-set-data { display: flex; flex-wrap: wrap; gap: 10px; padding: 6px 0 10px; }
-.qn-set-data-btn {
-  flex: 1 1 96px;
+.qn-set-list { display: flex; flex-direction: column; padding: 2px 0 8px; }
+.qn-set-list-item {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 10px;
-  background: #1c1c24;
-  border: 1px solid var(--border-subtle);
+  gap: 12px;
+  width: 100%;
+  padding: 14px 4px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border-subtle);
   border-radius: 0;
   color: var(--text-bright);
   font-family: inherit;
   font-size: var(--fs-body);
+  text-align: left;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.qn-set-data-btn svg { width: 18px; height: 18px; fill: currentColor; }
-.qn-set-data-btn:active { transform: scale(0.97); }
+.qn-set-list-item:last-child { border-bottom: none; }
+.qn-set-list-item span { flex: 1; min-width: 0; }
+.qn-set-list-ico { width: 20px; height: 20px; fill: var(--icon-muted); flex-shrink: 0; }
+.qn-set-list-chev { width: 20px; height: 20px; fill: var(--icon-muted); flex-shrink: 0; }
+.qn-set-list-item:active { background: rgba(255, 255, 255, 0.04); }
+
+/* 設定の下層ビューのヘッダー戻るボタン */
+.pcv2-panel-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-right: 4px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-round);
+  color: var(--icon-muted);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.pcv2-panel-back svg { width: 24px; height: 24px; fill: currentColor; }
+.pcv2-panel-back:active { transform: scale(0.92); }
 @media (hover: hover) and (pointer: fine) {
-  .qn-set-seg-btn:hover:not(.is-on), .qn-set-step-btn:hover:not(:disabled), .qn-set-data-btn:hover { color: var(--accent-primary); }
+  .qn-set-seg-btn:hover:not(.is-on), .qn-set-step-btn:hover:not(:disabled), .qn-set-list-item:hover, .pcv2-panel-back:hover { color: var(--accent-primary); }
 }
 
 /* 波形エリア右下の再生/停止ボタン(MARKERの右。v3.38.0) */
@@ -232,3 +255,14 @@
 @media (max-width: 900px) {
   .panel-fab-play-btn { padding: 10px 12px; }
 }
+
+/* 波形ヘッダーの歯車: SP幅は大きく(タップしやすく) */
+@media screen and (max-width: 900px) {
+  .qn-bar-gear { width: 40px; height: 40px; margin-left: 4px; }
+  .qn-bar-gear svg { width: 26px; height: 26px; }
+}
+
+/* PLAYER表示中はアイコンバーのKeyboard/Colorを隠す(設定の下層ビューへ移設。アプリ表示中はqn-apps.jsがColorボタンを使うので残す) */
+#pcV2IconBar:not(.qn-app-sidebar) #pcV2IconBarBottom > .pcv2-icon-item[data-panel-id="keyboard"],
+#pcV2IconBar:not(.qn-app-sidebar) #pcV2IconBarBottom > .pcv2-icon-item[data-panel-id="color"] { display: none; }
+.pcv2-panel-back + .pcv2-panel-header-title { margin-right: auto; }

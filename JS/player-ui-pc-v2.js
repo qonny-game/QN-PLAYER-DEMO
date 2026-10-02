@@ -79,11 +79,12 @@
       icon: '<path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/>'
     },
     {
-      // 【v3.37.0】設定パネル(波形ヘッダーの歯車から開く。アイコンバーには出さない)。バー秒数/追従/プリロール/速度刻み/Backup・Import・Transferの入口
+      // 【v3.41.0】設定パネル。波形ヘッダーの歯車とアイコンバー最下段(Colorの下)の両方から開く。Backup/Import/Color/Keyboardはここの下層ビュー(戻るボタンで戻る)。アイコンバーのボタンはbottomGroup構築の末尾で明示的に作る
       id: "settings",
       label: "Settings",
+      hidden: true,
       panelType: "settings",
-      hidden: true
+      icon: '<path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>'
     }
   ];
 
@@ -157,6 +158,16 @@
       btn.addEventListener("click", () => openPanelOverlay(entry.id));
       bottomGroup.appendChild(btn);
     });
+    // 【v3.41.0】Settings(Colorの下=最下段)。PLAYER表示中はKeyboard/Colorボタンを隠す(CSS)ので実質ここだけが下段に残る。アプリ表示中はColorだけ残る(qn-apps.jsが使用)ので、Keyboard/ColorのDOMは消さない
+    const settingsItem = ICON_ITEMS.find(i => i.id === "settings");
+    const settingsIconBtn = el(
+      '<button type="button" class="pcv2-icon-item" data-panel-id="settings" title="Settings">' +
+        '<svg viewBox="0 0 24 24">' + settingsItem.icon + '</svg>' +
+        '<span>Settings</span>' +
+      '</button>'
+    );
+    settingsIconBtn.addEventListener("click", () => { if (typeof hapticTap === "function") hapticTap(); openSettingsPanel(); });
+    bottomGroup.appendChild(settingsIconBtn);
     iconBar.appendChild(spacer);
     iconBar.appendChild(bottomGroup);
 
@@ -412,7 +423,7 @@
     syncTimeRowPosition();
     // シークバー1本の秒数設定(歯車)。位置は常に右端(CSS order)。時刻行がSP⇔PCで出入りしても順序が崩れない
     waveHead.appendChild(QNBars.createGearButton());
-    QNBars.setOpenSettings(() => openPanelOverlay("settings"));
+    QNBars.setOpenSettings(() => openSettingsPanel());
     // 設定パネルの中身を先に作ってstashへ(プリロード操作要素を下部バーから外すため。let宣言より後に実行するrAF)
     requestAnimationFrame(() => { const sb = ensureSettingsBody(); if (!sb.parentNode) getPanelStash().appendChild(sb); });
     syncTimeRowPosition();
@@ -777,6 +788,24 @@
     }
   });
 
+  // 【v3.41.0】設定の下層ビュー(Backup/Import/Color/Keyboard)を開いている間true。ヘッダーに戻るボタンを出し、アイコンバーは「Settings」を点灯させる
+  let settingsSub = false;
+  function openSettingsPanel() {
+    if (settingsSub) { switchPanel("settings"); return; }
+    openPanelOverlay("settings");
+  }
+  function openSettingsSub(id) {
+    if (id === "transfer") { if (window.QNP2P) window.QNP2P.open(); return; }
+    settingsSub = true;
+    switchPanel(id, { fromSettings: true });
+  }
+  function addSettingsBackBtn(panelHeader) {
+    if (!settingsSub) return;
+    const back = el('<button type="button" class="pcv2-panel-back" title="Back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg></button>');
+    back.addEventListener("click", () => { if (typeof hapticTap === "function") hapticTap(); switchPanel("settings"); });
+    panelHeader.appendChild(back);
+  }
+
   // 閉じる時は下へスライドしてから非表示(.pcv2-panel-closing=アニメ中だけパネルを残す)。再度開く操作で中断できる
   let sheetCloseTimer = 0;
   function closePanelOverlay() {
@@ -790,6 +819,7 @@
     } else if (layoutEl) layoutEl.classList.remove("pcv2-panel-open", "pcv2-panel-closing");
 
     currentPanel = "seekbar";
+    settingsSub = false;
     document.querySelectorAll("#pcV2IconBar .pcv2-icon-item").forEach(btn => {
       btn.classList.toggle("active", btn.getAttribute("data-panel-id") === "seekbar");
     });
@@ -797,6 +827,7 @@
 
   window.qnPcv2DismissAuxPanel = function () {
     if (currentPanel !== "backup" && currentPanel !== "import") return;
+    if (settingsSub) { switchPanel("settings"); return; }
     const isSpWidth = isSpWidthNow();
     if (isSpWidth) {
       closePanelOverlay();
@@ -973,17 +1004,19 @@
     sec2.appendChild(rSpd);
     body.appendChild(sec2);
 
-    const sec3 = el('<div class="qn-set-sec"><div class="qn-set-sec-title">Data</div><div class="qn-set-data"></div></div>');
-    const data = sec3.querySelector(".qn-set-data");
+    const sec3 = el('<div class="qn-set-sec"><div class="qn-set-sec-title">More</div><div class="qn-set-list"></div></div>');
+    const list = sec3.querySelector(".qn-set-list");
     [
       { id: "backup", label: "Backup", icon: '<path d="M6 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13zM8 13h8v2H8v-2zm0 4h5v2H8v-2z"/>' },
       { id: "import", label: "Import", icon: '<path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>' },
+      { id: "color", label: "Color", icon: '<path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10c1.38 0 2.5-1.12 2.5-2.5 0-.61-.23-1.2-.64-1.67-.08-.09-.13-.21-.13-.33 0-.28.22-.5.5-.5H16c3.31 0 6-2.69 6-6 0-4.96-4.49-9-10-9zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 8 6.5 8 8 8.67 8 9.5 7.33 11 6.5 11zm3-4C8.67 7 8 6.33 8 5.5S8.67 4 9.5 4s1.5.67 1.5 1.5S10.33 7 9.5 7zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 4 14.5 4s1.5.67 1.5 1.5S15.33 7 14.5 7zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 8 17.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>' },
+      { id: "keyboard", label: "Keyboard", icon: '<path d="M20 5H4c-1.1 0-1.99.9-1.99 2L2 17c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zM11 8h2v2h-2V8zM11 11h2v2h-2v-2zM8 8h2v2H8V8zM8 11h2v2H8v-2zM5 8h2v2H5V8zm0 3h2v2H5v-2zm10 6H9v-2h6v2zm0-4h-2v-2h2v2zm0-3h-2V8h2v2zm3 3h-2v-2h2v2zm0-3h-2V8h2v2z"/>' },
       { id: "transfer", label: "Transfer", icon: '<path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/>' }
     ].forEach(d => {
-      const b = el('<button type="button" class="qn-set-data-btn" data-panel-id="' + d.id + '"><svg viewBox="0 0 24 24">' + d.icon + '</svg><span>' + d.label + '</span></button>');
+      const b = el('<button type="button" class="qn-set-list-item" data-panel-id="' + d.id + '"><svg class="qn-set-list-ico" viewBox="0 0 24 24">' + d.icon + '</svg><span>' + d.label + '</span><svg class="qn-set-list-chev" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg></button>');
       if (d.id === "transfer" && !(window.QNLibSync && window.QNLibSync.isActive())) b.style.display = "none";
-      b.addEventListener("click", () => handleIconClick(ICON_ITEMS.find(i => i.id === d.id)));
-      data.appendChild(b);
+      b.addEventListener("click", () => { if (typeof hapticTap === "function") hapticTap(); openSettingsSub(d.id); });
+      list.appendChild(b);
     });
     body.appendChild(sec3);
 
@@ -1049,6 +1082,7 @@
 
   function switchPanel(panelId, opts) {
     currentPanel = panelId;
+    if (!(opts && opts.fromSettings)) settingsSub = false;
 
     // 【v3.14.0】格納中に外部(右クリック・Backup完了等)から呼ばれたら必ず展開してから表示。初期表示のみkeepCollapsed:trueで格納維持
     if (panelCollapsed && !(opts && opts.keepCollapsed)) setCollapsed(false);
@@ -1063,7 +1097,7 @@
     }
 
     document.querySelectorAll("#pcV2IconBar .pcv2-icon-item").forEach(btn => {
-      btn.classList.toggle("active", !isCollapsed() && btn.getAttribute("data-panel-id") === panelId);
+      btn.classList.toggle("active", !isCollapsed() && btn.getAttribute("data-panel-id") === (settingsSub ? "settings" : panelId));
     });
 
     const panelBody = document.getElementById("pcV2PanelBody");
@@ -1097,6 +1131,7 @@
     if (panelId !== "playlist") panelBody.classList.remove("playlist-edit-mode");
 
     if (panelId === "keyboard" || panelId === "color") {
+      addSettingsBackBtn(panelHeader);
       const titleSpan = el('<span class="pcv2-panel-header-title"></span>');
       titleSpan.textContent = panelId === "keyboard" ? "Keyboard" : "Color";
       panelHeader.appendChild(titleSpan);
@@ -1107,6 +1142,7 @@
     const item = ICON_ITEMS.find(i => i.id === panelId);
     if (!item) return;
 
+    addSettingsBackBtn(panelHeader);
     const titleSpan = el('<span class="pcv2-panel-header-title"></span>');
     titleSpan.textContent = item.label;
     panelHeader.appendChild(titleSpan);
