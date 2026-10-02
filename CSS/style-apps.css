@@ -36,21 +36,26 @@ body直下fixed。PC=サイドバー右に重ねる(clip-pathで縁から出る)
   clip-path: inset(0 -48px 0 0);
 }
 
+/* v3.48.0 SP: ヘッダーの切替ボタン直下に出るドロップダウン(上から開く)。幕は暗くせず外側タップ判定だけ */
 #qnAppFlyout.qn-flyout-sp {
-  flex-direction: row;
-  width: auto;
-  padding: 6px 6px;
-  gap: 2px;
+  width: 200px;
+  max-width: calc(100vw - 8px);
+  padding: 6px 0;
+  gap: 0;
   border-right: none;
-  border-top: 2px solid var(--accent-primary);
-  box-shadow: 0 -14px 36px rgba(0, 0, 0, 0.6);
-  overflow-x: auto;
-  transform: translateY(100%);
+  border-bottom: 2px solid var(--accent-primary);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.6);
+  transform: translateY(-8px);
+  opacity: 0;
   clip-path: inset(0 0 100% 0);
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+              clip-path 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+              opacity 160ms ease;
 }
 #qnAppFlyout.qn-flyout-sp.qn-flyout-in {
   transform: none;
-  clip-path: inset(-48px 0 0 0);
+  opacity: 1;
+  clip-path: inset(0 -48px -48px -48px);
 }
 
 #qnAppFlyout .qn-flyout-item {
@@ -68,7 +73,7 @@ body直下fixed。PC=サイドバー右に重ねる(clip-pathで縁から出る)
 }
 #qnAppScrim[hidden] { display: none; }
 #qnAppScrim.qn-scrim-in { opacity: 1; }
-#qnAppScrim.qn-scrim-sp { background: rgba(0, 0, 0, 0.55); }
+#qnAppScrim.qn-scrim-sp { background: transparent; }
 
 /* v3.11.1: OS視覚効果低減でもtransition:noneにしない(Windowsでフライアウトが一瞬でパッと出る原因だった) */
 
@@ -211,6 +216,14 @@ body直下fixed。PC=サイドバー右に重ねる(clip-pathで縁から出る)
     width: auto;
     height: 2px;
   }
+  #qnAppFlyout .qn-flyout-item.qn-app-active::before {
+    left: 0;
+    right: auto;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    height: auto;
+  }
 }
 
 /* ---------- トースト ---------- */
@@ -320,8 +333,8 @@ body.qn-mic-on #qnAppBadge::after {
 }
 
 
-/* v3.32.0 PC幅: アプリ一覧(フライアウト)だけ「アイコン＋文字」の1行・広め。サイドバー本体/バッジは従来のまま */
-@media screen and (min-width: 901px) {
+/* v3.32.0 アプリ一覧(フライアウト)だけ「アイコン＋文字」の1行・広め(v3.48.0でSPにも適用)。サイドバー本体/バッジは従来のまま */
+@media screen and (min-width: 0) {
   #qnAppFlyout .qn-flyout-item {
     flex-direction: row;
     justify-content: flex-start;
@@ -336,7 +349,7 @@ body.qn-mic-on #qnAppBadge::after {
     letter-spacing: 0.4px;
     white-space: nowrap;
   }
-  #qnAppFlyout { width: 190px; }
+  #qnAppFlyout:not(.qn-flyout-sp) { width: 190px; }
 }
 
 /* v3.33.0 SP: リスト行の横スワイプで出る□アイコンボタン(編集/SKIP(HIDE)/削除)。ボタン群は行の右外(left:100%)に置き、行を左へずらして見せる。はみ出しはリスト側でclip */
@@ -401,7 +414,7 @@ body.qn-mic-on #qnAppBadge::after {
 
 /* ---------- SPのアプリ切替・アイコンバー(v3.47.0) ----------
    アプリ切替=ヘッダー左の#qnAppSwitchBtn(アクセント色の角ボタン。PC幅は非表示で従来の#qnAppBadge)。
-   アイコンバーは横スクロールなしの等分(Seekbar/Library/Markers/Text/Control/Settings)。ラベルは選択中のタブだけ表示。 */
+   アイコンバーは横スクロールなしの等分(Library/Markers/Text/Control/Settings)。ラベルは選択中のタブだけ表示。 */
 #qnAppSwitchBtn { display: none; }
 @media screen and (max-width: 900px) {
   #qnAppSwitchBtn {

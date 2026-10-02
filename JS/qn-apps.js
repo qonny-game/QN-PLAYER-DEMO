@@ -92,16 +92,31 @@
     flyout.classList.toggle("qn-flyout-sp", sp);
     if (scrim) scrim.classList.toggle("qn-scrim-sp", sp);
     if (sp) {
-      flyout.style.left = "0px";
-      flyout.style.right = "0px";
-      flyout.style.top = "auto";
-      flyout.style.bottom = Math.max(0, window.innerHeight - br.top) + "px";
+      // 【v3.48.0】SP: 押したヘッダーのボタン(#qnAppSwitchBtn)の真下にドロップダウン表示(アイコン＋文字の縦リスト)
+      var sb = switchBtn ? switchBtn.getBoundingClientRect() : null;
+      flyout.style.left = (sb ? Math.max(0, sb.left) : 0) + "px";
+      flyout.style.right = "auto";
+      flyout.style.top = (sb ? sb.bottom : 0) + "px";
+      flyout.style.bottom = "auto";
     } else {
       flyout.style.left = br.right + "px";
       flyout.style.right = "auto";
       flyout.style.top = br.top + "px";
       flyout.style.bottom = Math.max(0, window.innerHeight - br.bottom) + "px";
     }
+  }
+
+  // 【v3.48.0】SP: アプリ一覧の表示中はアプリ表示領域(#qnAppHost)をメニューの高さ分だけ下へずらし、YouTubeプレイヤーを覆わない(規約)。サイズは変えずtransformだけ、はみ出す下側はclip-pathで切る(アイコンバーに被らせない。プレイヤーは上側なので切れない)
+  function shiftHostForFlyout(on) {
+    if (!host) return;
+    var h = 0;
+    if (on && isSp() && current && flyout) {
+      // アニメ途中のtransformに左右されないよう、style値とoffsetHeightで計算
+      h = Math.max(0, Math.ceil((parseFloat(flyout.style.top) || 0) + flyout.offsetHeight - (parseFloat(host.style.top) || 0)));
+    }
+    host.style.transition = "transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1)";
+    host.style.transform = h ? "translateY(" + h + "px)" : "";
+    host.style.clipPath = h ? "inset(0 0 " + h + "px 0)" : "";
   }
 
   function ensureScrim() {
@@ -131,6 +146,7 @@
       badgeBtn.setAttribute("aria-expanded", "true");
     }
     if (switchBtn) { switchBtn.classList.add("qn-badge-open"); switchBtn.setAttribute("aria-expanded", "true"); }
+    shiftHostForFlyout(true);
   }
 
   function closeFlyout() {
@@ -144,6 +160,7 @@
       badgeBtn.setAttribute("aria-expanded", "false");
     }
     if (switchBtn) { switchBtn.classList.remove("qn-badge-open"); switchBtn.setAttribute("aria-expanded", "false"); }
+    shiftHostForFlyout(false);
     if (flyoutHideTimer) clearTimeout(flyoutHideTimer);
     flyoutHideTimer = setTimeout(function () {
       flyoutHideTimer = null;
@@ -559,7 +576,7 @@
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") closeFlyout();
     });
-    window.addEventListener("resize", function () { if (flyoutOpen) positionFlyout(); });
+    window.addEventListener("resize", function () { if (flyoutOpen) { positionFlyout(); shiftHostForFlyout(true); } });
     window.addEventListener("orientationchange", closeFlyout);
     iconBar.addEventListener("click", function (e) {
       if (e.target.closest && e.target.closest("#qnAppBadge")) return;

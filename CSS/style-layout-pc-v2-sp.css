@@ -231,10 +231,6 @@
     padding: 12px 10px;
   }
 
-  .pcv2-icon-item[data-panel-id="seekbar"] {
-    display: flex;
-  }
-
   .pcv2-icon-item svg {
     width: 26px;
     height: 26px;

@@ -105,6 +105,6 @@
 - skipは`savePins`(localStorage)/トラックバックアップ(`skip`)/同期(`k`)に含める。新しいマーカー項目を足す時はこの3箇所とplayer-sync.jsの復元側を揃える。YouTubeアプリのマーカーは未対応。
 
 ## SPのアイコンバーとアプリ切替(v3.47.0)
-- SPでは`#qnAppBadge`をCSSで隠し、ヘッダーの`#qnAppSwitchBtn`が同じフライアウトを開く(DOMは両方残す。PC幅は`#qnAppBadge`)。フライアウトの位置はアイコンバー基準なのでバッジが非表示でも崩れない。外側タップ判定の除外に`#qnAppSwitchBtn`を含めること。
-- SPのアイコンバーは`overflow-x:hidden`+各タブ`flex:1 1 0`。ラベル(span)は`.active`/`.qn-app-active`以外を非表示。タブを増やす時は幅(6〜7個まで)を確認。
+- SPでは`#qnAppBadge`をCSSで隠し、ヘッダーの`#qnAppSwitchBtn`が同じフライアウトを開く(DOMは両方残す。PC幅は`#qnAppBadge`)。v3.48.0〜SPのフライアウトは`#qnAppSwitchBtn`の真下に出るドロップダウン(`positionFlyout()`が`switchBtn`の矩形基準。暗幕は透明)。**開いている間は`shiftHostForFlyout()`が`#qnAppHost`をtransformで下へずらす**(YouTubeプレイヤーを覆わない規約対応。はみ出す下側はclip-pathで切る)。フライアウトの高さや位置を変えたらこのずらし量も確認。外側タップ判定の除外に`#qnAppSwitchBtn`を含めること。
+- SPのアイコンバーは`overflow-x:hidden`+各タブ`flex:1 1 0`(v3.48.0でSeekbarタブ撤去=5タブ)。ラベル(span)は`.active`/`.qn-app-active`以外を非表示。タブを増やす時は幅(6〜7個まで)を確認。
 - SPヘッダーのバージョン表記(`#appVersion`)はCSSで非表示。確認は設定の最下段(`QNSettingsUI.versionLine()`)。

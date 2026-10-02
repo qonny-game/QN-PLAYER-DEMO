@@ -121,11 +121,6 @@ body.pc-v2-active > .app-container {
 }
 
 
-.pcv2-icon-item[data-panel-id="seekbar"] {
-  display: none;
-}
-
-
 #pcV2IconBarSpacer {
   flex: 1;
 }

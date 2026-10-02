@@ -10,14 +10,8 @@
   try { panelCollapsed = localStorage.getItem(PANEL_COLLAPSED_KEY) === "1"; } catch (e) {}
   const bottomBarEffectButtons = {};
 
-  // アイコンバー項目。panelType: tab=既存.mobile-tab-panel表示 / eq=EQモーダル中身 / export=Exportモーダル中身 / action=即実行(現在該当なし、ロジックのみ残す) / close=開いていれば閉じる(SP幅専用)。並び(v3.1.0〜): Library→Markers→Text→Control→Backup→Import(SeekbarはSP専用先頭、Exportは非表示)
+  // アイコンバー項目。panelType: tab=既存.mobile-tab-panel表示 / eq=EQモーダル中身 / export=Exportモーダル中身 / action=即実行(現在該当なし、ロジックのみ残す) / close=開いていれば閉じる(現在該当なし)。並び: Library→Markers→Text→Control→Backup→Import(Exportは非表示。v3.48.0でSP専用のSeekbarタブは撤去)
   const ICON_ITEMS = [
-    {
-      id: "seekbar",
-      label: "Seekbar",
-      panelType: "close",
-      icon: '<path d="M4 5h2v14H4zm4 3h2v8H8zm4-6h2v20h-2zm4 4h2v12h-2zm4 3h2v6h-2z"/>'
-    },
     {
       id: "playlist",
       label: "Library",
