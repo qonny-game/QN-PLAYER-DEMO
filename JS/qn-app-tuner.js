@@ -501,7 +501,6 @@
     { id: "tone", label: "Tone", icon: ICON.tone },
     { id: "sens", label: "Sensitivity", icon: ICON.tune },
     { id: "display", label: "Display", icon: ICON.display },
-    { id: "keyboard", bottom: true, label: "Keyboard", icon: ICON.keyboard }
   ];
   var PANEL_TITLES = { tone: "Tone Generator", sens: "Sensitivity", display: "Display", keyboard: "Keyboard" };
   var panelState = null;

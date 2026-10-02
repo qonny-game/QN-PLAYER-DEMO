@@ -85,3 +85,7 @@
 - `#loopPreRollControl`は設定パネル内に置く(player-controls.jsのハンドラがこの要素に付いているので作り直さず移すだけ)。設定パネル本体は初回rAFでstashへ入れる(let宣言より後に走らせるため)。
 - 速度±の刻みはplayer-controls.jsの`speedStepPct`(`setSpeedStepPct`)。無料版はSpeed変更がロックされるのでテストは`snapSpeedStep(dir)`で確認する。
 - 波形は1行1本のPath2Dを色の区間ごとにclipして塗る(マーカー色/再生済み)。バー個別のfillRectに戻さない。
+
+## 設定パネルの部品ルール(v3.43.0)
+- 設定の選択肢は`.qn-stepper`(‹ 値 ›)だけを使う。ボタン列(セグメント)や別デザインの＋/−を新設しない。項目を足す時は`SETTING_DEFS`に{values,get,set,fmt}を足し、`settingsStepper(kind)`で置く。
+- `#loopPreRollControl`はindex.htmlで`.qn-stepper`のマークアップ。`#loopPreRollValue`は`textNode + .qn-stepper-unit`構造(player-controls.jsが`firstChild.textContent`を書き換える)なので構造を変えない。

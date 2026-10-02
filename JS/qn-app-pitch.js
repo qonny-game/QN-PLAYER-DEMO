@@ -873,9 +873,6 @@
   var SIDEBAR = [
     { id: "filters", label: "Filters", icon: ICON.filters },
     { id: "recordings", label: "Recordings", icon: ICON.list },
-    { id: "backup", bottom: true, label: "Backup", icon: '<path d="M6 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13zM8 13h8v2H8v-2zm0 4h5v2H8v-2z"/>' },
-    { id: "import", bottom: true, label: "Import", icon: '<path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>' },
-    { id: "keyboard", bottom: true, label: "Keyboard", icon: ICON.keyboard }
   ];
   var PANEL_TITLES = { filters: "Filters", recordings: "Recordings", backup: "Backup", import: "Import", keyboard: "Keyboard", save: "Save Recording" };
   var panelCollapsed = (function () { try { return localStorage.getItem(KEY_COLLAPSE) === "1"; } catch (e) { return false; } })();

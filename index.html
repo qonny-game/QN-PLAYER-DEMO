@@ -32,7 +32,7 @@
 <link rel="stylesheet" href="CSS/style-pitch.css">
 <script>
   // アプリバージョン一元管理(QN_APP_VERSION)。<title>はここで即更新、#splashVersion/#appVersionは各要素直後のinline scriptが反映
-  window.QN_APP_VERSION = "3.41.0";
+  window.QN_APP_VERSION = "3.43.0";
   document.title = "QNPLAYER " + window.QN_APP_VERSION;
 
   window.QN_SHORTCUTS = [
@@ -233,10 +233,10 @@
           <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
           <span class="top-controls-btn-label">Loop</span>
         </button>
-        <div id="loopPreRollControl" class="loop-preroll-control" title="Loop pre/post-roll seconds">
-          <button id="loopPreRollMinus" class="loop-preroll-btn" type="button" title="Decrease">−</button>
-          <span id="loopPreRollValue" class="loop-preroll-value">0<span class="loop-preroll-unit">s</span></span>
-          <button id="loopPreRollPlus" class="loop-preroll-btn" type="button" title="Increase">＋</button>
+        <div id="loopPreRollControl" class="qn-stepper" title="Loop pre/post-roll seconds">
+          <button id="loopPreRollMinus" class="qn-stepper-btn" type="button" title="Decrease" aria-label="Decrease"><svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg></button>
+          <span id="loopPreRollValue" class="qn-stepper-val">0<span class="qn-stepper-unit">s</span></span>
+          <button id="loopPreRollPlus" class="qn-stepper-btn" type="button" title="Increase" aria-label="Increase"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg></button>
         </div>
       </div>
     </div>

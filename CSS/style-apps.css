@@ -6,7 +6,7 @@
   display: none;
 }
 
-#pcV2IconBar.qn-app-sidebar #pcV2IconBarBottom > .pcv2-icon-item:not([data-panel-id="color"]):not(.qn-appside-item) {
+#pcV2IconBar.qn-app-sidebar #pcV2IconBarBottom > .pcv2-icon-item:not([data-panel-id="settings"]):not(.qn-appside-item) {
   display: none;
 }
 
@@ -112,6 +112,8 @@ body直下fixed。PC=サイドバー右に重ねる(clip-pathで縁から出る)
 #qnColorPop.qn-colorpanel-sp { border-right: none; border-top: 1px solid var(--border-subtle); }
 #qnColorPop[hidden] { display: none; }
 #qnColorPop .qn-colorpanel-head {
+  display: flex;
+  align-items: center;
   padding: 14px 16px 14px 20px;
   border-bottom: 1px solid var(--border-subtle);
   font-family: var(--font-display, 'Instrument Sans'), sans-serif;

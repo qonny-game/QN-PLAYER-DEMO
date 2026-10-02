@@ -145,21 +145,6 @@
 .qn-set-label span { font-size: var(--fs-body); color: var(--text-bright); }
 .qn-set-label small { font-size: var(--fs-micro); color: var(--icon-muted); }
 .qn-set-ctl { display: flex; align-items: center; flex-shrink: 0; }
-.qn-set-seg { display: flex; padding: 3px; gap: 2px; background: #1c1c24; border: 1px solid var(--border-subtle); border-radius: 0; }
-.qn-set-seg-btn {
-  min-width: 36px;
-  padding: 6px 8px;
-  background: none;
-  border: none;
-  border-radius: 0;
-  color: var(--icon-muted);
-  font-family: inherit;
-  font-size: var(--fs-body);
-  font-variant-numeric: tabular-nums;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-.qn-set-seg-btn.is-on { background: color-mix(in srgb, var(--accent-primary) 28%, #1c1c24); color: var(--text-pure-white); }
 .qn-set-switch {
   position: relative;
   width: 46px;
@@ -184,24 +169,6 @@
 }
 .qn-set-switch.is-on { background: var(--accent-primary); border-color: var(--accent-primary); }
 .qn-set-switch.is-on span { transform: translateX(18px); }
-.qn-set-step { display: flex; align-items: center; padding: 3px; background: #1c1c24; border: 1px solid var(--border-subtle); border-radius: 0; }
-.qn-set-step-btn {
-  width: 32px;
-  height: 30px;
-  padding: 0;
-  background: none;
-  border: none;
-  border-radius: 0;
-  color: var(--text-pure-white);
-  font-size: 16px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-.qn-set-step-btn:active { transform: scale(0.92); }
-.qn-set-step-btn:disabled { opacity: 0.35; cursor: default; }
-.qn-set-step-val { min-width: 38px; text-align: center; font-size: var(--fs-body); color: var(--text-pure-white); font-variant-numeric: tabular-nums; }
-.qn-set-step-val b { font-weight: 700; }
-.qn-set-step-val i { font-style: normal; opacity: 0.7; margin-left: 1px; }
 .qn-set-list { display: flex; flex-direction: column; padding: 2px 0 8px; }
 .qn-set-list-item {
   display: flex;
@@ -245,7 +212,7 @@
 .pcv2-panel-back svg { width: 24px; height: 24px; fill: currentColor; }
 .pcv2-panel-back:active { transform: scale(0.92); }
 @media (hover: hover) and (pointer: fine) {
-  .qn-set-seg-btn:hover:not(.is-on), .qn-set-step-btn:hover:not(:disabled), .qn-set-list-item:hover, .pcv2-panel-back:hover { color: var(--accent-primary); }
+  .qn-stepper-btn:hover:not(:disabled), .qn-set-list-item:hover, .pcv2-panel-back:hover { color: var(--accent-primary); }
 }
 
 /* 波形エリア右下の再生/停止ボタン(MARKERの右。v3.38.0) */
@@ -262,7 +229,52 @@
   .qn-bar-gear svg { width: 26px; height: 26px; }
 }
 
-/* PLAYER表示中はアイコンバーのKeyboard/Colorを隠す(設定の下層ビューへ移設。アプリ表示中はqn-apps.jsがColorボタンを使うので残す) */
-#pcV2IconBar:not(.qn-app-sidebar) #pcV2IconBarBottom > .pcv2-icon-item[data-panel-id="keyboard"],
-#pcV2IconBar:not(.qn-app-sidebar) #pcV2IconBarBottom > .pcv2-icon-item[data-panel-id="color"] { display: none; }
+/* アイコンバーのKeyboard/Colorは常に隠す(設定の下層ビューへ移設。DOMは残す=player-ui-pc-v2.js/qn-apps.jsの参照用) */
+#pcV2IconBarBottom > .pcv2-icon-item[data-panel-id="keyboard"],
+#pcV2IconBarBottom > .pcv2-icon-item[data-panel-id="color"] { display: none; }
 .pcv2-panel-back + .pcv2-panel-header-title { margin-right: auto; }
+
+/* ---------- 設定の部品ルール(v3.43.0) ----------
+   行の高さ=56px、操作部の高さ=40px、枠=1px var(--border-subtle)・背景#1c1c24・角丸0(スイッチのみピル)。
+   選択肢は全て「‹ 値 ›」(.qn-stepper)。ON/OFFだけスイッチ。階層に入る行は右に›(.qn-set-list-item)。 */
+.qn-stepper {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  box-sizing: border-box;
+  background: #1c1c24;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0;
+  flex-shrink: 0;
+}
+.qn-stepper-btn {
+  width: 40px;
+  height: 100%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 0;
+  color: var(--text-bright);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.qn-stepper-btn svg { width: 22px; height: 22px; fill: currentColor; display: block; }
+.qn-stepper-btn:active:not(:disabled) { background: rgba(255, 255, 255, 0.06); }
+.qn-stepper-btn:disabled { color: var(--icon-muted); opacity: 0.4; cursor: default; }
+.qn-stepper-val {
+  min-width: 64px;
+  padding: 0 4px;
+  text-align: center;
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  color: var(--text-pure-white);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.qn-stepper-unit { font-size: inherit; font-weight: inherit; }
+.qn-set-row { min-height: 56px; padding: 8px 0; }
+.qn-set-list-item { min-height: 56px; padding-top: 0; padding-bottom: 0; }

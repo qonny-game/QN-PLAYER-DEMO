@@ -167,7 +167,7 @@
     if (!current || !current.sidebar) return;
     var spacer = $("pcV2IconBarSpacer");
     var bottomBox = $("pcV2IconBarBottom");
-    var colorBtn = bottomBox ? bottomBox.querySelector('[data-panel-id="color"]') : null;
+    var colorBtn = bottomBox ? bottomBox.querySelector('[data-panel-id="settings"]') : null;
     current.sidebar.forEach(function (it) {
       var btn = makeItemButton({ cls: "qn-appside-item" }, it.icon, it.label, it.label);
       btn.setAttribute("data-side-id", it.id);
@@ -370,7 +370,17 @@
     window.dispatchEvent(new Event("resize"));
   }
 
-  var colorPop = null, colorSec = null, colorHome = null, colorNext = null;
+  // 【v3.42.0】アプリ表示中の「Settings」パネル(旧Color用ポップを拡張)。一覧(Backup/Import/Color/Keyboard/Transfer)→下層ビュー(戻るボタンで一覧へ)。
+  // Backup/Importは本体共通画面(qnBackupMountInto)、Keyboardはrender Shortcuts、Colorは本体のテーマセクションを借りる。閉じる/切替時は借りたものを元へ戻す。関数名のcolorPopは互換のため据え置き
+  var colorPop = null, colorSec = null, colorHome = null, colorNext = null, setView = "root";
+  var SET_ICONS = {
+    backup: '<path d="M6 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13zM8 13h8v2H8v-2zm0 4h5v2H8v-2z"/>',
+    import: '<path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>',
+    color: '<path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10c1.38 0 2.5-1.12 2.5-2.5 0-.61-.23-1.2-.64-1.67-.08-.09-.13-.21-.13-.33 0-.28.22-.5.5-.5H16c3.31 0 6-2.69 6-6 0-4.96-4.49-9-10-9zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 8 6.5 8 8 8.67 8 9.5 7.33 11 6.5 11zm3-4C8.67 7 8 6.33 8 5.5S8.67 4 9.5 4s1.5.67 1.5 1.5S10.33 7 9.5 7zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 4 14.5 4s1.5.67 1.5 1.5S15.33 7 14.5 7zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 8 17.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>',
+    keyboard: '<path d="M20 5H4c-1.1 0-1.99.9-1.99 2L2 17c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zM11 8h2v2h-2V8zM11 11h2v2h-2v-2zM8 8h2v2H8V8zM8 11h2v2H8v-2zM5 8h2v2H5V8zm0 3h2v2H5v-2zm10 6H9v-2h6v2zm0-4h-2v-2h2v2zm0-3h-2V8h2v2zm3 3h-2v-2h2v2zm0-3h-2V8h2v2z"/>',
+    transfer: '<path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/>'
+  };
+  var SET_LABELS = { backup: "Backup", import: "Import", color: "Color", keyboard: "Keyboard", transfer: "Transfer" };
 
   function findColorSection() {
     return document.querySelector('.qn-menu-section[data-qn-section="theme"]');
@@ -402,30 +412,106 @@
     }
   }
 
-  function closeColorPop() {
-    if (!colorPop || colorPop.hidden) return;
-    colorPop.hidden = true;
+  // 借りている要素を元の場所へ戻す(Color)/退避する(Backup/Importの共通画面)
+  function releaseSetView() {
     if (colorSec && colorHome && colorHome.isConnected) {
       if (colorNext && colorNext.parentNode === colorHome) colorHome.insertBefore(colorSec, colorNext);
       else colorHome.appendChild(colorSec);
     }
-    var b = document.querySelector('#pcV2IconBarBottom [data-panel-id="color"]');
-    if (b) b.classList.remove("qn-app-active");
     colorSec = colorHome = colorNext = null;
+    if (typeof window.qnBackupReleaseExternal === "function") window.qnBackupReleaseExternal();
+    if (typeof window.qnBackupParts === "function" && colorPop) {
+      var parts = window.qnBackupParts();
+      var stash = $("pcV2PanelStash");
+      if (!stash) { stash = document.createElement("div"); stash.id = "pcV2PanelStash"; stash.style.display = "none"; stash.setAttribute("aria-hidden", "true"); document.body.appendChild(stash); }
+      for (var k in parts) if (parts[k] && colorPop.contains(parts[k])) stash.appendChild(parts[k]);
+    }
+  }
+
+  function setActiveBtn(on) {
+    var b = document.querySelector('#pcV2IconBarBottom [data-panel-id="settings"]');
+    if (b) b.classList.toggle("qn-app-active", !!on);
+  }
+
+  function closeColorPop() {
+    if (!colorPop || colorPop.hidden) return;
+    releaseSetView();
+    colorPop.hidden = true;
+    setView = "root";
+    setActiveBtn(false);
+  }
+
+  function showSetView(name) {
+    if (!colorPop) return;
+    releaseSetView();
+    setView = name;
+    var head = colorPop.querySelector(".qn-colorpanel-head");
+    var body = colorPop.querySelector(".qn-colorpanel-body");
+    head.textContent = "";
+    body.textContent = "";
+    if (name !== "root") {
+      var back = document.createElement("button");
+      back.type = "button";
+      back.className = "pcv2-panel-back";
+      back.title = "Back";
+      back.setAttribute("aria-label", "Back");
+      back.innerHTML = '<svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>';
+      back.addEventListener("click", function () { haptic(); showSetView("root"); });
+      head.appendChild(back);
+    }
+    var title = document.createElement("span");
+    title.className = "pcv2-panel-header-title";
+    title.textContent = name === "root" ? "Settings" : SET_LABELS[name];
+    head.appendChild(title);
+    if (name === "root") {
+      var list = document.createElement("div");
+      list.className = "qn-set-list";
+      ["backup", "import", "color", "keyboard", "transfer"].forEach(function (id) {
+        if (id === "transfer" && !(window.QNLibSync && window.QNLibSync.isActive())) return;
+        if (id === "color" && !findColorSection()) return;
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "qn-set-list-item";
+        b.setAttribute("data-panel-id", id);
+        b.innerHTML = '<svg class="qn-set-list-ico" viewBox="0 0 24 24">' + SET_ICONS[id] + '</svg><span></span>' +
+          '<svg class="qn-set-list-chev" viewBox="0 0 24 24">' + CHEVRON_ICON + '</svg>';
+        b.querySelector("span").textContent = SET_LABELS[id];
+        b.addEventListener("click", function () {
+          haptic();
+          if (id === "transfer") { if (window.QNP2P) window.QNP2P.open(); return; }
+          showSetView(id);
+        });
+        list.appendChild(b);
+      });
+      body.appendChild(list);
+    } else if (name === "color") {
+      var sec = findColorSection();
+      if (sec) {
+        colorSec = sec; colorHome = sec.parentNode; colorNext = sec.nextSibling;
+        body.appendChild(sec);
+      }
+    } else if (name === "keyboard") {
+      var box = document.createElement("div");
+      body.appendChild(box);
+      renderShortcuts(box, current ? current.id : null);
+    } else if (name === "backup" || name === "import") {
+      var hostEl = document.createElement("div");
+      hostEl.className = name === "backup" ? "qn-pt-sec-backup" : "qn-pt-sec-import";
+      body.appendChild(hostEl);
+      if (typeof window.qnBackupMountInto === "function") window.qnBackupMountInto(name, hostEl, function () { showSetView("root"); });
+    }
+    body.scrollTop = 0;
   }
 
   function openColorPop() {
-    var sec = findColorSection();
-    if (!sec) return;
     if (!colorPop) {
       colorPop = document.createElement("div");
       colorPop.id = "qnColorPop";
       colorPop.hidden = true;
-      colorPop.innerHTML = '<div class="qn-colorpanel-head"><span class="pcv2-panel-header-title">Color</span></div>' +
-        '<div class="qn-colorpanel-body"></div>';
+      colorPop.innerHTML = '<div class="qn-colorpanel-head"></div><div class="qn-colorpanel-body"></div>';
       document.body.appendChild(colorPop);
       iconBar.addEventListener("click", function (e) {
-        if (e.target.closest && e.target.closest('[data-panel-id="color"]')) return;
+        if (e.target.closest && e.target.closest('[data-panel-id="settings"]')) return;
         closeColorPop();
       });
       document.addEventListener("keydown", function (e) {
@@ -433,12 +519,10 @@
       });
       window.addEventListener("resize", positionColorPop);
     }
-    colorSec = sec; colorHome = sec.parentNode; colorNext = sec.nextSibling;
-    colorPop.querySelector(".qn-colorpanel-body").appendChild(sec);
+    showSetView("root");
     colorPop.hidden = false;
     positionColorPop();
-    var b = document.querySelector('#pcV2IconBarBottom [data-panel-id="color"]');
-    if (b) b.classList.add("qn-app-active");
+    setActiveBtn(true);
   }
 
   function initColorKeeper() {
@@ -446,7 +530,7 @@
     if (!bottom || bottom.__qnColor) return;
     bottom.__qnColor = true;
     bottom.addEventListener("click", function (e) {
-      var b = e.target.closest && e.target.closest('[data-panel-id="color"]');
+      var b = e.target.closest && e.target.closest('[data-panel-id="settings"]');
       if (!b || !current) return;
       closeFlyout();
       e.stopImmediatePropagation();

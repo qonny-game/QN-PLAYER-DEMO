@@ -792,42 +792,6 @@ body.pc-v2-active #topControlsSpacer {
 }
 
 
-#pcV2BottomBar .loop-preroll-control {
-  padding: 8px 4px;
-  background: none;
-  border: none;
-  box-shadow: none;
-  gap: 0;
-}
-
-
-#pcV2BottomBar .loop-preroll-btn {
-  width: 20px;
-  height: 20px;
-  color: var(--icon-muted);
-  font-size: 13px;
-}
-
-
-#pcV2BottomBar .loop-preroll-btn:hover {
-  background: none;
-  color: var(--text-bright);
-}
-
-
-#pcV2BottomBar .loop-preroll-value {
-  min-width: 16px;
-  font-size: 22px;
-  font-weight: 400;
-  color: var(--icon-muted);
-}
-
-
-#pcV2BottomBar .loop-preroll-control.is-active .loop-preroll-value {
-  color: var(--accent-primary, #3b82f6);
-}
-
-
 body.pc-v2-active #appHeader {
   height: 52px;
   border-bottom: 1px solid var(--border-subtle);

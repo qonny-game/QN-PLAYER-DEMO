@@ -950,16 +950,22 @@
     return row;
   }
 
-  function settingsSeg(kind, values, fmt) {
-    const seg = el('<div class="qn-set-seg" role="radiogroup"></div>');
-    seg.dataset.kind = kind;
-    values.forEach(v => {
-      const b = el('<button type="button" class="qn-set-seg-btn" role="radio"></button>');
-      b.dataset.v = String(v);
-      b.textContent = fmt(v);
-      seg.appendChild(b);
-    });
-    return seg;
+  // 複数選択肢の設定は全て「‹ 値 ›」の同じ部品(.qn-stepper)。値の一覧と取得/設定はSETTING_DEFSに集約(新しい項目はここに足すだけ)
+  const CHEV_L = '<svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>';
+  const CHEV_R = '<svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>';
+  const SETTING_DEFS = {
+    bar:   { values: () => QNBars.OPTIONS, get: () => QNBars.getSec(), set: v => QNBars.setSec(v), fmt: v => v + "s" },
+    rows:  { values: () => QNBars.ROWS_OPTIONS, get: () => QNBars.getRows(), set: v => QNBars.setRows(v), fmt: v => v === 0 ? "Auto" : String(v) },
+    pause: { values: () => { const a = []; for (let i = QNBars.PAUSE_MIN; i <= QNBars.PAUSE_MAX; i++) a.push(i); return a; }, get: () => QNBars.getPause(), set: v => QNBars.setPause(v), fmt: v => v + "s" },
+    skip:  { values: () => SKIP_OPTIONS, get: () => skipSec, set: v => setSkipSec(v), fmt: v => v + "s" },
+    scope: { values: () => ["folder", "all"], get: () => (typeof getAutoNextScope === "function" ? getAutoNextScope() : "folder"), set: v => { if (typeof setAutoNextScope === "function") setAutoNextScope(v); }, fmt: v => v === "folder" ? "Folder" : "All" },
+    speed: { values: () => (typeof SPEED_STEP_OPTIONS !== "undefined" ? SPEED_STEP_OPTIONS : [1, 2, 5, 10]), get: () => (typeof getSpeedStepPct === "function" ? getSpeedStepPct() : 5), set: v => { if (typeof setSpeedStepPct === "function") setSpeedStepPct(v); }, fmt: v => v + "%" }
+  };
+
+  function settingsStepper(kind) {
+    const st = el('<div class="qn-stepper"><button type="button" class="qn-stepper-btn" data-d="-1" aria-label="Previous">' + CHEV_L + '</button><span class="qn-stepper-val"></span><button type="button" class="qn-stepper-btn" data-d="1" aria-label="Next">' + CHEV_R + '</button></div>');
+    st.dataset.kind = kind;
+    return st;
   }
 
   function ensureSettingsBody() {
@@ -968,11 +974,11 @@
 
     const sec1 = el('<div class="qn-set-sec"><div class="qn-set-sec-title">Seek bar</div></div>');
     const rBar = settingsRow("Bar length", "1 bar = seconds");
-    rBar.querySelector(".qn-set-ctl").appendChild(settingsSeg("bar", QNBars.OPTIONS, v => v + "s"));
+    rBar.querySelector(".qn-set-ctl").appendChild(settingsStepper("bar"));
     sec1.appendChild(rBar);
 
     const rRows = settingsRow("Bars on screen", "Rows shown at once");
-    rRows.querySelector(".qn-set-ctl").appendChild(settingsSeg("rows", QNBars.ROWS_OPTIONS, v => v === 0 ? "Auto" : String(v)));
+    rRows.querySelector(".qn-set-ctl").appendChild(settingsStepper("rows"));
     sec1.appendChild(rRows);
 
     const rFollow = settingsRow("Follow playhead", "Auto-scroll while playing");
@@ -982,8 +988,7 @@
 
     const rPause = settingsRow("Pause after scrolling", "Seconds before follow resumes");
     rPause.id = "qnSetPauseRow";
-    const st = el('<div class="qn-set-step"><button type="button" class="qn-set-step-btn" data-d="-1">−</button><span class="qn-set-step-val"><b id="qnSetPauseVal">6</b><i>s</i></span><button type="button" class="qn-set-step-btn" data-d="1">＋</button></div>');
-    rPause.querySelector(".qn-set-ctl").appendChild(st);
+    rPause.querySelector(".qn-set-ctl").appendChild(settingsStepper("pause"));
     sec1.appendChild(rPause);
     body.appendChild(sec1);
 
@@ -993,14 +998,13 @@
     if (preCtl) rPre.querySelector(".qn-set-ctl").appendChild(preCtl);
     sec2.appendChild(rPre);
     const rSkip = settingsRow("Skip buttons", "Seconds for back / forward");
-    rSkip.querySelector(".qn-set-ctl").appendChild(settingsSeg("skip", SKIP_OPTIONS, v => v + "s"));
+    rSkip.querySelector(".qn-set-ctl").appendChild(settingsStepper("skip"));
     sec2.appendChild(rSkip);
     const rScope = settingsRow("Library repeat range", "Auto Next / Repeat scope");
-    rScope.querySelector(".qn-set-ctl").appendChild(settingsSeg("scope", ["folder", "all"], v => v === "folder" ? "Folder" : "All"));
+    rScope.querySelector(".qn-set-ctl").appendChild(settingsStepper("scope"));
     sec2.appendChild(rScope);
     const rSpd = settingsRow("Speed step", "For the speed − / ＋ buttons");
-    const speedOpts = (typeof SPEED_STEP_OPTIONS !== "undefined") ? SPEED_STEP_OPTIONS : [1, 2, 5, 10];
-    rSpd.querySelector(".qn-set-ctl").appendChild(settingsSeg("speed", speedOpts, v => v + "%"));
+    rSpd.querySelector(".qn-set-ctl").appendChild(settingsStepper("speed"));
     sec2.appendChild(rSpd);
     body.appendChild(sec2);
 
@@ -1023,19 +1027,15 @@
     body.addEventListener("click", (e) => {
       const t = e.target.closest ? e.target.closest("button") : null;
       if (!t) return;
-      const seg = t.closest(".qn-set-seg");
-      if (seg && t.dataset.v) {
-        if (typeof hapticTap === "function") hapticTap();
-        const v = parseInt(t.dataset.v, 10);
-        if (seg.dataset.kind === "scope") {
-          if (typeof setAutoNextScope === "function") setAutoNextScope(t.dataset.v);
-          syncSettingsBody();
-          return;
+      const st = t.closest(".qn-stepper[data-kind]");
+      if (st && t.dataset.d) {
+        const def = SETTING_DEFS[st.dataset.kind];
+        const vals = def.values();
+        const i = vals.indexOf(def.get()) + parseInt(t.dataset.d, 10);
+        if (i >= 0 && i < vals.length) {
+          if (typeof hapticTap === "function") hapticTap();
+          def.set(vals[i]);
         }
-        if (seg.dataset.kind === "rows") QNBars.setRows(v);
-        else if (seg.dataset.kind === "skip") setSkipSec(v);
-        else if (seg.dataset.kind === "bar") QNBars.setSec(v);
-        else if (seg.dataset.kind === "speed" && typeof setSpeedStepPct === "function") setSpeedStepPct(v);
         syncSettingsBody();
         return;
       }
@@ -1045,11 +1045,6 @@
         syncSettingsBody();
         return;
       }
-      if (t.classList.contains("qn-set-step-btn")) {
-        if (typeof hapticTap === "function") hapticTap();
-        QNBars.setPause(QNBars.getPause() + parseInt(t.dataset.d, 10));
-        syncSettingsBody();
-      }
     });
 
     settingsBody = body;
@@ -1058,26 +1053,20 @@
 
   function syncSettingsBody() {
     if (!settingsBody) return;
-    const curSpeed = (typeof getSpeedStepPct === "function") ? getSpeedStepPct() : 5;
-    settingsBody.querySelectorAll(".qn-set-seg").forEach(seg => {
-      const kind = seg.dataset.kind;
-      const cur = kind === "bar" ? QNBars.getSec() : kind === "rows" ? QNBars.getRows() : kind === "skip" ? skipSec : kind === "scope" ? (typeof getAutoNextScope === "function" ? getAutoNextScope() : "folder") : curSpeed;
-      seg.querySelectorAll(".qn-set-seg-btn").forEach(b => {
-        const on = (kind === "scope" ? b.dataset.v : parseInt(b.dataset.v, 10)) === cur;
-        b.classList.toggle("is-on", on);
-        b.setAttribute("aria-checked", on ? "true" : "false");
-      });
+    settingsBody.querySelectorAll(".qn-stepper[data-kind]").forEach(st => {
+      const def = SETTING_DEFS[st.dataset.kind];
+      const vals = def.values();
+      const cur = def.get();
+      const i = vals.indexOf(cur);
+      st.querySelector(".qn-stepper-val").textContent = def.fmt(cur);
+      st.querySelector('[data-d="-1"]').disabled = i <= 0;
+      st.querySelector('[data-d="1"]').disabled = i < 0 || i >= vals.length - 1;
     });
     const on = QNBars.getFollow();
     const sw = settingsBody.querySelector("#qnSetFollowSwitch");
     sw.classList.toggle("is-on", on);
     sw.setAttribute("aria-checked", on ? "true" : "false");
     settingsBody.querySelector("#qnSetPauseRow").classList.toggle("is-disabled", !on);
-    settingsBody.querySelector("#qnSetPauseVal").textContent = String(QNBars.getPause());
-    const mi = settingsBody.querySelector('.qn-set-step-btn[data-d="-1"]');
-    const pl = settingsBody.querySelector('.qn-set-step-btn[data-d="1"]');
-    mi.disabled = QNBars.getPause() <= QNBars.PAUSE_MIN;
-    pl.disabled = QNBars.getPause() >= QNBars.PAUSE_MAX;
   }
 
   function switchPanel(panelId, opts) {
