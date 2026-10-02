@@ -627,6 +627,84 @@ document.getElementById("vbarRows").addEventListener("click", e => {
 });
 
 
+// 【v3.45.0】波形のジェスチャー(タップ=従来どおりシーク+再生)
+//  長押し(0.5秒): その位置にマーカー追加 / 横スワイプ: 再生位置をスクラブ(行の幅=バー長の秒数) / ダブルタップ(再生中): その位置で停止
+//  マーカーの線・A/B旗の上から始めた操作は対象外(それぞれ独自のドラッグ/タップ)。#vbarRowsはCSSでtouch-action:pan-y(横方向はこちらで処理)
+(function () {
+  const rowsEl = document.getElementById("vbarRows");
+  if (!rowsEl) return;
+  const LONG_MS = 500, MOVE_PX = 10, DBL_MS = 320, DBL_PX = 36;
+  let g = null, suppressUntil = 0, lastTap = { at: 0, x: 0, y: 0 };
+
+  function clearTimer() { if (g && g.timer) { clearTimeout(g.timer); g.timer = 0; } }
+
+  rowsEl.addEventListener("pointerdown", e => {
+    if (!audio.duration || (e.pointerType === "mouse" && e.button !== 0)) return;
+    if (e.target.closest && e.target.closest(".vbar-line, .vbar-label, .vbar-ab-pt")) return;
+    const bar = e.target.closest ? e.target.closest(".vbar") : null;
+    if (!bar) return;
+    g = { id: e.pointerId, x0: e.clientX, y0: e.clientY, bar: bar, mode: null, startT: audio.currentTime, timer: 0, touch: e.pointerType !== "mouse" };
+    g.timer = setTimeout(() => {
+      if (!g || g.mode) return;
+      g.mode = "long";
+      const t = QNBars.timeInRow(g.bar, parseInt(g.bar.dataset.row, 10), g.x0);
+      suppressUntil = Date.now() + 700;
+      if (t !== null && typeof addPinAt === "function") addPinAt(t);
+    }, LONG_MS);
+  });
+
+  rowsEl.addEventListener("pointermove", e => {
+    if (!g || e.pointerId !== g.id) return;
+    const dx = e.clientX - g.x0, dy = e.clientY - g.y0;
+    if (!g.mode) {
+      if (Math.abs(dx) < MOVE_PX && Math.abs(dy) < MOVE_PX) return;
+      clearTimer();
+      if (g.touch && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        g.mode = "scrub";
+        g.startT = audio.currentTime;
+        try { rowsEl.setPointerCapture(e.pointerId); } catch (err) {}
+        beginSeek();
+        if (typeof hidePinPopup === "function") hidePinPopup();
+      } else { g.mode = "other"; return; }
+    }
+    if (g.mode === "scrub") {
+      const w = g.bar.getBoundingClientRect().width || 1;
+      const t = Math.max(0, Math.min(audio.duration, g.startT + dx / w * QNBars.getSec()));
+      audio.currentTime = t;
+      prevTime = t;
+    }
+  });
+
+  function end(e) {
+    if (!g || e.pointerId !== g.id) return;
+    clearTimer();
+    if (g.mode === "scrub") {
+      suppressUntil = Date.now() + 400;
+      setTimeout(() => { isSeeking = false; }, 150);
+    }
+    g = null;
+  }
+  rowsEl.addEventListener("pointerup", end);
+  rowsEl.addEventListener("pointercancel", end);
+
+  // 長押し/スクラブ直後のclickは無効化。ダブルタップ(2回目)は再生中ならその位置で停止して通常のシーク+再生を止める(captureで先に受ける)
+  rowsEl.addEventListener("click", e => {
+    if (Date.now() < suppressUntil) { e.stopImmediatePropagation(); e.preventDefault(); return; }
+    const now = Date.now();
+    const dbl = now - lastTap.at < DBL_MS && Math.abs(e.clientX - lastTap.x) < DBL_PX && Math.abs(e.clientY - lastTap.y) < DBL_PX;
+    lastTap = { at: now, x: e.clientX, y: e.clientY };
+    if (dbl && !audio.paused) {
+      e.stopImmediatePropagation();
+      lastTap.at = 0;
+      if (typeof hidePinPopup === "function") hidePinPopup();
+      if (typeof hapticTap === "function") hapticTap();
+      audio.pause();
+      updatePlayButtonState();
+    }
+  }, true);
+})();
+
+
 
 
 const isMobileLayout = () => window.matchMedia("(max-width: 768px)").matches;

@@ -34,3 +34,5 @@ grep -o 'id="[a-zA-Z0-9]*"' JS/player-ui-pc-v2.js | sed 's/id="//;s/"//' | sort 
 - TUNER：idは使わず**`data-tn="..."`で参照**（`micBtn`/`toneStopBtn`/`displayBtn`/`sensDown`/`sensUp`/`smoothDown`/`smoothUp`=下段バー、`presetTabs`/`tuningTabs`/`stringList`/`toneNow*`=Tone、`sensRange`/`smoothRange`=Sensitivity、`displayChoices`=Display、`kbdBox`=Keyboard、`prompt`/`display`/`micError`=ステージ）。`.qn-tn[data-panel="tone|sens|display|keyboard|none"]`が開いているパネル、`.qn-tn-collapsed`がパネル格納、メーター内部は`data-d`（`.qn-tn-meter`/`.qn-tn-gm`の`data-state`=just/close/far）。
 
 - v3.44.0: 設定UIの共通部品は`JS/qn-settings-ui.js`、CSSは`CSS/style-settings.css`。YouTubeのバー内プリロール(`.qn-yt-preroll`/preDown/preUp/preVal)は撤去、設定の行へ移動。
+
+- v3.45.0: SPメインドック`#pcV2SpDock`(`#pcV2DockPrevMarker` `#pcV2DockLoop` `#pcV2DockPlay` `#pcV2DockAdd` `#pcV2DockNextMarker` `#pcV2DockMore`)。PC幅は非表示。ポップアップ`.qn-pl-seekpop`に`[data-pop="L"]`(Loop)。

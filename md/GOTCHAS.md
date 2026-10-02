@@ -94,3 +94,8 @@
 - 設定の行/ステッパー/スイッチ/Moreの一覧は`JS/qn-settings-ui.js`(QNSettingsUI)だけで作る。CSSは`CSS/style-settings.css`だけ。PLAYER(player-ui-pc-v2.js)にもアプリ(qn-apps.js)にも個別の行ビルダーを書かない。
 - アプリ固有の設定は`QNApps.register({settings: [{title, rows:[...]}] | () => [...]})`。`build()`が返す`el`のクリック処理は`el`自体に付くので、子要素だけ別の親へ移さない(動かなくなる)。
 - 下層(Color/Keyboard等)から戻る時のスクロール位置は`settingsScroll`(PLAYER)/`rootScroll`(アプリ)で復元。
+
+## SPメインドックと波形ジェスチャー(v3.45.0)
+- `#pcV2SpDock`は既存ボタン(`#playToggle` `#loopToggleBtn` `#addPinBtn` `#prevMarkerBtn` `#nextMarkerBtn`)への中継とミラーだけ。ハンドラやidは既存側に残す。ドックは既存ボタンがdocumentに接続された後(`buildSpDock()`はroot挿入後)に作ること。
+- 下段バー(`#pcV2BottomBar`)は`#pcV2Root.qn-sp-more-open`の時だけ表示(SP)。パネル高さ変数`--pcv2-bottom-bars-height`にはドックの高さも含める。アプリ表示中は`body.qn-app-open`でドックも非表示。
+- 波形ジェスチャー(player-ui-shared.js)は`#vbarRows`で受ける。`touch-action: pan-y`(SPのCSS)が前提。マーカー線・A/B旗の上から始めた操作は対象外。長押し/スクラブ直後のclickは`suppressUntil`で無効化。ダブルタップ停止は再生中のみ。

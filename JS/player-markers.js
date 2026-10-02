@@ -13,6 +13,22 @@ function addCurrentPin() {
   savePins();
 }
 
+// 【v3.45.0】指定位置にマーカー追加(波形の長押し用)。±0.3秒以内に既存マーカーがあれば何もしない(falseを返す)
+function addPinAt(t) {
+  if (!audio.duration) return false;
+  t = Math.max(0, Math.min(audio.duration, Math.round(t * 10) / 10));
+  if (pins.some(p => Math.abs(p.t - t) <= 0.3)) return false;
+  hapticSuccess();
+  pins.push({ t: t, enabled: true, memo: "", color: null });
+  pins.sort((a, b) => a.t - b.t);
+  loopActiveMarkerIndex = null;
+  renderPins();
+  renderSegments();
+  renderPinList();
+  savePins();
+  return true;
+}
+
 document.getElementById("addPinBtn").onclick = addCurrentPin;
 
 function getMarkerNavReferenceTime() {
@@ -587,6 +603,7 @@ function ensurePinPopup() {
       '<button type="button" class="qn-yt-seekpop-btn" data-pop="A" title="この位置をA点(ループ開始)に（もう一度押すと解除）"><b>A</b><span>Start</span></button>' +
       '<button type="button" class="qn-yt-seekpop-btn" data-pop="B" title="この位置をB点(ループ終了)に（もう一度押すと解除）"><b>B</b><span>End</span></button>' +
       '<button type="button" class="qn-yt-seekpop-btn" data-pop="M" title="この位置にマーカーを追加"><b>＋</b><span>Marker</span></button>' +
+      '<button type="button" class="qn-yt-seekpop-btn" data-pop="L" title="この位置の区間(マーカーからマーカーまで)をループ"><b><svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg></b><span>Loop</span></button>' +
       '<button type="button" class="qn-yt-seekpop-btn qn-yt-seekpop-del" data-pop="X" title="このA/B点を削除" hidden><b>－</b><span>Point</span></button>' +
       '<button type="button" class="qn-yt-seekpop-btn qn-yt-seekpop-del" data-pop="D" title="このマーカーを削除" hidden><b>－</b><span>Marker</span></button>' +
       '<button type="button" class="qn-yt-seekpop-btn" data-pop="C" title="マーカーの色を変える" hidden><b><i class="qn-yt-seekpop-dot"></i></b><span>Color</span></button>' +
@@ -602,6 +619,7 @@ function ensurePinPopup() {
     if (k === "X") pinPopClearPoint();
     else if (k === "A" || k === "B") pinPopAB(k);
     else if (k === "M") pinPopAdd();
+    else if (k === "L") pinPopLoop();
     else if (k === "D") pinPopDelete();
     else if (k === "C") pinPopColor();
     else if (k === "H") pinPopToggle();
@@ -649,6 +667,7 @@ function showPinPopup(t, barEl, clientX, pinObj, abKind) {
   pop.querySelector('[data-pop="A"]').hidden = !!abKind;
   pop.querySelector('[data-pop="B"]').hidden = !!abKind;
   pop.querySelector('[data-pop="M"]').hidden = !!pinObj || !!abKind;
+  pop.querySelector('[data-pop="L"]').hidden = !!abKind;
   ["D", "C", "H"].forEach(k => { pop.querySelector(`[data-pop="${k}"]`).hidden = !pinObj; });
   pop.querySelector('[data-pop="A"]').classList.toggle("is-set", abA !== null && Math.abs(abA - pinPopTime) <= AB_SNAP_SEC);
   pop.querySelector('[data-pop="B"]').classList.toggle("is-set", abB !== null && Math.abs(abB - pinPopTime) <= AB_SNAP_SEC);
@@ -670,6 +689,21 @@ function showPinPopup(t, barEl, clientX, pinObj, abKind) {
   pop.style.left = left + "px";
   pop.style.top = top + "px";
   resetPinPopTimer();
+}
+
+// 【v3.45.0】ポップアップのLoop: その位置を含む区間をSectionループにして再生(1タップでループ開始)
+function pinPopLoop() {
+  const t = pinPopTime;
+  hidePinPopup();
+  hapticSuccess();
+  if (typeof setLoopModeState === "function") setLoopModeState("sec", true);
+  beginSeek();
+  audio.currentTime = t;
+  prevTime = t;
+  audio.play();
+  updatePlayButtonState();
+  renderSegments(getActiveSegment(t));
+  setTimeout(() => { isSeeking = false; }, 150);
 }
 
 function pinPopAB(kind) {

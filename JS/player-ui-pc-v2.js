@@ -384,6 +384,58 @@
 
     root.appendChild(bottomBar);
 
+    // 【v3.45.0】SP専用メインドック(#pcV2SpDock): 前マーカー/Loop/再生/+Marker/次マーカー + Moreトグル。押す先は既存ボタン(idとハンドラは不変。ドックは中継+状態ミラーだけ)。
+    // 既存の下段バー(#pcV2BottomBar)は「More」で開閉(既定は閉。qn_sp_more)。PC幅はCSSで非表示
+    const SP_MORE_KEY = "qn_sp_more";
+    function buildSpDock() {
+      const svgOf = (id) => { const b = document.getElementById(id); const sv = b && b.querySelector("svg"); return sv ? sv.outerHTML : ""; };
+      const mk = (cls, id, title, iconHtml, label) => el('<button type="button" class="pcv2-dock-btn ' + cls + '" id="' + id + '" title="' + title + '">' + iconHtml + '<span>' + label + '</span></button>');
+      const dock = el('<div id="pcV2SpDock"></div>');
+      const prevM = mk("", "pcV2DockPrevMarker", "Previous marker", svgOf("prevMarkerBtn"), "Prev");
+      const loop = mk("pcv2-dock-loop", "pcV2DockLoop", "Loop", svgOf("loopToggleBtn"), "Loop");
+      const play = mk("pcv2-dock-play", "pcV2DockPlay", "Play / Pause", '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>', "");
+      const add = mk("pcv2-dock-add", "pcV2DockAdd", "Add marker", '<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>', "Marker");
+      const nextM = mk("", "pcV2DockNextMarker", "Next marker", svgOf("nextMarkerBtn"), "Next");
+      const more = mk("pcv2-dock-more", "pcV2DockMore", "More controls", '<svg viewBox="0 0 24 24"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>', "More");
+      [prevM, loop, play, add, nextM, more].forEach(b => dock.appendChild(b));
+      const click = (id) => { const b = document.getElementById(id); if (b) b.click(); };
+      prevM.addEventListener("click", () => click("prevMarkerBtn"));
+      nextM.addEventListener("click", () => click("nextMarkerBtn"));
+      loop.addEventListener("click", () => click("loopToggleBtn"));
+      add.addEventListener("click", () => { if (typeof hapticTap === "function") hapticTap(); if (typeof addCurrentPin === "function") addCurrentPin(); });
+      play.addEventListener("click", () => { if (typeof togglePlay === "function") togglePlay(); });
+      // 再生/停止アイコンのミラー
+      const syncPlay = () => {
+        const playing = !audio.paused;
+        play.classList.toggle("is-playing", playing);
+        play.innerHTML = '<svg viewBox="0 0 24 24"><path d="' + (playing ? "M6 19h4V5H6v14zm8-14v14h4V5h-4z" : "M8 5v14l11-7z") + '"/></svg>';
+      };
+      ["play", "pause", "ended", "emptied", "loadedmetadata"].forEach(n => audio.addEventListener(n, syncPlay));
+      // Loopの状態(OFF / A-B / Section)のミラー: 本体ボタンのclass/ラベルを写す(rAFは使わずMutationObserver)
+      const loopSrc = document.getElementById("loopToggleBtn");
+      const loopLbl = loop.querySelector("span");
+      const syncLoop = () => {
+        if (!loopSrc) return;
+        const on = loopSrc.classList.contains("is-active");
+        loop.classList.toggle("is-active", on);
+        const l = loopSrc.querySelector(".top-controls-btn-label");
+        loopLbl.textContent = l ? l.textContent : "Loop";
+      };
+      if (loopSrc && typeof MutationObserver === "function") new MutationObserver(syncLoop).observe(loopSrc, { attributes: true, attributeFilter: ["class"], childList: true, subtree: true, characterData: true });
+      syncLoop();
+      // More: 既存の下段バーの開閉
+      const setMore = (open) => {
+        root.classList.toggle("qn-sp-more-open", open);
+        more.classList.toggle("is-open", open);
+        try { localStorage.setItem(SP_MORE_KEY, open ? "1" : "0"); } catch (e) {}
+        if (document.getElementById("pcV2Layout")?.classList.contains("pcv2-panel-open")) updatePcv2BottomBarsHeightVar();
+      };
+      more.addEventListener("click", () => { if (typeof hapticTap === "function") hapticTap(); setMore(!root.classList.contains("qn-sp-more-open")); });
+      let saved = false; try { saved = localStorage.getItem(SP_MORE_KEY) === "1"; } catch (e) {}
+      setMore(saved);
+      return dock;
+    }
+
     // PLAYタブ位置を#playToggle真上へ動的に合わせる(実測。初期scrollLeft=0基準で1回。呼び出しはsyncBottomBarPosition()のDOM順確定後)
     function alignPlayAnchorTab() {
       const playBtn = document.getElementById("playToggle");
@@ -398,6 +450,7 @@
     }
 
     appContainer.parentNode.insertBefore(root, appContainer.nextSibling);
+    root.appendChild(buildSpDock()); // 既存ボタンがdocumentに接続された後に作る(アイコン複製・ミラー用)
 
     // 【SP幅】SPは「アイコンバー最下部、その上にコントロールバー」。bottomBarは#pcV2Root直下、iconBarは#pcV2Layout内で階層が違いCSS orderでは不可→JSでDOM移動。PC幅に戻る時は元位置(#pcV2Root直下、layoutの後)へ
     syncBottomBarPosition();
@@ -663,6 +716,7 @@
   function syncBottomBarPosition() {
     const bottomBar = document.getElementById("pcV2BottomBar");
     const anchorTabs = document.getElementById("pcV2BottomBarAnchorTabs");
+    const dockEl = document.getElementById("pcV2SpDock");
     const layoutEl = document.getElementById("pcV2Layout");
     const iconBar = document.getElementById("pcV2IconBar");
     const rootEl = document.getElementById("pcV2Root");
@@ -677,6 +731,8 @@
       if (anchorTabs && (anchorTabs.nextSibling !== bottomBar || anchorTabs.parentElement !== layoutEl)) {
         layoutEl.insertBefore(anchorTabs, bottomBar);
       }
+      // ドックは下段バーの直前(アンカータブの手前)
+      if (dockEl && (dockEl.nextSibling !== anchorTabs || dockEl.parentElement !== layoutEl)) layoutEl.insertBefore(dockEl, anchorTabs || bottomBar);
     } else {
       if (bottomBar.parentElement !== layoutEl || layoutEl.lastElementChild !== bottomBar) {
         layoutEl.appendChild(bottomBar);
@@ -778,7 +834,8 @@
     const bottomBar = document.getElementById("pcV2BottomBar");
     const iconBar = document.getElementById("pcV2IconBar");
     if (!layoutEl || !bottomBar || !iconBar) return;
-    const total = bottomBar.getBoundingClientRect().height + iconBar.getBoundingClientRect().height;
+    const dockEl = document.getElementById("pcV2SpDock");
+    const total = bottomBar.getBoundingClientRect().height + iconBar.getBoundingClientRect().height + (dockEl ? dockEl.getBoundingClientRect().height : 0);
     layoutEl.style.setProperty("--pcv2-bottom-bars-height", total + "px");
   }
 

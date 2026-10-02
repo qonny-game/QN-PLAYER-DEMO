@@ -407,3 +407,65 @@ html {
 #pcV2BottomBar .pcv2-stepper { margin: 0 12px; }
 #pcV2BottomBar #pcV2VolumeBtn,
 #pcV2BottomBar #pcV2BottomEqToggle { margin: 0 6px; }
+
+/* ---------- SPメインドック(v3.45.0) ----------
+   前マーカー/Loop/再生/+Marker/次マーカー/Moreを1行に。再生は円(円角はそのまま)、他は角ボタン。タップ領域は全て48px以上。
+   既存の下段バー(#pcV2BottomBar)は「More」で開閉(#pcV2Root.qn-sp-more-open)。押す先は既存ボタン(JSの中継)。 */
+#pcV2SpDock { display: none; }
+@media screen and (max-width: 900px) {
+  #pcV2SpDock {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1.7fr 1.2fr 1fr 0.9fr;
+    align-items: center;
+    order: 3;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 110;
+    background: #0a0a0c;
+    border-top: 1px solid var(--border-subtle);
+    padding: 6px 6px 4px;
+    gap: 2px;
+  }
+  #pcV2BottomBarAnchorTabs { display: none; }
+  #pcV2Root:not(.qn-sp-more-open) #pcV2BottomBar { display: none; }
+  #pcV2WaveFabRow #pcV2WaveAddMarkerBtn, #pcV2WaveFabRow #pcV2WaveFabPlayBtn { display: none; }
+  .pcv2-dock-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-height: 56px;
+    padding: 4px 0;
+    background: none;
+    border: none;
+    border-radius: 0;
+    color: var(--icon-muted);
+    font-family: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .pcv2-dock-btn svg { width: 28px; height: 28px; fill: currentColor; display: block; }
+  .pcv2-dock-btn span { font-size: 11px; line-height: 1; white-space: nowrap; }
+  .pcv2-dock-btn:active { background: rgba(255, 255, 255, 0.06); }
+  .pcv2-dock-loop.is-active, .pcv2-dock-more.is-open { color: var(--accent-primary); }
+  .pcv2-dock-add { color: var(--text-bright); }
+  .pcv2-dock-add svg { width: 32px; height: 32px; }
+  .pcv2-dock-play {
+    justify-self: center;
+    width: 64px;
+    height: 64px;
+    min-height: 0;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    color: var(--sidebar-on-accent, #fff);
+  }
+  .pcv2-dock-play svg { width: 34px; height: 34px; }
+  .pcv2-dock-play:active { background: var(--accent-primary); transform: scale(0.94); }
+  .pcv2-dock-play.is-playing { background: linear-gradient(135deg, #10b981, #059669); }
+  .pcv2-dock-more svg { transition: transform 150ms ease; }
+  .pcv2-dock-more.is-open svg { transform: rotate(180deg); }
+  /* 波形の横スワイプ(シーク)を使うため、縦スクロール以外はブラウザに任せない */
+  #vbarRows { touch-action: pan-y; }
+}

@@ -245,6 +245,7 @@ body直下fixed。PC=サイドバー右に重ねる(clip-pathで縁から出る)
 /* アプリ表示中は本体の再生系バーをdisplay:noneで隠すだけ(DOM/状態は変えない) */
 body.qn-app-open #pcV2BottomBar,
 body.qn-app-open #pcV2BottomBarAnchorTabs,
+body.qn-app-open #pcV2SpDock,
 body.qn-app-open #pcV2TimeRow {
   display: none !important;
 }
