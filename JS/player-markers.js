@@ -1,6 +1,29 @@
 // player-markers.js — マーカー追加/前後ジャンプ/波形上のピン描画/ドラッグ(startDragPin。PC/SP共通)/カラーピッカー/メモ編集/ループ区間(segmentHighlight)。行(.vbar)はQNBars(player-bars.js)が仮想スクロールで作る: 装飾はdecorateBarRowで付け、行DOMは直接探さずQNBars.rowEl/eachRow経由。
 // 依存: player-core.js(pins,savePins,hexToRgba,MARKER_COLOR_PALETTE), player-bars.js(QNBars), player-ui-shared.js(haptic*,isMobileLayout)。トップレベルでDOM取得するのでDOM構築後に読み込む
 
+// 行/スワイプトレイ共通のアクションボタン(□アイコン+ラベル)。PLAYERのマーカー行(.pin-act-btn)と、qn-apps.jsのスワイプトレイ(.qn-swipe-btn)が同じ見た目になるよう、ここだけでアイコン・ラベルを決める(qn-apps.jsはwindow.QN_ROW_ACTを読む)。
+// kind: edit=編集 / skip=曲のSKIP(playlist。on=スキップ中→PLAY) / mskip=マーカー区間のSKIP(on=飛ばし中→PLAY) / hide=表示切替(on=非表示中→SHOW) / del=削除
+window.QN_ROW_ACT = (function () {
+  const icons = {
+    edit: '<path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>',
+    eyeOn: '<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>',
+    eyeOff: '<path d="M12 6.5c3.79 0 7.17 2.13 8.82 5.5-.59 1.2-1.42 2.25-2.42 3.11l1.42 1.42c1.39-1.23 2.49-2.77 3.18-4.53C21.27 7.61 17 4.5 12 4.5c-1.27 0-2.49.2-3.64.57l1.65 1.65c.62-.14 1.28-.22 1.99-.22zM2.71 3.16L1.29 4.57 4 7.27C2.36 8.53 1.07 10.15 0.18 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l3.01 3.01 1.41-1.41L2.71 3.16zM12 17c-2.76 0-5-2.24-5-5 0-.77.18-1.5.49-2.14l1.57 1.57c-.03.18-.06.37-.06.57 0 1.66 1.34 3 3 3 .2 0 .38-.03.57-.07l1.57 1.57c-.65.32-1.37.5-2.14.5zm2.97-5.33c-.15-1.4-1.25-2.49-2.64-2.64l2.64 2.64z"/>',
+    del: '<path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>',
+    ok: '<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>',
+    skipNext: '<path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>',
+    play: '<path d="M8 5v14l11-7z"/>'
+  };
+  function info(kind, on) {
+    if (kind === "edit") return { icon: icons.edit, label: "EDIT" };
+    if (kind === "del") return { icon: icons.del, label: "DELETE" };
+    if (kind === "hide") return { icon: on ? icons.eyeOn : icons.eyeOff, label: on ? "SHOW" : "HIDE" };
+    if (kind === "mskip") return { icon: on ? icons.play : icons.skipNext, label: on ? "PLAY" : "SKIP" };
+    return { icon: on ? icons.eyeOn : icons.eyeOff, label: on ? "PLAY" : "SKIP" };
+  }
+  function html(kind, on) { const i = info(kind, on); return '<svg viewBox="0 0 24 24">' + i.icon + "</svg><span>" + i.label + "</span>"; }
+  return { icons: icons, info: info, html: html };
+})();
+
 function addCurrentPin() {
   if (!audio.duration) return;
   hapticSuccess();
@@ -437,6 +460,7 @@ function renderPinList() {
   pins.forEach((pinObj, i) => {
     const div = document.createElement("div");
     div.className = "pinItem";
+    div.dataset.pinIndex = String(i);
     if (!pinObj.enabled) {
       div.classList.add("disabled");
     }
@@ -447,17 +471,11 @@ function renderPinList() {
 
     const colorMark = document.createElement("button");
     colorMark.className = "pin-color-mark";
-    colorMark.title = "Set marker color";
+    colorMark.title = "Edit marker";
     colorMark.style.background = (pinObj.color && MARKER_COLOR_PALETTE[pinObj.color]) ? MARKER_COLOR_PALETTE[pinObj.color] : "#3a3a48";
-    colorMark.onclick = (e) => {
-      e.stopPropagation();
-      if (typeof isUnlocked === "function" && !isUnlocked()) {
-        swShowUnlockToast("無料版ではマーカーの色変更はできません。");
-        return;
-      }
-      openMarkerColorPicker(colorMark, pinObj, i);
-    };
-    // 【v2.16.8】.pinItemはgrid4列固定(先頭セル/ラベル/目/削除)。子要素は必ず4個。鍵は.pin-leading-cellにcolorMarkと一緒に入れる(別要素で5個になると列がズレる。GOTCHAS.md)
+    // 色丸のタップは編集(メモ+プリセット)と同じ表示を開く(下のeditActionを共有)
+    colorMark.onclick = (e) => { e.stopPropagation(); if (div._qnEdit) div._qnEdit(); };
+    // 【v2.16.8】.pinItemはgrid4列固定(先頭セル/ラベル/操作ボタン群/選択)。子要素は必ず4個。鍵は.pin-leading-cellにcolorMarkと一緒に入れる(別要素で5個になると列がズレる。GOTCHAS.md)
     const leadingCell = document.createElement("div");
     leadingCell.className = "pin-leading-cell";
     if (isLockedMarker) {
@@ -494,49 +512,36 @@ function renderPinList() {
       setTimeout(() => { isSeeking = false; }, 150);
     };
     labelRow.appendChild(infoSpan);
+    div.appendChild(labelRow);
 
-    const editBtn = document.createElement("button");
-    editBtn.className = "pin-edit-btn";
-    editBtn.title = "Edit memo";
-    editBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>';
-    editBtn.onclick = (e) => {
-      e.stopPropagation();
+    // 操作ボタン群(.pin-act-cell): 編集(EDITモードのみ)/SKIP/HIDE。見た目はスワイプトレイと共通(QN_ROW_ACT)。選択(〇)は後ろの.pin-del-zone
+    const markersHasSelection = typeof window.markersHasSelectedItems === "function" && window.markersHasSelectedItems();
+    const actCell = document.createElement("div");
+    actCell.className = "pin-act-cell";
+    function makeActBtn(kind, on, cls, title) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "pin-act-btn is-" + kind + " " + cls;
+      b.title = title;
+      b.innerHTML = window.QN_ROW_ACT.html(kind, on);
+      b.disabled = markersHasSelection;
+      return b;
+    }
+
+    const editAction = () => {
       if (typeof isUnlocked === "function" && !isUnlocked()) {
         swShowUnlockToast("無料版ではマーカーメモを利用できません。");
         return;
       }
       startPinMemoEdit(div, infoSpan, pinObj, i);
     };
-    labelRow.appendChild(editBtn);
+    div._qnEdit = editAction;
+    const editBtn = makeActBtn("edit", false, "pin-edit-btn", "Edit memo");
+    editBtn.onclick = (e) => { e.stopPropagation(); editAction(); };
+    actCell.appendChild(editBtn);
 
-    // A/Bボタン(ブロック型)。この位置をA点/B点に設定(同位置をもう一度で解除)。labelRow内に置く(.pinItemは4列固定)
-    const abCell = document.createElement("div");
-    abCell.className = "pin-ab-cell";
-    ["A", "B"].forEach(kind => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "qn-ab-block";
-      b.dataset.abKind = kind;
-      b.dataset.t = String(pinObj.t);
-      b.textContent = kind;
-      b.title = kind === "A" ? "このマーカーの位置をA点(ループ開始)に" : "このマーカーの位置をB点(ループ終了)に";
-      b.onclick = (e) => {
-        e.stopPropagation();
-        if (isLockedMarker) {
-          swShowUnlockToast(`無料版はマーカーの先頭${SW_LIMITS.MARKER_MAX_ACTIVE}個までしか使用できません。`);
-          return;
-        }
-        hapticTap();
-        setABAt(kind, pinObj.t);
-      };
-      abCell.appendChild(b);
-    });
     // Skip: この区間(次のマーカーまで)を再生中に飛ばす。トグル
-    const skipBtn = document.createElement("button");
-    skipBtn.type = "button";
-    skipBtn.className = "qn-ab-block qn-skip-block" + (pinObj.skip ? " is-skip" : "");
-    skipBtn.textContent = "S";
-    skipBtn.title = pinObj.skip ? "Skip ON: 次のマーカーまで飛ばして再生" : "Skip OFF: 押すとこの区間(次のマーカーまで)を飛ばして再生";
+    const skipBtn = makeActBtn("mskip", !!pinObj.skip, "pin-skip-btn" + (pinObj.skip ? " is-on" : ""), pinObj.skip ? "Skip ON: 次のマーカーまで飛ばして再生" : "Skip OFF: 押すとこの区間(次のマーカーまで)を飛ばして再生");
     skipBtn.onclick = (e) => {
       e.stopPropagation();
       if (isLockedMarker) {
@@ -546,20 +551,9 @@ function renderPinList() {
       hapticTap();
       toggleSkipPin(pinObj);
     };
-    abCell.appendChild(skipBtn);
-    labelRow.appendChild(abCell);
-    updatePinABButtons(div);
+    actCell.appendChild(skipBtn);
 
-    div.appendChild(labelRow);
-
-    const toggleBtn = document.createElement("button");
-    toggleBtn.className = "toggle-btn";
-    toggleBtn.title = pinObj.enabled ? "Marker enabled (click to disable)" : "Marker disabled (click to enable)";
-    toggleBtn.innerHTML = pinObj.enabled
-      ? '<svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>'
-      : '<svg viewBox="0 0 24 24"><path d="M12 6.5c3.79 0 7.17 2.13 8.82 5.5-.59 1.2-1.42 2.25-2.42 3.11l1.42 1.42c1.39-1.23 2.49-2.77 3.18-4.53C21.27 7.61 17 4.5 12 4.5c-1.27 0-2.49.2-3.64.57l1.65 1.65c.62-.14 1.28-.22 1.99-.22zM2.71 3.16L1.29 4.57 4 7.27C2.36 8.53 1.07 10.15 0.18 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l3.01 3.01 1.41-1.41L2.71 3.16zM12 17c-2.76 0-5-2.24-5-5 0-.77.18-1.5.49-2.14l1.57 1.57c-.03.18-.06.37-.06.57 0 1.66 1.34 3 3 3 .2 0 .38-.03.57-.07l1.57 1.57c-.65.32-1.37.5-2.14.5zm2.97-5.33c-.15-1.4-1.25-2.49-2.64-2.64l2.64 2.64z"/></svg>';
-    const markersHasSelection = typeof window.markersHasSelectedItems === "function" && window.markersHasSelectedItems();
-    toggleBtn.disabled = markersHasSelection;
+    const toggleBtn = makeActBtn("hide", !pinObj.enabled, "toggle-btn", pinObj.enabled ? "Marker enabled (click to disable)" : "Marker disabled (click to enable)");
     toggleBtn.onclick = (e) => {
       e.stopPropagation();
       if (typeof window.markersHasSelectedItems === "function" && window.markersHasSelectedItems()) return;
@@ -570,7 +564,8 @@ function renderPinList() {
       renderPinList();
       savePins();
     };
-    div.appendChild(toggleBtn);
+    actCell.appendChild(toggleBtn);
+    div.appendChild(actCell);
 
     const delBtn = document.createElement("button");
     delBtn.textContent = "✕";

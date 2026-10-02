@@ -108,3 +108,9 @@
 - アプリ切替はヘッダーのロゴ`#qnAppLogoBtn`(index.htmlにある。PC/SP共通。v3.50.0〜サイドバーのバッジ`#qnAppBadge`とSPの`#qnAppSwitchBtn`は撤去済み)。フライアウトはロゴの真下に出るドロップダウン(`positionFlyout()`がロゴの矩形基準。z-index 450=サイドバー400より上。幕は透明)。**開いている間は`shiftHostForFlyout()`が`#qnAppHost`をtransformで下へずらす**(YouTubeプレイヤーを覆わない規約対応。はみ出す下側はclip-pathで切る。空いた上側は`#qnAppShiftCover`で塞ぎ裏のPLAYERを見せない)。フライアウトの高さや位置を変えたらこのずらし量も確認。外側タップ判定の除外に`#qnAppLogoBtn`を含めること。表示名はqn-apps.jsの`BRAND`(YouTubeアプリは規約上グレーになりうるので名前に「YouTube」を入れない)。
 - SPのアイコンバーは`overflow-x:hidden`+各タブ`flex:1 1 0`(v3.48.0でSeekbarタブ撤去=5タブ)。ラベル(span)は`.active`/`.qn-app-active`以外を`visibility:hidden`(`display:none`にすると選択でバーの高さが変わる)。タブを増やす時は幅(6〜7個まで)を確認。
 - SPヘッダーのバージョン表記(`#appVersion`)はCSSで非表示。確認は設定の最下段(`QNSettingsUI.versionLine()`)。
+
+## Markersパネルの行(v3.51.0)
+- `.pinItem`は4列grid(色丸/ラベル/`.pin-act-cell`/選択`.pin-del-zone`)。操作ボタン(`.pin-act-btn`: 編集`.pin-edit-btn`・SKIP`.pin-skip-btn`・HIDE`.toggle-btn`)は`.pin-act-cell`の中に入れる(子を増やさない)。編集ボタンはEDITモードだけ表示(CSS)。
+- ボタン/スワイプトレイのアイコン・ラベルは`window.QN_ROW_ACT`(player-markers.js)だけで決める(qn-apps.jsのトレイも読む)。kind: edit / skip(曲) / mskip(マーカー区間) / hide / del。
+- 行には`data-pin-index`と`row._qnEdit`(編集の起動)を持たせ、スワイプ(player-swipe.js)と色丸タップが同じ処理を呼ぶ。player-swipe.jsでDOM変数名に`pins`を使わない(グローバルのマーカー配列を隠す)。
+- 削除用の選択中は`.pin-act-btn`を全部disabled(再描画で選択表示が消えるため)。YouTube側のマーカー行(`.qn-ab-block`等)は未変更。

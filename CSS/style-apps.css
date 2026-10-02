@@ -371,7 +371,7 @@ body.qn-mic-on #qnAppLogoBtn::after {
   .qn-swipe-list .qn-swipe-tray .qn-swipe-btn svg { width: 22px; height: 22px; fill: currentColor; }
   .qn-swipe-list .qn-swipe-tray .qn-swipe-btn span { color: #fff; font-size: 10px; }
   .qn-swipe-list .qn-swipe-tray .qn-swipe-btn.is-edit { background: var(--accent-primary); }
-  .qn-swipe-list .qn-swipe-tray .qn-swipe-btn.is-skip, .qn-swipe-list .qn-swipe-tray .qn-swipe-btn.is-hide { background: #b45309; }
+  .qn-swipe-list .qn-swipe-tray .qn-swipe-btn.is-skip, .qn-swipe-list .qn-swipe-tray .qn-swipe-btn.is-mskip, .qn-swipe-list .qn-swipe-tray .qn-swipe-btn.is-hide { background: #b45309; }
   .qn-swipe-list .qn-swipe-tray .qn-swipe-btn.is-del { background: var(--danger, #ef4444); }
   .qn-swipe-list .qn-swipe-tray .qn-swipe-btn.is-del.confirm { background: #991b1b; }
   .qn-swipe-list .qn-swipe-tray .qn-swipe-btn:active { filter: brightness(0.85); }
@@ -380,11 +380,9 @@ body.qn-mic-on #qnAppLogoBtn::after {
 .qn-swipe-tray { display: none; }
 @media screen and (max-width: 900px) { .qn-swipe-tray { display: flex; } }
 
-/* SP: 行の編集/HIDEアイコンはスワイプで出すので通常時は非表示(編集モード中は従来どおり) */
+/* SP: YouTube側の行の編集/HIDEアイコンはスワイプで出すので通常時は非表示(編集モード中は従来どおり)。PLAYERのマーカー行はv3.51.0から常時SKIP/HIDEを表示(style-markers.css) */
 @media (max-width: 900px) {
   .playlistItem .playlist-hover-edit-btn { display: none !important; }
-  #pcV2PanelBody:not(.markers-edit-mode) #pinList .pin-edit-btn,
-  #pcV2PanelBody:not(.markers-edit-mode) #pinList .toggle-btn,
   .qn-yt:not([data-edit="markers"]) .qn-yt-pinbox .pin-edit-btn,
   .qn-yt:not([data-edit="markers"]) .qn-yt-pinbox .toggle-btn { display: none !important; }
   .qn-yt[data-edit="markers"] .qn-yt-pinbox .pinItem { grid-template-columns: auto 1fr auto auto; }

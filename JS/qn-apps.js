@@ -669,13 +669,8 @@
   }
 
   // SP幅のリスト行: 横にスワイプすると右に□アイコンボタン(編集/SKIP(HIDE)/削除)が出る。opts={rowSel, disabled():bool, actions(row):[{kind:"edit|skip|hide|del", on:bool(skip/hide: 今の状態=無効か), run(row)}]}。削除は2タップ確認。行が再描画されると自然に閉じる
-  var SW_ICON = {
-    edit: '<path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>',
-    eyeOn: '<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>',
-    eyeOff: '<path d="M12 6.5c3.79 0 7.17 2.13 8.82 5.5-.59 1.2-1.42 2.25-2.42 3.11l1.42 1.42c1.39-1.23 2.49-2.77 3.18-4.53C21.27 7.61 17 4.5 12 4.5c-1.27 0-2.49.2-3.64.57l1.65 1.65c.62-.14 1.28-.22 1.99-.22zM2.71 3.16L1.29 4.57 4 7.27C2.36 8.53 1.07 10.15 0.18 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l3.01 3.01 1.41-1.41L2.71 3.16zM12 17c-2.76 0-5-2.24-5-5 0-.77.18-1.5.49-2.14l1.57 1.57c-.03.18-.06.37-.06.57 0 1.66 1.34 3 3 3 .2 0 .38-.03.57-.07l1.57 1.57c-.65.32-1.37.5-2.14.5zm2.97-5.33c-.15-1.4-1.25-2.49-2.64-2.64l2.64 2.64z"/>',
-    del: '<path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>',
-    ok: '<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>'
-  };
+  // アイコン・ラベルはplayer-markers.jsのwindow.QN_ROW_ACT(PLAYERのマーカー行のボタンと共通)
+  var SW_ICON = window.QN_ROW_ACT.icons;
   function swipeRows(container, opts) {
     if (!container || container._qnSwipe) return;
     container._qnSwipe = true;
@@ -699,13 +694,9 @@
       (opts.actions(row) || []).forEach(function (a) {
         var b = document.createElement("button");
         b.type = "button";
-        var kind = a.kind, icon, label;
-        if (kind === "edit") { icon = SW_ICON.edit; label = "EDIT"; }
-        else if (kind === "del") { icon = SW_ICON.del; label = "DELETE"; }
-        else if (kind === "hide") { icon = a.on ? SW_ICON.eyeOn : SW_ICON.eyeOff; label = a.on ? "SHOW" : "HIDE"; }
-        else { icon = a.on ? SW_ICON.eyeOn : SW_ICON.eyeOff; label = a.on ? "PLAY" : "SKIP"; }
+        var kind = a.kind;
         b.className = "qn-swipe-btn is-" + kind;
-        b.innerHTML = '<svg viewBox="0 0 24 24">' + icon + "</svg><span>" + label + "</span>";
+        b.innerHTML = window.QN_ROW_ACT.html(kind, a.on);
         b.addEventListener("click", function (e) {
           e.stopPropagation();
           if (kind === "del" && !b.classList.contains("confirm")) {

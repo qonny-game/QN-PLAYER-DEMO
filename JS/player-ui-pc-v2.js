@@ -766,18 +766,7 @@
       addGroup.appendChild(newFolderBtn);
     }
 
-    if (panelId === "markers") {
-      const addMarkerBtn = el(
-        '<button type="button" class="panel-fab-btn panel-addfile-btn" id="pcV2AddMarkerBtn" title="Add Marker">' +
-          '<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>' +
-          '<span>MARKER</span>' +
-        '</button>'
-      );
-      addMarkerBtn.addEventListener("click", () => {
-        if (typeof addCurrentPin === "function") addCurrentPin();
-      });
-      addGroup.appendChild(addMarkerBtn);
-    }
+    // 【v3.51.0】Markersパネルの+MARKERボタンは撤去(追加は下部ドック/波形のMARKER/長押し)
 
     fab.appendChild(addGroup);
 
@@ -1156,11 +1145,11 @@
       } else if (panelId === "markers") {
         const hasSelection = selectedIndices.markers.size > 0;
         items.forEach(item => {
-          const toggle = item.querySelector(".toggle-btn");
-          if (!toggle) return;
-          if (!toggle.dataset.baseTitle) toggle.dataset.baseTitle = toggle.title;
-          toggle.disabled = hasSelection;
-          toggle.title = hasSelection ? "削除の選択中は切り替えられません" : toggle.dataset.baseTitle;
+          item.querySelectorAll(".pin-act-btn").forEach(toggle => {
+            if (!toggle.dataset.baseTitle) toggle.dataset.baseTitle = toggle.title;
+            toggle.disabled = hasSelection;
+            toggle.title = hasSelection ? "削除の選択中は切り替えられません" : toggle.dataset.baseTitle;
+          });
         });
       }
     };

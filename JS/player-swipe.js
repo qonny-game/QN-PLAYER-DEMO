@@ -5,7 +5,7 @@
   function bind() {
     if (!window.QNApps || typeof window.QNApps.swipeRows !== "function") return;
     var box = document.getElementById("playlistBox");
-    var pins = document.getElementById("pinList");
+    var pinListEl = document.getElementById("pinList");
     function inEdit(cls) {
       var b = document.getElementById("pcV2PanelBody");
       return !!(b && b.classList.contains(cls));
@@ -27,15 +27,17 @@
         }
       });
     }
-    if (pins) {
-      window.QNApps.swipeRows(pins, {
+    if (pinListEl) {
+      window.QNApps.swipeRows(pinListEl, {
         rowSel: ".pinItem",
         disabled: function () { return inEdit("markers-edit-mode"); },
         actions: function (row) {
-          var disabled = row.classList.contains("disabled");
+          var i = parseInt(row.dataset.pinIndex, 10), p = (typeof pins !== "undefined" && Array.isArray(pins)) ? pins[i] : null;
+          if (!p) return [];
           return [
-            { kind: "edit", run: function () { var b = row.querySelector(".pin-edit-btn"); if (b) b.click(); } },
-            { kind: "hide", on: disabled, run: function () { var b = row.querySelector(".toggle-btn"); if (b && !b.disabled) b.click(); } },
+            { kind: "edit", run: function () { if (row._qnEdit) row._qnEdit(); } },
+            { kind: "mskip", on: !!p.skip, run: function () { toggleSkipPin(p); } },
+            { kind: "hide", on: !p.enabled, run: function () { var b = row.querySelector(".toggle-btn"); if (b && !b.disabled) b.click(); } },
             { kind: "del", run: function () { var d = row.querySelector(".del-btn"); if (d) { d.click(); d.click(); } } }
           ];
         }
