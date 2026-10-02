@@ -1,4 +1,4 @@
-/* style-bars.css — 可変長シークバー: #vbarContainer内の#vbarScroll(縦スクロール)/#vbarRows(行の親)/.vbar(1行=BAR_SEC秒)/.vbar-time(行左の開始時刻)、歯車ボタン(.qn-bar-gear)、秒数ポップアップ(.qn-bar-pop)。
+/* style-bars.css — 可変長シークバー: #vbarContainer内の#vbarScroll(縦スクロール)/#vbarRows(行の親)/.vbar(1行=BAR_SEC秒)/.vbar-time(行左の開始時刻)、歯車ボタン(.qn-bar-gear)、設定パネル(#pcV2SettingsBody/.qn-set-*)。
    style-pcv2-panels.cssの後に読み、旧「6本をflexで等分」前提の指定(#pcV2WaveArea #vbarContainer / #pcV2WaveArea .vbar)を上書きする。寸法の元は#vbarContainerのカスタムプロパティ(player-bars.jsがgetComputedStyleで読む。ここを変えれば行ピッチも追従) */
 
 #vbarContainer {
@@ -122,62 +122,105 @@
   fill: currentColor;
 }
 .qn-bar-gear:active { transform: scale(0.92); }
-.qn-bar-gear.is-open { color: var(--accent-primary); }
 @media (hover: hover) and (pointer: fine) {
   .qn-bar-gear:hover { color: var(--text-bright); }
-  .qn-bar-gear.is-open:hover { color: var(--accent-primary); }
 }
 
-/* ---------- 秒数ポップアップ(body直下fixed) ---------- */
-.qn-bar-pop {
-  position: fixed;
-  z-index: 330;
-  box-sizing: border-box;
-  min-width: 140px;
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  background: #101013;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-popup, 12px);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
-  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
-}
-.qn-bar-pop[hidden] { display: none; }
-.qn-bar-pop-title {
-  padding: 4px 10px 6px;
+
+/* ---------- 設定パネル(#pcV2PanelBody内。v3.37.0) ---------- */
+#pcV2SettingsBody { display: flex; flex-direction: column; padding-bottom: 24px; }
+.qn-set-sec { padding: 14px 0 6px; border-bottom: 1px solid var(--border-subtle); }
+.qn-set-sec:last-child { border-bottom: none; }
+.qn-set-sec-title {
+  padding-bottom: 6px;
   font-size: var(--fs-micro);
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   color: var(--icon-muted);
 }
-.qn-bar-pop-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 9px 10px;
+.qn-set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; min-height: 44px; }
+.qn-set-row.is-disabled { opacity: 0.4; pointer-events: none; }
+.qn-set-label { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.qn-set-label span { font-size: var(--fs-body); color: var(--text-bright); }
+.qn-set-label small { font-size: var(--fs-micro); color: var(--icon-muted); }
+.qn-set-ctl { display: flex; align-items: center; flex-shrink: 0; }
+.qn-set-seg { display: flex; padding: 3px; gap: 2px; background: #1c1c24; border: 1px solid var(--border-subtle); border-radius: 10px; }
+.qn-set-seg-btn {
+  min-width: 36px;
+  padding: 6px 8px;
   background: none;
   border: none;
-  border-radius: 8px;
-  color: var(--text-bright);
+  border-radius: 7px;
+  color: var(--icon-muted);
   font-family: inherit;
   font-size: var(--fs-body);
-  text-align: left;
+  font-variant-numeric: tabular-nums;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.qn-bar-pop-item:active { background: rgba(255, 255, 255, 0.06); }
+.qn-set-seg-btn.is-on { background: color-mix(in srgb, var(--accent-primary) 28%, #1c1c24); color: var(--text-pure-white); }
+.qn-set-switch {
+  position: relative;
+  width: 46px;
+  height: 28px;
+  padding: 0;
+  background: #2a2a35;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 120ms ease;
+}
+.qn-set-switch span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--text-bright);
+  transition: transform 120ms ease;
+}
+.qn-set-switch.is-on { background: var(--accent-primary); border-color: var(--accent-primary); }
+.qn-set-switch.is-on span { transform: translateX(18px); }
+.qn-set-step { display: flex; align-items: center; padding: 3px; background: #1c1c24; border: 1px solid var(--border-subtle); border-radius: 10px; }
+.qn-set-step-btn {
+  width: 32px;
+  height: 30px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 7px;
+  color: var(--text-pure-white);
+  font-size: 16px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.qn-set-step-btn:active { transform: scale(0.92); }
+.qn-set-step-btn:disabled { opacity: 0.35; cursor: default; }
+.qn-set-step-val { min-width: 38px; text-align: center; font-size: var(--fs-body); color: var(--text-pure-white); font-variant-numeric: tabular-nums; }
+.qn-set-step-val b { font-weight: 700; }
+.qn-set-step-val i { font-style: normal; opacity: 0.7; margin-left: 1px; }
+.qn-set-data { display: flex; flex-wrap: wrap; gap: 10px; padding: 6px 0 10px; }
+.qn-set-data-btn {
+  flex: 1 1 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 10px;
+  background: #1c1c24;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  color: var(--text-bright);
+  font-family: inherit;
+  font-size: var(--fs-body);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.qn-set-data-btn svg { width: 18px; height: 18px; fill: currentColor; }
+.qn-set-data-btn:active { transform: scale(0.97); }
 @media (hover: hover) and (pointer: fine) {
-  .qn-bar-pop-item:hover { background: rgba(255, 255, 255, 0.06); }
+  .qn-set-seg-btn:hover:not(.is-on), .qn-set-step-btn:hover:not(:disabled), .qn-set-data-btn:hover { color: var(--accent-primary); }
 }
-.qn-bar-pop-check {
-  width: 16px;
-  height: 16px;
-  flex: none;
-  fill: currentColor;
-  visibility: hidden;
-}
-.qn-bar-pop-item[aria-checked="true"] { color: var(--accent-primary); }
-.qn-bar-pop-item[aria-checked="true"] .qn-bar-pop-check { visibility: visible; }

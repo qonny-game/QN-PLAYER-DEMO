@@ -57,6 +57,7 @@
       id: "backup",
       label: "Backup",
       bottom: true,
+      hidden: true,
       panelType: "backup",
       icon: '<path d="M6 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13zM8 13h8v2H8v-2zm0 4h5v2H8v-2z"/>'
     },
@@ -64,6 +65,7 @@
       id: "import",
       label: "Import",
       bottom: true,
+      hidden: true,
       panelType: "import",
       icon: '<path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>'
     },
@@ -72,8 +74,16 @@
       id: "transfer",
       label: "Transfer",
       bottom: true,
+      hidden: true,
       panelType: "transfer",
       icon: '<path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/>'
+    },
+    {
+      // 【v3.37.0】設定パネル(波形ヘッダーの歯車から開く。アイコンバーには出さない)。バー秒数/追従/プリロール/速度刻み/Backup・Import・Transferの入口
+      id: "settings",
+      label: "Settings",
+      panelType: "settings",
+      hidden: true
     }
   ];
 
@@ -171,7 +181,6 @@
       const allRepeatToggleBtn = topControls.querySelector("#allRepeatToggleBtn");
       const markerNavBtn = topControls.querySelector("#markerNavBtn");
       const loopToggleBtn = topControls.querySelector("#loopToggleBtn");
-      const loopPreRollControl = topControls.querySelector("#loopPreRollControl");
 
       // 【v3.16.0】Startボタン撤去。並び: Track(前)/-10s/Play/+10s/Track(次)/Repeat。Trackアイコンはindex.html元のSVG。頭出しはEnterキー(seekToTrackStart)
       const skipSvg = {
@@ -213,10 +222,7 @@
       if (markerNavBtn && loopToggleBtn) {
         markerNavBtn.appendChild(loopToggleBtn);
       }
-      // loopPreRollControlもmarkerNavBtnの子にする(理由は上と同じ)
-      if (markerNavBtn && loopPreRollControl) {
-        markerNavBtn.appendChild(loopPreRollControl);
-      }
+      // 【v3.37.0】loopPreRollControlは下部バーに置かない(設定パネルへ移設。要素は#topControlsに残し、設定パネルを作る時に移す)
       // v3.10.1〜: Clear AB(プリロールの右。A/B両方クリア)
       const clearABBtn = el('<button type="button" id="clearABBtn" class="loopbtn ab-set-btn" title="A/B点をクリア"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg><span class="top-controls-btn-label">Clear AB</span></button>');
       clearABBtn.addEventListener("click", () => { if (typeof clearAB === "function") clearAB(); });
@@ -409,6 +415,10 @@
     syncTimeRowPosition();
     // シークバー1本の秒数設定(歯車)。位置は常に右端(CSS order)。時刻行がSP⇔PCで出入りしても順序が崩れない
     waveHead.appendChild(QNBars.createGearButton());
+    QNBars.setOpenSettings(() => openPanelOverlay("settings"));
+    // 設定パネルの中身を先に作ってstashへ(プリロード操作要素を下部バーから外すため。let宣言より後に実行するrAF)
+    requestAnimationFrame(() => { const sb = ensureSettingsBody(); if (!sb.parentNode) getPanelStash().appendChild(sb); });
+    syncTimeRowPosition();
 
     const waveAddAudioBtn = el(
       '<button type="button" class="panel-fab-btn panel-addfile-btn" id="pcV2WaveAddAudioBtn" title="Add Audio">' +
@@ -557,7 +567,7 @@
     });
   }
 
-  let controlBody, markersBody, playlistBody, textBody, eqBody, exportBody, exportFooter;
+  let settingsBody, controlBody, markersBody, playlistBody, textBody, eqBody, exportBody, exportFooter;
   let backupBody, backupFooter, importBody, importFooter;
 
   function initPanels() {
@@ -653,24 +663,16 @@
     requestAnimationFrame(updateIconBarScrollHint);
   }
 
-  // 【SP幅】時刻行(.time-controls-row)はSP=#pcV2TimeRow(専用行、タップ領域を圧迫しない)、PC=group1(Repeatの右)へDOM移動
+  // 【v3.37.0】時刻行(.time-controls-row)はPC/SPとも波形ヘッダー(#pcV2WaveHead)の歯車の左。#pcV2TimeRowは常に非表示の空コンテナ(互換のため残す)
   function syncTimeRowPosition() {
     // querySelector(".time-controls-row")だけだと別行(adjust-controls-row等)を誤取得する。#timeDisplayからclosestで取る
     const timeDisplay = document.getElementById("timeDisplay");
     const timeControlsRow = timeDisplay ? timeDisplay.closest(".time-controls-row") : null;
-    const timeRow = document.getElementById("pcV2TimeRow");
     const waveHead = document.getElementById("pcV2WaveHead");
-    if (!timeControlsRow || !timeRow || !waveHead) return;
-
-    const isSpWidth = isSpWidthNow();
-    if (isSpWidth) {
-      if (timeControlsRow.parentElement !== timeRow) {
-        timeRow.appendChild(timeControlsRow);
-      }
-    } else {
-      if (timeControlsRow.parentElement !== waveHead) {
-        waveHead.appendChild(timeControlsRow);
-      }
+    if (!timeControlsRow || !waveHead) return;
+    const gear = document.getElementById("qnBarGearBtn");
+    if (timeControlsRow.parentElement !== waveHead || (gear && gear.parentElement === waveHead && timeControlsRow.nextSibling !== gear)) {
+      waveHead.insertBefore(timeControlsRow, gear && gear.parentElement === waveHead ? gear : null);
     }
   }
 
@@ -857,13 +859,134 @@
   function stashPanelContents(panelBody) {
     const stash = getPanelStash();
     const keep = [
-      controlBody, eqDividerEl, markersBody, playlistBody, textBody, eqBody,
+      settingsBody, controlBody, eqDividerEl, markersBody, playlistBody, textBody, eqBody,
       exportBody, exportFooter, backupBody, backupFooter, importBody, importFooter,
       pcv2QnSections.color, pcv2QnSections.keyboard
     ];
     keep.forEach(node => {
       if (node && node.parentNode === panelBody) stash.appendChild(node);
     });
+  }
+
+
+  // ---------- 設定パネル(v3.37.0) ----------
+  // 中身は初回に1度だけ作り、パネルを離れる時はstashへ退避(stashPanelContents)。プリロード操作は既存の#loopPreRollControl要素をそのまま移す(player-controls.jsのハンドラを生かす)
+  function settingsRow(label, hint) {
+    const row = el('<div class="qn-set-row"><div class="qn-set-label"><span></span><small></small></div><div class="qn-set-ctl"></div></div>');
+    row.querySelector(".qn-set-label span").textContent = label;
+    const sm = row.querySelector("small");
+    if (hint) sm.textContent = hint; else sm.remove();
+    return row;
+  }
+
+  function settingsSeg(kind, values, fmt) {
+    const seg = el('<div class="qn-set-seg" role="radiogroup"></div>');
+    seg.dataset.kind = kind;
+    values.forEach(v => {
+      const b = el('<button type="button" class="qn-set-seg-btn" role="radio"></button>');
+      b.dataset.v = String(v);
+      b.textContent = fmt(v);
+      seg.appendChild(b);
+    });
+    return seg;
+  }
+
+  function ensureSettingsBody() {
+    if (settingsBody) return settingsBody;
+    const body = el('<div id="pcV2SettingsBody"></div>');
+
+    const sec1 = el('<div class="qn-set-sec"><div class="qn-set-sec-title">Seek bar</div></div>');
+    const rBar = settingsRow("Bar length", "1 bar = seconds");
+    rBar.querySelector(".qn-set-ctl").appendChild(settingsSeg("bar", QNBars.OPTIONS, v => v + "s"));
+    sec1.appendChild(rBar);
+
+    const rFollow = settingsRow("Follow playhead", "Auto-scroll while playing");
+    const sw = el('<button type="button" class="qn-set-switch" id="qnSetFollowSwitch" role="switch" aria-checked="true"><span></span></button>');
+    rFollow.querySelector(".qn-set-ctl").appendChild(sw);
+    sec1.appendChild(rFollow);
+
+    const rPause = settingsRow("Pause after scrolling", "Seconds before follow resumes");
+    rPause.id = "qnSetPauseRow";
+    const st = el('<div class="qn-set-step"><button type="button" class="qn-set-step-btn" data-d="-1">−</button><span class="qn-set-step-val"><b id="qnSetPauseVal">6</b><i>s</i></span><button type="button" class="qn-set-step-btn" data-d="1">＋</button></div>');
+    rPause.querySelector(".qn-set-ctl").appendChild(st);
+    sec1.appendChild(rPause);
+    body.appendChild(sec1);
+
+    const sec2 = el('<div class="qn-set-sec"><div class="qn-set-sec-title">Playback</div></div>');
+    const rPre = settingsRow("Loop pre/post-roll", "Seconds added around loop");
+    const preCtl = document.getElementById("loopPreRollControl");
+    if (preCtl) rPre.querySelector(".qn-set-ctl").appendChild(preCtl);
+    sec2.appendChild(rPre);
+    const rSpd = settingsRow("Speed step", "For the speed − / ＋ buttons");
+    const speedOpts = (typeof SPEED_STEP_OPTIONS !== "undefined") ? SPEED_STEP_OPTIONS : [1, 2, 5, 10];
+    rSpd.querySelector(".qn-set-ctl").appendChild(settingsSeg("speed", speedOpts, v => v + "%"));
+    sec2.appendChild(rSpd);
+    body.appendChild(sec2);
+
+    const sec3 = el('<div class="qn-set-sec"><div class="qn-set-sec-title">Data</div><div class="qn-set-data"></div></div>');
+    const data = sec3.querySelector(".qn-set-data");
+    [
+      { id: "backup", label: "Backup", icon: '<path d="M6 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13zM8 13h8v2H8v-2zm0 4h5v2H8v-2z"/>' },
+      { id: "import", label: "Import", icon: '<path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>' },
+      { id: "transfer", label: "Transfer", icon: '<path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/>' }
+    ].forEach(d => {
+      const b = el('<button type="button" class="qn-set-data-btn" data-panel-id="' + d.id + '"><svg viewBox="0 0 24 24">' + d.icon + '</svg><span>' + d.label + '</span></button>');
+      if (d.id === "transfer" && !(window.QNLibSync && window.QNLibSync.isActive())) b.style.display = "none";
+      b.addEventListener("click", () => handleIconClick(ICON_ITEMS.find(i => i.id === d.id)));
+      data.appendChild(b);
+    });
+    body.appendChild(sec3);
+
+    body.addEventListener("click", (e) => {
+      const t = e.target.closest ? e.target.closest("button") : null;
+      if (!t) return;
+      const seg = t.closest(".qn-set-seg");
+      if (seg && t.dataset.v) {
+        if (typeof hapticTap === "function") hapticTap();
+        const v = parseInt(t.dataset.v, 10);
+        if (seg.dataset.kind === "bar") QNBars.setSec(v);
+        else if (seg.dataset.kind === "speed" && typeof setSpeedStepPct === "function") setSpeedStepPct(v);
+        syncSettingsBody();
+        return;
+      }
+      if (t.id === "qnSetFollowSwitch") {
+        if (typeof hapticTap === "function") hapticTap();
+        QNBars.setFollow(!QNBars.getFollow());
+        syncSettingsBody();
+        return;
+      }
+      if (t.classList.contains("qn-set-step-btn")) {
+        if (typeof hapticTap === "function") hapticTap();
+        QNBars.setPause(QNBars.getPause() + parseInt(t.dataset.d, 10));
+        syncSettingsBody();
+      }
+    });
+
+    settingsBody = body;
+    return body;
+  }
+
+  function syncSettingsBody() {
+    if (!settingsBody) return;
+    const curSpeed = (typeof getSpeedStepPct === "function") ? getSpeedStepPct() : 5;
+    settingsBody.querySelectorAll(".qn-set-seg").forEach(seg => {
+      const cur = seg.dataset.kind === "bar" ? QNBars.getSec() : curSpeed;
+      seg.querySelectorAll(".qn-set-seg-btn").forEach(b => {
+        const on = parseInt(b.dataset.v, 10) === cur;
+        b.classList.toggle("is-on", on);
+        b.setAttribute("aria-checked", on ? "true" : "false");
+      });
+    });
+    const on = QNBars.getFollow();
+    const sw = settingsBody.querySelector("#qnSetFollowSwitch");
+    sw.classList.toggle("is-on", on);
+    sw.setAttribute("aria-checked", on ? "true" : "false");
+    settingsBody.querySelector("#qnSetPauseRow").classList.toggle("is-disabled", !on);
+    settingsBody.querySelector("#qnSetPauseVal").textContent = String(QNBars.getPause());
+    const mi = settingsBody.querySelector('.qn-set-step-btn[data-d="-1"]');
+    const pl = settingsBody.querySelector('.qn-set-step-btn[data-d="1"]');
+    mi.disabled = QNBars.getPause() <= QNBars.PAUSE_MIN;
+    pl.disabled = QNBars.getPause() >= QNBars.PAUSE_MAX;
   }
 
   function switchPanel(panelId, opts) {
@@ -962,6 +1085,9 @@
       if (exportModalOverlay) exportModalOverlay.classList.remove("open");
       if (exportBody) panelBody.appendChild(exportBody);
       if (exportFooter) panelBody.appendChild(exportFooter);
+    } else if (item.panelType === "settings") {
+      panelBody.appendChild(ensureSettingsBody());
+      syncSettingsBody();
     } else if (item.panelType === "backup" || item.panelType === "import") {
       panelBody.classList.add("pcv2-panel-aux");
       if (typeof window.qnBackupMount === "function") window.qnBackupMount(item.panelType, panelBody);
@@ -1451,7 +1577,6 @@ document.addEventListener("drop", e => {
   const allRepeatToggleBtn = document.getElementById("allRepeatToggleBtn");
   const markerNavBtn = document.getElementById("markerNavBtn");
   const loopToggleBtn = document.getElementById("loopToggleBtn");
-  const loopPreRollControl = document.getElementById("loopPreRollControl");
 
   if (!topControls || !row1 || !row2 || !playbackTripleBtn || !allRepeatToggleBtn || !markerNavBtn || !loopToggleBtn) {
     return;
@@ -1462,7 +1587,6 @@ document.addEventListener("drop", e => {
   topControls.appendChild(allRepeatToggleBtn);
   topControls.appendChild(markerNavBtn);
   topControls.appendChild(loopToggleBtn);
-  if (loopPreRollControl) topControls.appendChild(loopPreRollControl);
   row1.style.display = "none";
   row2.style.display = "none";
 })();

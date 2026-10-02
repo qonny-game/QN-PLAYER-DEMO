@@ -115,11 +115,13 @@
     flex-shrink: 0;
   }
 
-  /* #pcV2TimeRow: PC幅共通側はdisplay:none、SP幅でflexに戻す(order:2) */
+  /* #pcV2TimeRow: v3.37.0〜 時刻表示は波形ヘッダー(歯車の左)へ移動したため常に非表示(空コンテナ) */
   #pcV2TimeRow {
-    display: flex;
-    order: 2;
-    padding: 2px 16px 6px;
+    display: none;
+  }
+
+  #pcV2WaveHead {
+    gap: 8px;
   }
 
   #pcV2BottomBar .pcv2-ctrl-btn {

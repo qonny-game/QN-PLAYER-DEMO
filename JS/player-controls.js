@@ -56,14 +56,33 @@ function handleSpeedRangeInput(e) {
 }
 if (controlSpeedRange) controlSpeedRange.oninput = handleSpeedRangeInput;
 
-const SPEED_STEP = 0.05;
+// 速度±ボタンの刻み(%)。設定パネルで変更(localStorage qn_speed_step_pct)。キーボードCtrl+←→の1%は別
+const SPEED_STEP_OPTIONS = [1, 2, 5, 10];
+const SPEED_STEP_KEY = "qn_speed_step_pct";
+let speedStepPct = 5;
+try {
+  const v = parseInt(localStorage.getItem(SPEED_STEP_KEY), 10);
+  if (SPEED_STEP_OPTIONS.indexOf(v) >= 0) speedStepPct = v;
+} catch (e) {}
+function getSpeedStepPct() { return speedStepPct; }
+function setSpeedStepPct(v) {
+  if (SPEED_STEP_OPTIONS.indexOf(v) < 0) return;
+  speedStepPct = v;
+  try { localStorage.setItem(SPEED_STEP_KEY, String(v)); } catch (e) {}
+  const d = document.getElementById("controlSpeedDownBtn");
+  const u = document.getElementById("controlSpeedUpBtn");
+  if (d) d.title = "Speed −" + v + "%";
+  if (u) u.title = "Speed +" + v + "%";
+}
 function snapSpeedStep(dir) {
-  const q = currentSpeed / SPEED_STEP;
+  const step = speedStepPct / 100;
+  const q = currentSpeed / step;
   const n = dir > 0 ? Math.floor(q + 1e-6) + 1 : Math.ceil(q - 1e-6) - 1;
-  return n * SPEED_STEP;
+  return Math.round(n * step * 100) / 100;
 }
 const controlSpeedDownBtn = document.getElementById("controlSpeedDownBtn");
 const controlSpeedUpBtn = document.getElementById("controlSpeedUpBtn");
+setSpeedStepPct(speedStepPct);
 function stepSpeed(dir) {
   hapticTap();
   setupAudioGraph().catch(err => console.warn("setupAudioGraph failed:", err));

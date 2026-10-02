@@ -80,3 +80,8 @@
 - 並びの主導権(`ou`)は「両端末にある曲の相対順が変わった時」だけ更新。曲の追加・取り込みで更新すると、取り込み順で相手の並びを上書きする。
 - P2P転送(player-p2p.js): 合図は「経路候補が出そろってから1回だけ書く」(trickleにしない=書き込みと読み取りが増える)。DataChannelのメッセージは16KB以下、`bufferedAmount`が1MBを超えたら`bufferedamountlow`まで待つ(待たないとiOSでメモリが膨らむ/切断する)。空のライブラリへ最初の1曲を入れると`addFilesToPlaylist`が自動再生するので取り込み直後に`audio.pause()`する。
 - アプリ内の文言はタメ口・絵文字にしない(簡潔な丁寧語)。ボタンは英語大文字(`text-transform: uppercase`)、新しいモーダルは`.export-modal*`・`.export-section*`・`.track-backup-row`・`.export-filename-input`・`.export-run-btn/.export-cancel-btn`を流用して独自デザインを作らない。
+
+## 設定パネルとプリロード要素(v3.37.0)
+- `#loopPreRollControl`は設定パネル内に置く(player-controls.jsのハンドラがこの要素に付いているので作り直さず移すだけ)。設定パネル本体は初回rAFでstashへ入れる(let宣言より後に走らせるため)。
+- 速度±の刻みはplayer-controls.jsの`speedStepPct`(`setSpeedStepPct`)。無料版はSpeed変更がロックされるのでテストは`snapSpeedStep(dir)`で確認する。
+- 波形は1行1本のPath2Dを色の区間ごとにclipして塗る(マーカー色/再生済み)。バー個別のfillRectに戻さない。

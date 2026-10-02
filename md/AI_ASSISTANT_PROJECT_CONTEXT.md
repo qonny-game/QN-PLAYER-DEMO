@@ -87,6 +87,9 @@ favicon/  md/  pricing*.html  QUICK_START.md
 | ループ設定 | localStorage | `mp3player_loop_mode` / `mp3player_loop_enabled` / `mp3player_loop_preroll_seconds`（0〜5秒）／`mp3player_repeat_mode` |
 | マーカーメモのプリセット色／カスタムプリセット | localStorage | `qn_marker_preset_colors_v1`（`{名前:色キー|null}`、初期値`MARKER_PRESET_COLOR_DEFAULTS`）／`qn_marker_custom_presets_v1`（`[{label,color}]`最大30）。PLAYERとYouTubeで共用（`getAllMarkerPresetLabels()`） |
 | シークバー1本の秒数 | localStorage | `qn_bar_sec`（5/10/15/30/60、既定5） |
+| シークバー追従ON/OFF | localStorage | `qn_bar_follow`（"0"でOFF、既定ON） |
+| 手動スクロール後の追従停止秒数 | localStorage | `qn_bar_follow_pause`（1〜30、既定6） |
+| 速度±ボタンの刻み(%) | localStorage | `qn_speed_step_pct`（1/2/5/10、既定5） |
 | パネル格納／最後のアプリ | localStorage | `qn_panel_collapsed`（PLAYER）／`qn_yt_panel_collapsed`／`qn_last_app` |
 | TUNER | localStorage | `qn_tuner_display` `qn_tuner_sens` `qn_tuner_smooth` `qn_tuner_panel_collapsed`（詳細は`TUNER_APP.md`） |
 | PITCH | localStorage／IndexedDB | `qn_pitch_filters` `qn_pitch_rec_meta`(録音の改名) `qn_pitch_panel_collapsed`／IndexedDB `qn_pitch_db`(録音実体。レコードは再putしない)（詳細は`PITCH_APP.md`） |

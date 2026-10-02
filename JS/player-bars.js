@@ -8,18 +8,23 @@ const QNBars = (function () {
   const STORE_KEY = "qn_bar_sec";
   const DEFAULT_SEC = 5;
   const BUFFER_ROWS = 2;
-  const BAR_STEP_CSS = 4;
-  const FOLLOW_SUSPEND_MS = 6000;
+  const BAR_STEP_CSS = 1.5;
+  const FOLLOW_KEY = "qn_bar_follow";
+  const PAUSE_KEY = "qn_bar_follow_pause";
+  const PAUSE_DEFAULT = 6;
+  const PAUSE_MIN = 1;
+  const PAUSE_MAX = 30;
   const PROG_SCROLL_MS = 800;
   const UNPLAYED = "rgba(255, 255, 255, 0.16)";
   const GEAR_SVG = '<svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>';
-  const CHECK_SVG = '<svg class="qn-bar-pop-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
 
   const containerEl = document.getElementById("vbarContainer");
   const scrollEl = document.getElementById("vbarScroll");
   const rowsEl = document.getElementById("vbarRows");
 
   let sec = readSec();
+  let followOn = readFollow();
+  let pauseSec = readPause();
   let dur = 0;
   let rowCount = 0;
   const g = { padTop: 26, padBottom: 12, barH: 44, gap: 28, pitch: 72, labelW: 44, padRight: 12, barW: 300, viewH: 300, dpr: 1, nBars: 75 };
@@ -50,6 +55,18 @@ const QNBars = (function () {
       if (OPTIONS.indexOf(v) >= 0) return v;
     } catch (e) {}
     return DEFAULT_SEC;
+  }
+
+  function readFollow() {
+    try { return localStorage.getItem(FOLLOW_KEY) !== "0"; } catch (e) { return true; }
+  }
+
+  function readPause() {
+    try {
+      const v = parseInt(localStorage.getItem(PAUSE_KEY), 10);
+      if (v >= PAUSE_MIN && v <= PAUSE_MAX) return v;
+    } catch (e) {}
+    return PAUSE_DEFAULT;
   }
 
   function reduceMotion() {
@@ -276,6 +293,7 @@ const QNBars = (function () {
     return v;
   }
 
+  // 連続した波形(隙間なし)。1行ぶんの輪郭を1本のPathにして、色が変わる区間(再生済み/未再生/マーカー色)ごとにclipして塗る
   function paintRow(el, r, played, accent) {
     const cv = el._cv;
     const cx = el._cx;
@@ -284,28 +302,48 @@ const QNBars = (function () {
     cx.clearRect(0, 0, W, H);
     const vals = rowPeaks(r);
     if (!vals) return;
-    const nB = g.nBars;
-    const step = W / nB;
-    const barW = Math.max(1, step - g.dpr);
-    const barDur = sec / nB;
+    const n = vals.length;
+    const step = W / g.nBars;
+    const minH = Math.max(1, g.dpr);
+    const path = new Path2D();
+    path.moveTo(0, H);
+    path.lineTo(0, H - Math.max(minH, vals[0] * H * 0.85));
+    for (let i = 0; i < n; i++) path.lineTo((i + 0.5) * step, H - Math.max(minH, vals[i] * H * 0.85));
+    path.lineTo(n * step, H - Math.max(minH, vals[n - 1] * H * 0.85));
+    path.lineTo(n * step, H);
+    path.closePath();
+
+    const barDur = sec / g.nBars;
     const t0 = r * sec;
     const ms = markersList;
     let ptr = -1;
     while (ptr + 1 < ms.length && ms[ptr + 1].t <= t0) ptr++;
-    let cur = null;
-    for (let i = 0; i < vals.length; i++) {
+    let runStart = 0;
+    let runFill = null;
+    const flush = (endI) => {
+      if (runFill === null || endI <= runStart) return;
+      cx.save();
+      cx.beginPath();
+      cx.rect(runStart * step, 0, (endI - runStart) * step + 0.5, H);
+      cx.clip();
+      cx.fillStyle = runFill;
+      cx.fill(path);
+      cx.restore();
+    };
+    for (let i = 0; i < n; i++) {
       const bt = t0 + i * barDur;
       while (ptr + 1 < ms.length && ms[ptr + 1].t <= bt) ptr++;
       const f = ptr >= 0 ? ms[ptr] : null;
       const mc = (f && f.color && MARKER_COLOR_PALETTE[f.color]) || null;
       const isPlayed = i < played;
-      let fill;
-      if (mc) fill = isPlayed ? mc : rgbaFor(mc, 0.35);
-      else fill = isPlayed ? accent : UNPLAYED;
-      if (fill !== cur) { cx.fillStyle = fill; cur = fill; }
-      const bh = Math.max(2 * g.dpr, vals[i] * H * 0.85);
-      cx.fillRect(i * step, H - bh, barW, bh);
+      const fill = mc ? (isPlayed ? mc : rgbaFor(mc, 0.35)) : (isPlayed ? accent : UNPLAYED);
+      if (fill !== runFill) {
+        flush(i);
+        runStart = i;
+        runFill = fill;
+      }
     }
+    flush(n);
   }
 
   function playedBars(r, ct) {
@@ -389,7 +427,7 @@ const QNBars = (function () {
   }
 
   function followTick(now, ct) {
-    if (now < progUntil || now < suspendUntil) return;
+    if (!followOn || now < progUntil || now < suspendUntil) return;
     if (Math.abs(ct - lastFollowCt) < 0.0005) return;
     lastFollowCt = ct;
     ensureVisible(ct, now);
@@ -428,69 +466,25 @@ const QNBars = (function () {
     }
   }
 
-  // ---------- 歯車ボタンと秒数ポップアップ ----------
+  function getFollow() { return followOn; }
+
+  function setFollow(on) {
+    followOn = !!on;
+    try { localStorage.setItem(FOLLOW_KEY, followOn ? "1" : "0"); } catch (e) {}
+    if (followOn) resumeFollow();
+  }
+
+  function getPause() { return pauseSec; }
+
+  function setPause(n) {
+    n = Math.max(PAUSE_MIN, Math.min(PAUSE_MAX, Math.round(n)));
+    pauseSec = n;
+    try { localStorage.setItem(PAUSE_KEY, String(n)); } catch (e) {}
+  }
+
+  // ---------- 歯車ボタン(押すと設定パネルを開く。パネル本体は player-ui-pc-v2.js) ----------
   let gearBtn = null;
-  let popEl = null;
-
-  function buildPop() {
-    popEl = document.createElement("div");
-    popEl.className = "qn-bar-pop";
-    popEl.hidden = true;
-    popEl.setAttribute("role", "menu");
-    let html = '<div class="qn-bar-pop-title">Bar length</div>';
-    OPTIONS.forEach(n => {
-      html += '<button type="button" class="qn-bar-pop-item" role="menuitemradio" data-sec="' + n + '">' + CHECK_SVG + '<span>' + n + ' sec</span></button>';
-    });
-    popEl.innerHTML = html;
-    document.body.appendChild(popEl);
-    popEl.addEventListener("click", e => {
-      e.stopPropagation();
-      const b = e.target.closest ? e.target.closest("[data-sec]") : null;
-      if (!b) return;
-      if (typeof hapticTap === "function") hapticTap();
-      setSec(parseInt(b.getAttribute("data-sec"), 10));
-      closePop();
-    });
-    document.addEventListener("pointerdown", e => {
-      if (popEl.hidden) return;
-      if (e.target.closest && (e.target.closest(".qn-bar-pop") || e.target.closest(".qn-bar-gear"))) return;
-      closePop();
-    }, true);
-    window.addEventListener("keydown", e => { if (e.key === "Escape") closePop(); }, true);
-    window.addEventListener("resize", closePop);
-    new MutationObserver(() => { if (document.body.classList.contains("qn-app-open")) closePop(); })
-      .observe(document.body, { attributes: true, attributeFilter: ["class"] });
-  }
-
-  function syncPopChecks() {
-    popEl.querySelectorAll("[data-sec]").forEach(b => {
-      b.setAttribute("aria-checked", parseInt(b.getAttribute("data-sec"), 10) === sec ? "true" : "false");
-    });
-  }
-
-  function openPop() {
-    if (!popEl) buildPop();
-    syncPopChecks();
-    popEl.hidden = false;
-    const r = gearBtn.getBoundingClientRect();
-    const w = popEl.offsetWidth;
-    const h = popEl.offsetHeight;
-    const left = Math.min(Math.max(r.right - w, 8), window.innerWidth - w - 8);
-    let top = r.bottom + 6;
-    if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 6);
-    popEl.style.left = left + "px";
-    popEl.style.top = top + "px";
-    gearBtn.classList.add("is-open");
-    gearBtn.setAttribute("aria-expanded", "true");
-  }
-
-  function closePop() {
-    if (popEl) popEl.hidden = true;
-    if (gearBtn) {
-      gearBtn.classList.remove("is-open");
-      gearBtn.setAttribute("aria-expanded", "false");
-    }
-  }
+  let openSettingsFn = null;
 
   function createGearButton() {
     if (gearBtn) return gearBtn;
@@ -498,14 +492,13 @@ const QNBars = (function () {
     gearBtn.type = "button";
     gearBtn.id = "qnBarGearBtn";
     gearBtn.className = "qn-bar-gear";
-    gearBtn.title = "Bar length";
-    gearBtn.setAttribute("aria-label", "Bar length");
-    gearBtn.setAttribute("aria-haspopup", "menu");
-    gearBtn.setAttribute("aria-expanded", "false");
+    gearBtn.title = "Settings";
+    gearBtn.setAttribute("aria-label", "Settings");
     gearBtn.innerHTML = GEAR_SVG;
     gearBtn.addEventListener("click", e => {
       e.stopPropagation();
-      if (popEl && !popEl.hidden) closePop(); else openPop();
+      if (typeof hapticTap === "function") hapticTap();
+      if (openSettingsFn) openSettingsFn();
     });
     return gearBtn;
   }
@@ -540,8 +533,7 @@ const QNBars = (function () {
     ["wheel", "touchstart", "touchmove", "pointerdown"].forEach(n => scrollEl.addEventListener(n, markInput, { passive: true }));
     scrollEl.addEventListener("scroll", () => {
       const now = performance.now();
-      if (now >= progUntil || now - lastInputAt < 1000) suspendUntil = now + FOLLOW_SUSPEND_MS;
-      closePop();
+      if (now >= progUntil || now - lastInputAt < 1000) suspendUntil = now + pauseSec * 1000;
       if (ensureRows()) draw(false);
     }, { passive: true });
 
@@ -569,7 +561,9 @@ const QNBars = (function () {
     ensureRows,
     onTrackLoaded,
     createGearButton,
-    closePop,
+    setOpenSettings(fn) { openSettingsFn = fn; },
+    getFollow, setFollow, getPause, setPause,
+    PAUSE_MIN, PAUSE_MAX,
     rowOf,
     pctInRow,
     rowStart(r) { return r * sec; },
