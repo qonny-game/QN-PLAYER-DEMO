@@ -1,0 +1,34 @@
+/* style-layout-sp.css — SP幅(≤768px等)の上書き。style-core.cssの後に読む。【大手術後】.app-container配下に残る要素向けは不要なので削除済み。残りはPC v2がmarkAnchor/restoreAnchorで.app-container外へ移す要素(#appHeader,#appLogo,#appTitle,#vbarContainer,.mobile-tab-panel,.export-modal)向けのみ */
+
+@media screen and (max-width: 768px) {
+
+  html, body {
+    height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior-x: none;
+  }
+
+  #appHeader {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  #appLogo {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #vbarContainer {
+    flex-shrink: 0;
+  }
+
+}
+
+@media screen and (max-width: 768px) {
+  .export-modal {
+    max-width: none;
+  }
+}
+
+

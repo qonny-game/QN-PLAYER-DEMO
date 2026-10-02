@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>QNPLAYER</title>
+<link rel="icon" type="image/x-icon" href="favicon/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="favicon/android-chrome-192x192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="favicon/android-chrome-512x512.png">
+
+<link rel="stylesheet" href="CSS/style-core.css">
+<link rel="stylesheet" href="CSS/style-playlist.css">
+<link rel="stylesheet" href="CSS/style-markers.css">
+<link rel="stylesheet" href="CSS/style-control-eq.css">
+<link rel="stylesheet" href="CSS/style-controls.css">
+<link rel="stylesheet" href="CSS/style-export.css">
+<link rel="stylesheet" href="CSS/style-text.css">
+<link rel="stylesheet" href="CSS/style-layout-sp.css">
+<link rel="stylesheet" href="CSS/style-layout-pc-v2.css">
+<link rel="stylesheet" href="CSS/style-layout-pc-v2-sp.css">
+<link rel="stylesheet" href="CSS/style-pcv2-panels.css">
+<link rel="stylesheet" href="CSS/style-bars.css">
+<link rel="stylesheet" href="CSS/style-auth.css">
+<link rel="stylesheet" href="CSS/style-shareware.css">
+<link rel="stylesheet" href="CSS/style-theme.css">
+<link rel="stylesheet" href="CSS/style-apps.css">
+<link rel="stylesheet" href="CSS/style-youtube.css">
+<link rel="stylesheet" href="CSS/style-tuner.css">
+<link rel="stylesheet" href="CSS/style-pitch.css">
+<script>
+  // アプリバージョン一元管理(QN_APP_VERSION)。<title>はここで即更新、#splashVersion/#appVersionは各要素直後のinline scriptが反映
+  window.QN_APP_VERSION = "3.36.0";
+  document.title = "QNPLAYER " + window.QN_APP_VERSION;
+
+  window.QN_SHORTCUTS = [
+    { key: "Space", action: "Play / Pause" },
+    { key: "Enter", action: "Seek to Start" },
+    { key: "P / M", action: "Add Marker" },
+    { key: "L", action: "Loop ON/OFF" },
+    { key: "R", action: "Repeat" },
+    { key: "1 - 9", action: "Jump to Marker" },
+    { key: "Ctrl + 1 - 9", action: "Marker ON/OFF" },
+    { key: "→", action: "Next Marker" },
+    { key: "←", action: "Prev Marker" },
+    { key: "↑", action: "First Marker" },
+    { key: "↓", action: "Last Marker" },
+    { key: "Ctrl + → / ←", action: "Speed +1% / -1%" },
+    { key: "Ctrl + ↑ / ↓", action: "Key +1 / -1 semitone" },
+    { key: "Ctrl + R", action: "Reset Speed & Key" }
+  ];
+</script>
+</head>
+<body>
+
+<div id="splashOverlay">
+  <div id="splashLogo"><span id="splashLogoQN">QN</span>PLAYER</div>
+  <div id="splashVersion">v</div>
+</div>
+<script>
+  document.getElementById("splashVersion").textContent = "v" + window.QN_APP_VERSION;
+</script>
+<script>
+  // セーフティ: onloadでスプラッシュが消えなくても5秒後に必ず消す
+  setTimeout(() => {
+    const splash = document.getElementById("splashOverlay");
+    if (splash && splash.style.display !== "none") {
+      splash.classList.add("splash-fade-out");
+      setTimeout(() => { splash.style.display = "none"; }, 550);
+    }
+  }, 5000);
+</script>
+
+<div id="dropOverlay">DROP AUDIO FILE HERE</div>
+
+<div id="appHeader">
+  <div id="qnMenuMount">
+    <div class="qn-menu-wrapper">
+      <button id="qnMenuBtn" title="Theme & Shortcuts">
+        <svg viewBox="0 0 24 24"><path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/></svg>
+      </button>
+
+      <div class="qn-menu-popup" id="qnMenuPopup">
+
+        <div class="qn-menu-section" data-qn-section="theme">
+          <span class="qn-menu-section-label">Color Theme</span>
+          <!-- スウォッチはQN_THEMES(player-theme.js)から動的生成。テーマ追加・編集はそこだけ -->
+          <div class="qn-theme-swatches" id="qnThemeSwatches"></div>
+          <div class="qn-glow-toggle-row">
+            <span class="qn-glow-toggle-label">Glow current color</span>
+            <button id="qnGlowToggleBtn" class="qn-glow-switch" role="switch" aria-checked="false" title="Fade the current color in and out">
+              <span class="qn-glow-switch-knob"></span>
+            </button>
+          </div>
+          <!-- 行はrenderMarkerPresetColorSettings()が組み立てる -->
+          <div class="qn-marker-preset-colors">
+            <div class="qn-marker-preset-colors-title">Marker Memo Colors</div>
+            <div class="qn-marker-preset-colors-desc">メモのプリセットを選んだ時、マーカーに自動で付く色</div>
+            <div class="qn-marker-preset-color-rows" id="qnMarkerPresetColorRows"></div>
+          </div>
+        </div>
+
+        <div class="qn-menu-section" data-qn-section="shortcuts" id="qnShortcutsSection">
+          <span class="qn-menu-section-label">Keyboard Shortcuts</span>
+          <table class="qn-shortcut-table">
+            <thead>
+              <tr><th>Action</th><th>Key</th></tr>
+            </thead>
+            <tbody id="qnShortcutsTbody">
+              <!-- player-theme.jsがwindow.QN_SHORTCUTSから組み立てる -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <h1 id="appLogo"><span id="appLogoQN">QN</span>PLAYER <span id="appVersion">v</span></h1>
+  <script>
+    document.getElementById("appVersion").textContent = "v" + window.QN_APP_VERSION;
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+<div id="authContainer">
+  <button id="btnLoginGoogle" title="Googleでログイン">
+    <svg viewBox="0 0 24 24"><path fill="#fff" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81z"/></svg>
+    <span>Googleでログイン</span>
+  </button>
+
+  <div id="userInfo" style="display:none;">
+    <button id="userAvatarBtn" title="アカウントメニュー">
+      <img id="userPhoto" src="" alt="User Photo">
+    </button>
+
+    <div id="userDropdown" class="user-dropdown">
+      <div class="user-dropdown-header">
+        <span id="userName">User Name</span>
+      </div>
+      <div class="user-dropdown-body">
+        <div class="user-dropdown-item">
+          <span class="user-dropdown-label">プラン</span>
+          <span id="userPlanBadge" class="sw-header-plan-badge">FREE</span>
+        </div>
+        <div class="user-dropdown-item" id="userPlanRemainingRow" style="display:none;">
+          <span class="user-dropdown-label">残り</span>
+          <span id="userPlanRemaining" class="user-dropdown-val"></span>
+        </div>
+        <div class="user-dropdown-item" id="userPlanEndDateRow" style="display:none;">
+          <span class="user-dropdown-label">利用終了日</span>
+          <span id="userPlanEndDate" class="user-dropdown-val"></span>
+        </div>
+      </div>
+      <div class="user-dropdown-footer">
+        <button id="swUpgradeBtn" title="Upgrade to Premium">UPGRADE</button>
+        <button id="btnCancelSubscription" style="display:none;">解約する</button>
+        <button id="btnLogout">
+          <svg viewBox="0 0 24 24"><path fill="currentColor" d="M17 7l-1.41 1.41L17.17 10H9v2h8.17l-1.58 1.58L17 15l4-4zM5 5h7V3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h7v-2H5V5z"/></svg>
+          <span>ログアウト</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+  
+
+
+
+
+
+</div>
+
+<div class="app-container">
+  <div class="player-section">
+    <p id="appTitle"><span id="appTitleInner"><span id="appTitleText">No file loaded</span></span></p>
+    <div id="vbarContainer">
+      <div id="vbarScroll"><div id="vbarRows"></div></div>
+      <span id="swLoopCounter"></span>
+    </div>
+    
+    <div class="top-controls" id="topControls">
+      <div class="top-controls-row">
+        <div class="tripleNavBtn" id="playbackTripleBtn" title="Prev / Play / Next Track">
+          <button id="prevTrackBtn" class="tripleNavBtn-third tripleNavBtn-left" title="Prev Track">
+            <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+            <span class="top-controls-btn-label">Track</span>
+          </button>
+          <span class="tripleNavBtn-divider"></span>
+          <button id="playToggle" class="tripleNavBtn-third tripleNavBtn-center" title="Play / Pause">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <span class="top-controls-btn-label">Play</span>
+          </button>
+          <span class="tripleNavBtn-divider"></span>
+          <button id="nextTrackBtn" class="tripleNavBtn-third tripleNavBtn-right" title="Next Track">
+            <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6h2v12h-2z"/></svg>
+            <span class="top-controls-btn-label">Track</span>
+          </button>
+        </div>
+        <button id="allRepeatToggleBtn" class="loopbtn" title="Toggle All Repeat">
+          <svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+          <span class="top-controls-btn-label">Repeat</span>
+        </button>
+      </div>
+
+      <div class="top-controls-row">
+        <div class="tripleNavBtn" id="markerNavBtn" title="Prev / Add / Next Marker">
+          <button id="prevMarkerBtn" class="tripleNavBtn-third tripleNavBtn-left" title="Prev Marker">
+            <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+            <span class="top-controls-btn-label">Marker</span>
+          </button>
+          <span class="tripleNavBtn-divider"></span>
+          <button id="addPinBtn" class="tripleNavBtn-third tripleNavBtn-center" title="Add Marker">
+            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            <span class="top-controls-btn-label">Marker</span>
+          </button>
+          <span class="tripleNavBtn-divider"></span>
+          <button id="nextMarkerBtn" class="tripleNavBtn-third tripleNavBtn-right" title="Next Marker">
+            <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6h2v12h-2z"/></svg>
+            <span class="top-controls-btn-label">Marker</span>
+          </button>
+        </div>
+        <button id="loopToggleBtn" class="loopbtn" title="Toggle Loop">
+          <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+          <span class="top-controls-btn-label">Loop</span>
+        </button>
+        <div id="loopPreRollControl" class="loop-preroll-control" title="Loop pre/post-roll seconds">
+          <button id="loopPreRollMinus" class="loop-preroll-btn" type="button" title="Decrease">−</button>
+          <span id="loopPreRollValue" class="loop-preroll-value">0<span class="loop-preroll-unit">s</span></span>
+          <button id="loopPreRollPlus" class="loop-preroll-btn" type="button" title="Increase">＋</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="time-controls-row">
+      <div id="timeDisplay">
+        <span id="currentTimeVal" class="time-val">00:00.0</span>
+        <span class="time-sep">/</span>
+        <span id="durationVal" class="time-dur">00:00.0</span>
+      </div>
+    </div>
+
+    <div class="basic-panel-box">
+      <!-- #fileInputはPlaylistタブのAdd Fileボタン等から参照されるのでdisplay:noneのまま残す -->
+      <div class="time-controls-row adjust-controls-row">
+        <div class="time-controls-buttons">
+          <button id="exportToggleBtn" class="av-toggle-btn" title="Export Audio">
+            <svg viewBox="0 0 24 24"><path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zM13 12.67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z"/></svg>
+            <span class="av-toggle-btn-text">
+              <span class="av-toggle-btn-label">Export</span>
+            </span>
+          </button>
+
+          <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.ogg,.oga,.m4a,.aac,.flac,.webm,.opus" multiple style="display:none;">
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="sidebar-section" id="sidebarSection">
+    <div class="mobile-tabs">
+      <button class="mobile-tab-btn" data-tab="control">Control</button>
+      <button class="mobile-tab-btn" data-tab="markers">Markers</button>
+      <button class="mobile-tab-btn active" data-tab="playlist">Playlist</button>
+      <button class="mobile-tab-btn" data-tab="text">Text</button>
+    </div>
+
+    <div class="mobile-tab-panel" data-tab-panel="control">
+      <div class="markers-heading-row">
+        <h3>Control</h3>
+      </div>
+      <div class="control-list">
+        <div class="control-card">
+          <label>Volume <span id="controlVolumeDisplay" style="color:#fff;">0.80</span></label>
+          <input type="range" id="controlVolume" min="0" max="1" step="0.01" value="0.8">
+        </div>
+
+        <div class="control-card" id="controlSpeedCard">
+          <label>
+            Speed <span id="controlSpeedDisplay" style="color:#fff;">1.00</span>x
+            <button class="mini-reset-btn" id="controlSpeedResetBtn" title="Reset speed to 1.00x">RESET</button>
+            <span class="control-stepper">
+              <button type="button" class="control-effect-toggle control-effect-icon" id="controlSpeedEnableToggle" role="switch" aria-checked="true" title="Speed effect ON/OFF"><svg viewBox="0 0 24 24"><path d="M20.38 8.57l-1.23 1.85a8 8 0 0 1-.22 7.58H5.07A8 8 0 0 1 15.58 6.85l1.85-1.23A10 10 0 0 0 3.35 19a2 2 0 0 0 1.72 1h13.85a2 2 0 0 0 1.74-1 10 10 0 0 0-.27-10.44zm-9.79 6.84a2 2 0 0 0 2.83 0l5.66-8.49-8.49 5.66a2 2 0 0 0 0 2.83z"/></svg></button>
+              <button type="button" class="control-step-btn" id="controlSpeedDownBtn" title="Speed −5%">−</button>
+              <button type="button" class="control-step-btn" id="controlSpeedUpBtn" title="Speed +5%">＋</button>
+            </span>
+          </label>
+          <input type="range" id="controlSpeedRange" min="0.5" max="1.5" step="0.01" value="1.0">
+
+          <div class="auto-speed-card" id="controlAutoSpeedCard">
+            <label class="auto-speed-header">
+              <span>Auto Speed</span>
+              <button class="glow-switch control-effect-toggle" id="controlAutoSpeedToggleBtn" role="switch" aria-checked="false" title="Automatically adjust speed every N loops">
+                <span class="glow-switch-knob"></span>
+              </button>
+            </label>
+            <div class="auto-speed-settings" id="controlAutoSpeedSettings">
+              <div class="auto-speed-row">
+                <div class="auto-speed-direction">
+                  <button type="button" class="auto-speed-dir-btn" data-dir="down">Speed Down</button>
+                  <button type="button" class="auto-speed-dir-btn active" data-dir="up">Speed Up</button>
+                </div>
+              </div>
+              <div class="auto-speed-row auto-speed-row-triple">
+                <div class="auto-speed-field">
+                  <span class="auto-speed-row-label">Every</span>
+                  <div class="auto-speed-field-input">
+                    <input type="number" id="controlAutoSpeedEveryN" class="auto-speed-number" min="1" max="99" step="1" value="5">
+                    <span class="auto-speed-unit">loops</span>
+                  </div>
+                </div>
+                <div class="auto-speed-field">
+                  <span class="auto-speed-row-label">By</span>
+                  <div class="auto-speed-field-input">
+                    <input type="number" id="controlAutoSpeedStepPercent" class="auto-speed-number" min="1" max="50" step="1" value="5">
+                    <span class="auto-speed-unit">%</span>
+                  </div>
+                </div>
+                <div class="auto-speed-field">
+                  <span class="auto-speed-row-label">Limit</span>
+                  <div class="auto-speed-field-input">
+                    <input type="number" id="controlAutoSpeedLimit" class="auto-speed-number" min="50" max="150" step="1" value="150">
+                    <span class="auto-speed-unit">%</span>
+                  </div>
+                </div>
+              </div>
+              <div class="auto-speed-status" id="controlAutoSpeedStatus">Loop progress: 0 / 5</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-card key-control-card">
+          <label>
+            Key <span id="controlKeyDisplay" style="color:#fff;">0</span> st
+            <button class="mini-reset-btn" id="controlKeyResetBtn" title="Reset key to 0">RESET</button>
+            <span class="control-stepper">
+              <button type="button" class="control-effect-toggle control-effect-icon" id="controlKeyEnableToggle" role="switch" aria-checked="true" title="Key effect ON/OFF"><svg viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg></button>
+              <button type="button" class="control-step-btn" id="controlKeyDownBtn" title="Key down 1 semitone">−</button>
+              <button type="button" class="control-step-btn" id="controlKeyUpBtn" title="Key up 1 semitone">＋</button>
+            </span>
+          </label>
+          <div class="key-stepper">
+            <div class="key-stepper-bar">
+              <div class="key-stepper-fill" id="controlKeyStepperFill"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-tab-panel" data-tab-panel="markers">
+      <div class="markers-heading-row">
+        <h3>Markers</h3>
+        <span id="loopInfo">ACTIVE 0/0</span>
+      </div>
+      <div id="markersNowPlaying" style="display:none"></div>
+      <div id="pinList"></div>
+    </div>
+
+    <div class="mobile-tab-panel" data-tab-panel="playlist">
+      <div class="markers-heading-row">
+        <h3>Library</h3>
+        <span id="playlistInfo">0 tracks</span>
+        <button type="button" id="playlistScopeBtn" class="mini-reset-btn playlist-scope-btn" hidden>
+          <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0 0 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 0 0 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+          <span class="playlist-scope-label">NEXT: FOLDER</span>
+        </button>
+      </div>
+      <div id="playlistBox"></div>
+    </div>
+
+    <div class="mobile-tab-panel" data-tab-panel="text">
+      <div class="markers-heading-row">
+        <h3>Text</h3>
+        <button id="noteTextFullscreenBtn" class="panel-fab-btn panel-addfile-btn" title="Fullscreen">
+          <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+          <span>FULL</span>
+        </button>
+      </div>
+      <textarea id="noteTextArea" class="note-textarea" placeholder="Lyrics, memo, anything…"></textarea>
+    </div>
+  </div>
+</div>
+
+<div id="textFullscreenOverlay" class="text-fullscreen-overlay">
+  <div class="text-fullscreen-header">
+    <div class="text-fullscreen-font-controls">
+      <button id="noteTextFontDecBtn" class="tab-icon-btn" title="Decrease text size">−</button>
+      <button id="noteTextFontIncBtn" class="tab-icon-btn" title="Increase text size">＋</button>
+    </div>
+    <button id="noteTextFullscreenCloseBtn" class="tab-icon-btn" title="Close">✕</button>
+  </div>
+  <textarea id="noteTextAreaFullscreen" class="note-textarea note-textarea-fullscreen" placeholder="Lyrics, memo, anything…"></textarea>
+</div>
+
+<div id="eqModalOverlay" class="export-modal-overlay">
+  <div class="export-modal eq-modal">
+    <div class="export-modal-header">
+      <span>Equalizer</span>
+      <button id="eqModalCloseBtn" class="export-modal-close" title="Close">✕</button>
+    </div>
+
+    <div class="export-modal-body">
+      <div class="export-section" id="eqInlineSection">
+        <div class="basic-panel-divider eq-inline-divider"></div>
+        <div class="eq-inline-title">
+          Equalizer
+          <button class="mini-reset-btn" id="controlEqResetBtn" title="Reset EQ to flat" data-preset="flat">RESET</button>
+          <button class="glow-switch control-effect-toggle" id="controlEqEnableToggle" role="switch" aria-checked="true" title="Toggle EQ effect on/off">
+            <span class="glow-switch-knob"></span>
+          </button>
+        </div>
+        <p class="eq-hint">Drag across the bands to draw a curve</p>
+        <div class="eq-bands" id="eqBands">
+          <div class="eq-band" data-freq="31">
+            <span class="eq-band-gain" id="eqGain0">0</span>
+            <div class="eq-slider-track"><input type="range" class="eq-vslider" id="eqBand0" min="-15" max="15" step="1" value="0" orient="vertical"></div>
+            <span class="eq-band-freq">31</span>
+          </div>
+          <div class="eq-band" data-freq="62">
+            <span class="eq-band-gain" id="eqGain1">0</span>
+            <div class="eq-slider-track"><input type="range" class="eq-vslider" id="eqBand1" min="-15" max="15" step="1" value="0" orient="vertical"></div>
+            <span class="eq-band-freq">62</span>
+          </div>
+          <div class="eq-band" data-freq="125">
+            <span class="eq-band-gain" id="eqGain2">0</span>
+            <div class="eq-slider-track"><input type="range" class="eq-vslider" id="eqBand2" min="-15" max="15" step="1" value="0" orient="vertical"></div>
+            <span class="eq-band-freq">125</span>
+          </div>
+          <div class="eq-band" data-freq="250">
+            <span class="eq-band-gain" id="eqGain3">0</span>
+            <div class="eq-slider-track"><input type="range" class="eq-vslider" id="eqBand3" min="-15" max="15" step="1" value="0" orient="vertical"></div>
+            <span class="eq-band-freq">250</span>
+          </div>
+          <div class="eq-band" data-freq="500">
+            <span class="eq-band-gain" id="eqGain4">0</span>
+            <div class="eq-slider-track"><input type="range" class="eq-vslider" id="eqBand4" min="-15" max="15" step="1" value="0" orient="vertical"></div>
+            <span class="eq-band-freq">500</span>
+          </div>
+          <div class="eq-band" data-freq="1000">
+            <span class="eq-band-gain" id="eqGain5">0</span>
+            <div class="eq-slider-track"><input type="range" class="eq-vslider" id="eqBand5" min="-15" max="15" step="1" value="0" orient="vertical"></div>
+            <span class="eq-band-freq">1k</span>
+          </div>
+          <div class="eq-band" data-freq="2000">
+            <span class="eq-band-gain" id="eqGain6">0</span>
+            <div class="eq-slider-track"><input type="range" class="eq-vslider" id="eqBand6" min="-15" max="15" step="1" value="0" orient="vertical"></div>
+            <span class="eq-band-freq">2k</span>
+          </div>
+          <div class="eq-band" data-freq="4000">
+            <span class="eq-band-gain" id="eqGain7">0</span>
+            <div class="eq-slider-track"><input type="range" class="eq-vslider" id="eqBand7" min="-15" max="15" step="1" value="0" orient="vertical"></div>
+            <span class="eq-band-freq">4k</span>
+          </div>
+          <div class="eq-band" data-freq="8000">
+            <span class="eq-band-gain" id="eqGain8">0</span>
+            <div class="eq-slider-track"><input type="range" class="eq-vslider" id="eqBand8" min="-15" max="15" step="1" value="0" orient="vertical"></div>
+            <span class="eq-band-freq">8k</span>
+          </div>
+          <div class="eq-band" data-freq="16000">
+            <span class="eq-band-gain" id="eqGain9">0</span>
+            <div class="eq-slider-track"><input type="range" class="eq-vslider" id="eqBand9" min="-15" max="15" step="1" value="0" orient="vertical"></div>
+            <span class="eq-band-freq">16k</span>
+          </div>
+        </div>
+        <div class="eq-preset-row">
+          <div class="eq-preset-buttons">
+            <button type="button" class="eq-preset-btn" data-preset="bass">Bass</button>
+            <button type="button" class="eq-preset-btn" data-preset="vocal">Vocal</button>
+            <button type="button" class="eq-preset-btn" data-preset="treble">Treble</button>
+            <button type="button" class="eq-preset-btn" data-preset="vshape">V-Shape</button>
+          </div>
+          <div class="eq-preset-buttons eq-preset-custom-row" id="eqCustomPresetButtons"></div>
+          <button type="button" class="eq-preset-save-btn" id="eqSavePresetBtn" title="Save current EQ as a custom preset">
+            <svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+            <span>Save as Preset</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="exportModalOverlay" class="export-modal-overlay">
+  <div class="export-modal">
+    <div class="export-modal-header">
+      <span>Export Audio</span>
+      <button id="exportModalCloseBtn" class="export-modal-close" title="Close">✕</button>
+    </div>
+
+    <div class="export-modal-body">
+      <div class="export-section">
+        <label class="export-section-label">Range</label>
+        <div class="export-range-options">
+          <label class="export-radio-row">
+            <input type="radio" name="exportRange" id="exportRangeAll" value="all" checked>
+            <span>All (Full Track)</span>
+          </label>
+          <label class="export-radio-row">
+            <input type="radio" name="exportRange" id="exportRangeMarker" value="marker">
+            <span>Marker Range</span>
+          </label>
+        </div>
+        <div class="export-marker-range-selects" id="exportMarkerRangeSelects">
+          <div class="export-marker-select-group">
+            <label class="export-marker-select-label">Start</label>
+            <select id="exportMarkerStartSelect" class="export-marker-select" disabled>
+              <option value="">No markers available</option>
+            </select>
+          </div>
+          <div class="export-marker-select-group">
+            <label class="export-marker-select-label">End</label>
+            <select id="exportMarkerEndSelect" class="export-marker-select" disabled>
+              <option value="">No markers available</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="export-section">
+        <label class="export-section-label">Apply Effects</label>
+        <div class="export-effect-options">
+          <label class="export-checkbox-row">
+            <input type="checkbox" id="exportApplySpeed" checked>
+            <span>Speed</span>
+          </label>
+          <label class="export-checkbox-row">
+            <input type="checkbox" id="exportApplyKey" checked>
+            <span>Key</span>
+          </label>
+          <label class="export-checkbox-row">
+            <input type="checkbox" id="exportApplyEq" checked>
+            <span>EQ</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="export-section">
+        <label class="export-section-label">File Name</label>
+        <input type="text" id="exportFileName" class="export-filename-input" placeholder="output">
+      </div>
+
+      <div class="export-section">
+        <label class="export-section-label">Format</label>
+        <div class="export-format-options">
+          <label class="export-radio-row">
+            <input type="radio" name="exportFormat" id="exportFormatWav" value="wav" checked>
+            <span>WAV</span>
+          </label>
+          <label class="export-radio-row">
+            <input type="radio" name="exportFormat" id="exportFormatMp3" value="mp3">
+            <span>MP3</span>
+          </label>
+        </div>
+
+        <div class="export-format-detail" id="exportWavDetail">
+          <label class="export-marker-select-label">Sample Rate</label>
+          <div class="export-format-options">
+            <label class="export-radio-row">
+              <input type="radio" name="exportWavSampleRate" value="44100" checked>
+              <span>44.1 kHz</span>
+            </label>
+            <label class="export-radio-row">
+              <input type="radio" name="exportWavSampleRate" value="48000">
+              <span>48 kHz</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="export-format-detail" id="exportMp3Detail" style="display:none;">
+          <label class="export-marker-select-label">Bitrate</label>
+          <div class="export-format-options">
+            <label class="export-radio-row">
+              <input type="radio" name="exportMp3Bitrate" value="128" checked>
+              <span>128 kbps</span>
+            </label>
+            <label class="export-radio-row">
+              <input type="radio" name="exportMp3Bitrate" value="192">
+              <span>192 kbps</span>
+            </label>
+            <label class="export-radio-row">
+              <input type="radio" name="exportMp3Bitrate" value="320">
+              <span>320 kbps</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="export-modal-footer">
+      <div id="exportStatus" class="export-status"></div>
+      <button id="exportCancelBtn" class="export-cancel-btn" title="Close">Cancel</button>
+      <button id="exportRunBtn" class="export-run-btn">Export</button>
+    </div>
+  </div>
+</div>
+
+<div id="cancelModalOverlay" class="export-modal-overlay">
+  <div class="export-modal cancel-modal">
+    <div class="export-modal-header">
+      <span>サブスクリプションの解約</span>
+      <button id="cancelModalCloseBtn" class="export-modal-close" title="Close">✕</button>
+    </div>
+
+    <div class="export-modal-body">
+      <div class="cancel-modal-row">
+        <span class="cancel-modal-label">プラン</span>
+        <span class="cancel-modal-val" id="cancelModalPlan">-</span>
+      </div>
+      <div class="cancel-modal-row">
+        <span class="cancel-modal-label">残り期間</span>
+        <span class="cancel-modal-val" id="cancelModalRemaining">-</span>
+      </div>
+      <div class="cancel-modal-row">
+        <span class="cancel-modal-label">次回自動更新日</span>
+        <span class="cancel-modal-val" id="cancelModalNextRenewal">-</span>
+      </div>
+      <div class="cancel-modal-notice">
+        解約手続きを行った場合も、<strong id="cancelModalUntilDate">-</strong>まで引き続きPremium機能をご利用いただけます。それ以降は自動的に無料プランへ切り替わります。
+      </div>
+    </div>
+
+    <div class="export-modal-footer">
+      <button id="cancelModalCancelBtn" class="export-cancel-btn" title="Close">キャンセル</button>
+      <button id="cancelModalConfirmBtn" class="export-run-btn cancel-modal-confirm-btn">解約手続きへ進む</button>
+    </div>
+  </div>
+</div>
+
+<div class="top-controls-spacer" id="topControlsSpacer"></div>
+
+<div id="trackBackupHome" hidden>
+    <div class="export-modal-body">
+      <div class="export-section">
+        <div class="track-backup-tracklist-header">
+          <label class="export-section-label">曲を選択</label>
+          <div class="track-backup-tracklist-actions">
+            <button type="button" id="trackBackupSelectAllBtn" class="track-backup-mini-btn">全選択</button>
+            <button type="button" id="trackBackupSelectNoneBtn" class="track-backup-mini-btn">全解除</button>
+          </div>
+        </div>
+        <div id="trackBackupTrackList" class="track-backup-tracklist"></div>
+        <div class="track-backup-size-row">
+          <span id="trackBackupSelectedCount">0曲選択中</span>
+          <span id="trackBackupTotalSize">0 MB</span>
+        </div>
+      </div>
+
+      <div class="export-section track-backup-options">
+        <label class="export-section-label">含める項目</label>
+        <div class="track-backup-checklist">
+          <label class="track-backup-row">
+            <input type="checkbox" id="trackBackupIncludeAudio" checked>
+            <span class="track-backup-row-label">音声データ</span>
+          </label>
+          <label class="track-backup-row">
+            <input type="checkbox" id="trackBackupIncludeSettings" checked>
+            <span class="track-backup-row-label">設定データ</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="export-modal-footer">
+      <div id="trackBackupStatus" class="export-status"></div>
+      <button id="trackBackupCancelBtn" class="export-cancel-btn" title="Close">Cancel</button>
+      <button id="trackBackupRunBtn" class="export-run-btn">Download</button>
+    </div>
+</div>
+
+<div id="trackImportHome" hidden>
+    <div class="export-modal-body">
+      <div class="export-section">
+        <div class="track-import-layout">
+          <div class="track-import-col-main">
+            <div id="trackImportDropZone" class="track-import-dropzone">
+              <svg viewBox="0 0 24 24" class="track-import-dropzone-icon"><path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zM13 12.67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z"/></svg>
+              <div class="track-import-dropzone-text">ZIP/JSONファイルをドロップ</div>
+              <div class="track-import-dropzone-sub">またはクリックして選択</div>
+              <input type="file" id="trackImportFileInput" accept=".zip,.json" style="display:none;">
+            </div>
+            <div id="trackImportLoadedInfo" class="track-import-loaded-info" style="display:none;">
+              <svg viewBox="0 0 24 24" class="track-import-loaded-info-icon"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              <div class="track-import-loaded-info-text">
+                <div id="trackImportLoadedFileName" class="track-import-loaded-info-name">-</div>
+                <div id="trackImportLoadedFileCount" class="track-import-loaded-info-count"></div>
+              </div>
+            </div>
+            <div id="trackImportSummary" class="track-import-summary" style="display:none;"></div>
+          </div>
+
+          <div id="trackImportDuplicateList" class="track-import-duplicate-list" style="display:none;">
+            <div class="track-import-duplicate-header">
+              <label class="export-section-label">重複する項目</label>
+              <div class="track-import-bulk-toggle-wrap">
+                <span id="trackImportBulkToggleLabel" class="track-import-choice-label">すべて上書き</span>
+                <button type="button" id="trackImportBulkToggle" class="glow-switch track-import-choice-switch" role="switch" aria-checked="true" title="すべてスキップに切り替え">
+                  <span class="glow-switch-knob"></span>
+                </button>
+              </div>
+            </div>
+            <div id="trackImportDuplicateRows"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="export-modal-footer">
+      <div id="trackImportStatus" class="export-status"></div>
+      <button id="trackImportCancelBtn" class="export-cancel-btn" title="Close">Cancel</button>
+      <button id="trackImportRunBtn" class="export-run-btn">Import</button>
+    </div>
+</div>
+
+
+<script src="JS/jszip.min.js"></script>
+<script src="JS/lame_min.js"></script>
+<script src="JS/player-shareware.js"></script>
+<script src="JS/qn-marker-core.js"></script>
+<script src="JS/player-core.js"></script>
+<script src="JS/player-bars.js"></script>
+<script src="JS/player-ui-shared.js"></script>
+<script src="JS/player-id3.js"></script>
+<script src="JS/player-playlist.js"></script>
+<script src="JS/player-track-backup.js"></script>
+<script src="JS/player-sync.js"></script>
+<script src="JS/player-p2p.js"></script>
+<script src="JS/player-markers.js"></script>
+<script src="JS/player-marker-presets.js"></script>
+<script src="JS/player-control-eq.js"></script>
+<script src="JS/player-controls.js"></script>
+<script src="JS/player-export.js"></script>
+<script src="JS/player-text.js"></script>
+<script src="JS/player-ui-pc-v2.js"></script>
+<script src="JS/qn-wakelock.js"></script>
+<script src="JS/qn-apps.js"></script>
+<script src="JS/player-swipe.js"></script>
+<script src="JS/qn-app-youtube.js"></script>
+<script src="JS/qn-pitch-core.js"></script>
+<script src="JS/qn-app-tuner.js"></script>
+<script src="JS/qn-pitch-filters.js"></script>
+<script src="JS/qn-app-pitch.js"></script>
+<script src="JS/player-theme.js"></script>
+<script type="module" src="JS/player-auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+/* style-control-eq.css — 10バンドEQのUI。EQモーダル外枠(.eq-modal)はExportモーダル共通デザインを土台にstyle-export.css側 */
+
+.eq-hint {
+  margin: 0 0 14px;
+  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-small);
+  color: #6b6b7b;
+}
+
+.eq-inline-divider,
+.eq-inline-title {
+  display: none;
+}
+
+.eq-preset-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+  margin-bottom: 10px;
+}
+
+.eq-preset-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.eq-preset-btn {
+  height: var(--btn-h);
+  flex: 1 1 auto;
+  padding: 0 12px;
+  background: none;
+  color: var(--icon-muted);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-btn);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--dur-hover) var(--ease-snap), border-color var(--dur-hover) var(--ease-snap), color var(--dur-hover) var(--ease-snap);
+}
+
+.eq-preset-btn:hover {
+  border-color: var(--accent-primary);
+  color: var(--text-pure-white);
+}
+
+.eq-preset-btn.active {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: var(--text-pure-white);
+}
+
+.eq-bands {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 4px;
+  height: 160px;
+  touch-action: none;
+}
+
+.eq-band {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.eq-band-gain {
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  color: var(--accent-primary);
+  white-space: nowrap;
+}
+
+.eq-slider-track {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.eq-vslider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 110px;
+  height: 4px;
+  border-radius: 2px;
+  outline: none;
+  transform: rotate(-90deg);
+  cursor: pointer;
+  pointer-events: none;
+  background: linear-gradient(
+    to right,
+    #2a2a35 0%,
+    #2a2a35 min(50%, var(--range-progress, 50) * 1%),
+    var(--accent-primary) min(50%, var(--range-progress, 50) * 1%),
+    var(--accent-primary) max(50%, var(--range-progress, 50) * 1%),
+    #2a2a35 max(50%, var(--range-progress, 50) * 1%),
+    #2a2a35 100%
+  );
+}
+
+.eq-vslider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  box-shadow: 0 0 6px var(--accent-glow);
+  cursor: pointer;
+}
+
+.eq-vslider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  box-shadow: 0 0 6px var(--accent-glow);
+  cursor: pointer;
+}
+
+.eq-band-freq {
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-micro);
+  font-weight: 500;
+  color: #6b6b7b;
+  white-space: nowrap;
+}
+
+
+.eq-preset-custom-row {
+  margin-top: 6px;
+}
+
+.eq-preset-btn-custom {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.eq-preset-custom-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  font-size: 9px;
+  line-height: 1;
+  color: #6b6b7b;
+  opacity: 0.7;
+}
+
+.eq-preset-custom-del:hover {
+  color: var(--danger);
+  opacity: 1;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.eq-preset-save-btn {
+  height: var(--btn-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 0 var(--btn-pad-x);
+  background: none;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-pill);
+  color: var(--icon-muted);
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-btn);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.eq-preset-save-btn:hover {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.eq-preset-save-btn svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}

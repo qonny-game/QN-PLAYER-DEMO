@@ -1,0 +1,388 @@
+/* style-markers.css — マーカー一覧(#pinList/.pinItem)・編集ボタン・カラーピッカー(.marker-color-popup等)・削除確認アニメ。波形上のピン(.vbar-line/.vbar-label)は共通土台側 */
+
+#pinList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: visible;
+  max-height: none;
+  padding-right: 0;
+  flex: none;
+}
+
+.pinItem {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  min-height: 50px;
+  box-sizing: border-box;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border-subtle);
+  border-radius: 0;
+  font-size: var(--fs-body);
+  transition: background 0.2s;
+}
+
+.pinItem:last-child {
+  border-bottom: none;
+}
+
+.pinItem:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.pinItem.disabled {
+  opacity: 0.4;
+}
+.pinItem.disabled .pin-info {
+  text-decoration: line-through;
+}
+
+.pinItem .pin-info {
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-body);
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--text-bright);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.pin-label-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 30px;
+}
+
+.pin-label-row .pin-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pin-edit-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  padding: 0;
+  background: none;
+  color: var(--icon-muted);
+  border: none;
+  border-radius: var(--radius-round);
+  cursor: pointer;
+  transition: background var(--dur-hover) var(--ease-snap), color var(--dur-hover) var(--ease-snap);
+}
+
+/* 【v2.13.6】ホバーで鉛筆を出すのはホバー可能環境のみ(iOSでマーカー名の1タップ目がジャンプせずホバーだけになるのを防ぐ)。タッチはEDITモードから編集 */
+@media (hover: hover) and (pointer: fine) {
+  .pin-label-row:hover .pin-edit-btn {
+    display: flex;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  #pcV2PanelBody.markers-edit-mode #pinList .pin-edit-btn {
+    display: flex;
+  }
+}
+
+.pin-edit-btn:hover {
+  background: var(--bg-hover-subtle);
+  color: var(--text-bright);
+}
+
+.pin-edit-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+/* 【v2.16.8】.pinItemの4列gridの1列目に収める入れ物(ロック=鍵+色丸、通常=色丸)。GOTCHAS.md */
+.pin-leading-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pin-color-mark {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: transform var(--dur-hover) var(--ease-snap), box-shadow var(--dur-hover) var(--ease-snap);
+}
+
+.pin-color-mark:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+
+.marker-color-popup {
+  z-index: 500;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  padding: 12px;
+  background: #16161b;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-popup);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+.marker-color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform var(--dur-hover) var(--ease-snap), border-color var(--dur-hover) var(--ease-snap);
+}
+
+.marker-color-swatch:hover {
+  transform: scale(1.12);
+}
+
+.marker-color-swatch.active {
+  border-color: var(--text-pure-white);
+}
+
+.marker-color-swatch.marker-color-none {
+  background: #2a2a35;
+  position: relative;
+}
+
+.marker-color-swatch.marker-color-none::before,
+.marker-color-swatch.marker-color-none::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 2px;
+  background: var(--icon-muted);
+  transform-origin: center;
+}
+
+.marker-color-swatch.marker-color-none::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.marker-color-swatch.marker-color-none::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.pin-memo-input {
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: var(--text-bright);
+  background: #14141a;
+  border: 1px solid var(--accent-primary);
+  border-radius: var(--radius-field);
+  padding: 5px 8px;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+}
+
+/* メモ編集のクイックプリセット: .pinItemはgridなのでgrid-column:1/-1で全列にまたがる新しい行にする */
+.pin-memo-preset-popup {
+  position: fixed;
+  z-index: 500;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: min(340px, calc(100vw - 16px));
+  padding: 10px;
+  background: #16161b;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-popup);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
+}
+
+.pin-memo-preset-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-btn);
+  font-weight: 600;
+  color: var(--text-bright);
+  background: #1f1f26;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: var(--radius-pill);
+  padding: 8px 11px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.pin-memo-preset-chip:active {
+  transform: scale(0.96);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pin-memo-preset-chip:hover {
+    border-color: var(--accent-primary);
+  }
+}
+
+.pin-memo-preset-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pinItem button {
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-btn);
+  letter-spacing: 0.5px;
+  padding: 7px;
+  cursor: pointer;
+  background: none;
+  color: var(--text-pure-white);
+  border: none;
+  border-radius: var(--radius-round);
+  font-weight: 600;
+  transition: background 0.2s;
+  text-align: center;
+}
+
+.pinItem .toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.pinItem .toggle-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.pinItem:not(.disabled) .toggle-btn {
+  color: var(--icon-muted);
+  transition: color var(--dur-hover) var(--ease-snap);
+}
+
+.pinItem:not(.disabled) .toggle-btn:hover {
+  color: var(--text-bright);
+}
+
+.pinItem.disabled .toggle-btn {
+  color: #55555f;
+}
+
+.pinItem button:hover {
+  background: var(--bg-hover-subtle);
+}
+
+/* .pinItem button{padding;border-radius}が後勝ちで.pin-color-markを角丸長方形に潰すのを正円に戻す */
+.pinItem .pin-color-mark {
+  padding: 0;
+  border-radius: 50%;
+}
+
+.playlistItem .toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-round);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.playlistItem .toggle-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.playlistItem .toggle-btn:hover {
+  background: var(--bg-hover-subtle);
+}
+
+.playlistItem:not(.disabled) .toggle-btn {
+  color: var(--icon-muted);
+}
+
+.playlistItem.disabled .toggle-btn {
+  color: #55555f;
+}
+
+.del-btn {
+  transition: background var(--dur-press) var(--ease-snap), color var(--dur-press) var(--ease-snap), transform var(--dur-press) var(--ease-snap);
+}
+
+.del-btn.confirm {
+  background: var(--danger) !important;
+  color: var(--text-pure-white) !important;
+  border-color: var(--danger) !important;
+  animation: delConfirmPulse 0.9s var(--ease-snap) infinite;
+}
+
+@keyframes delConfirmPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+
+/* A/Bブロックボタン(PLマーカー行・YTマーカー行で共通。スワイプのボタンと同じ角ばった塊) */
+.qn-ab-block,
+.pinItem button.qn-ab-block,
+.qn-yt-pinbox .pinItem button.qn-ab-block {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 4px;
+  background: #2f3a52;
+  color: #fff;
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-btn);
+  font-weight: 700;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+.qn-ab-block:hover { filter: brightness(1.15); }
+.pinItem button.qn-ab-block.active-a, .qn-ab-block.active-a { background: var(--accent-primary); color: #fff; }
+.pinItem button.qn-ab-block.active-b, .qn-ab-block.active-b { background: #b45309; color: #fff; }
+.pin-ab-cell, .qn-yt-ab-cell { display: flex; gap: 4px; flex-shrink: 0; }
+#pcV2PanelBody.markers-edit-mode #pinList .pin-ab-cell { display: none; }
+.pinItem button.qn-ab-block:hover { background: #2f3a52; filter: brightness(1.15); }
+.pinItem button.qn-ab-block.active-a:hover { background: var(--accent-primary); }
+.pinItem button.qn-ab-block.active-b:hover { background: #b45309; }

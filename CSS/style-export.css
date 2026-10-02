@@ -1,0 +1,793 @@
+/* style-export.css — Exportモーダル(開閉アニメ/範囲/フォーマット/エフェクト/ファイル名/実行)。.eq-modalも共通デザイン(.export-modal-overlay等)を土台にここに含む。Backup/Import/解約モーダルの固有スタイルも同居 */
+
+.export-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+  background: rgba(5, 5, 7, 0);
+  /* 【v2.14.1 負荷対策】閉じている間はbackdrop-filter:none+visibility:hidden(blur(0px)でも全面の合成レイヤーが残り、EQ/Export/解約/Backup/Importの5枚分が毎フレーム走って重くなった。GOTCHAS.md)。閉じアニメ中は背景を見せるためvisibilityだけ0.25s遅延 */
+  backdrop-filter: none;
+  visibility: hidden;
+  pointer-events: none;
+  transition: background 0.25s cubic-bezier(0.4, 0, 1, 1), backdrop-filter 0.25s cubic-bezier(0.4, 0, 1, 1), visibility 0s linear 0.25s;
+}
+
+.export-modal-overlay.open {
+  background: rgba(5, 5, 7, 0.72);
+  backdrop-filter: blur(4px);
+  visibility: visible;
+  pointer-events: auto;
+  transition: background 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), backdrop-filter 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0s linear 0s;
+}
+
+.export-modal {
+  width: 100%;
+  max-width: 420px;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: #16161b;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-modal);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  transform: translateY(24px) scale(0.94);
+  opacity: 0;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 1, 1), opacity 0.2s cubic-bezier(0.4, 0, 1, 1);
+}
+
+.export-modal-overlay.open .export-modal {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+  transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.eq-modal {
+  max-width: 560px;
+}
+
+.export-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--bg-hover-subtle);
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-bright);
+}
+
+.export-modal-close {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-round);
+  border: 1px solid var(--border-subtle);
+  background: #1c1c24;
+  color: var(--icon-muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background var(--dur-hover) var(--ease-snap), color var(--dur-hover) var(--ease-snap), border-color var(--dur-hover) var(--ease-snap), transform var(--dur-press) var(--ease-snap);
+}
+
+.export-modal-close:hover {
+  background: #252530;
+  color: var(--text-bright);
+  border-color: var(--accent-primary);
+}
+
+.export-modal-close:active {
+  transform: scale(0.9);
+}
+
+.export-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 22px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.export-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.export-section-label {
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #6b6b7b;
+}
+
+.export-range-options,
+.export-format-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.export-format-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.export-effect-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.export-radio-row,
+.export-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #1c1c24;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: #c8c8d0;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
+}
+
+.export-radio-row:hover,
+.export-checkbox-row:hover {
+  background: #22222c;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.export-radio-row:has(input:checked),
+.export-checkbox-row:has(input:checked) {
+  background: var(--accent-glow);
+  border-color: var(--accent-primary);
+  color: var(--text-pure-white);
+}
+
+.export-radio-row input,
+.export-checkbox-row input {
+  accent-color: var(--accent-primary);
+  cursor: pointer;
+}
+
+.export-marker-select {
+  width: 100%;
+  padding: 10px 12px;
+  background: #1c1c24;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-field);
+  color: var(--text-bright);
+  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-body);
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.export-marker-select:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.export-marker-select:not(:disabled):hover {
+  border-color: var(--accent-primary);
+}
+
+.export-marker-select option {
+  background: #1c1c24;
+  color: var(--text-bright);
+}
+
+.export-marker-select option:checked {
+  background: var(--accent-primary);
+  color: var(--text-pure-white);
+}
+
+.export-marker-range-selects {
+  display: flex;
+  gap: 12px;
+}
+
+.export-marker-select-group {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.export-marker-select-label {
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-small);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  color: var(--icon-muted);
+  text-transform: uppercase;
+}
+
+.export-filename-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: #1c1c24;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-field);
+  color: var(--text-bright);
+  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-body);
+  box-sizing: border-box;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.export-filename-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  background: #22222c;
+}
+
+.export-filename-input::placeholder {
+  color: #5a5a68;
+}
+
+.export-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 22px;
+  border-top: 1px solid var(--bg-hover-subtle);
+}
+
+.export-status {
+  flex: 1;
+  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-small);
+  color: var(--icon-muted);
+  min-height: 16px;
+  transition: color 0.2s ease;
+}
+
+.export-status.error {
+  color: var(--danger);
+}
+
+.export-status.success {
+  color: #10b981;
+}
+
+.export-run-btn {
+  flex-shrink: 0;
+  padding: 12px 28px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: var(--text-pure-white);
+  border: none;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-btn-primary);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 6px 20px var(--accent-glow);
+  transition: background var(--dur-hover) var(--ease-snap), box-shadow var(--dur-press) var(--ease-snap), transform var(--dur-press) var(--ease-snap);
+}
+
+.export-run-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--accent-hover-1), var(--accent-hover-2));
+  box-shadow: 0 8px 24px var(--accent-glow);
+  transform: translateY(-1px);
+}
+
+.export-run-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
+}
+
+.export-run-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.export-cancel-btn {
+  flex-shrink: 0;
+  padding: 12px 20px;
+  background: transparent;
+  color: var(--icon-muted);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-btn-primary);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background var(--dur-hover) var(--ease-snap), border-color var(--dur-hover) var(--ease-snap), color var(--dur-hover) var(--ease-snap);
+}
+
+.export-cancel-btn:hover {
+  background: var(--bg-hover-subtle);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-bright);
+}
+
+.export-cancel-btn:active {
+  transform: scale(0.97);
+}
+
+
+
+/* 解約確認モーダル(#cancelModalOverlay)固有。器は共通、ここは中身(プラン情報行/注意書き)のみ */
+.cancel-modal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.cancel-modal-row:last-of-type {
+  border-bottom: none;
+}
+
+.cancel-modal-label {
+  font-size: var(--fs-small);
+  color: var(--icon-muted);
+}
+
+.cancel-modal-val {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+.cancel-modal-notice {
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: var(--radius-field);
+  font-size: var(--fs-small);
+  line-height: 1.6;
+  color: var(--text-bright);
+}
+
+.cancel-modal-notice strong {
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+/* 「解約手続きへ進む」は危険色(赤系。export-run-btnと区別) */
+.cancel-modal-confirm-btn {
+  background: var(--danger, #ef4444);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35);
+}
+
+.cancel-modal-confirm-btn:hover {
+  background: #dc2626;
+}
+
+/* Backup/Import(パネルに移して表示)固有。.track-backup-checklistは.export-checkbox-row(3項目横並び前提)を継承せず独立(縦1列・丸チェック) */
+.track-backup-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.track-backup-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  background: #1c1c24;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0;
+  cursor: pointer;
+  transition: background var(--dur-hover, 0.18s) var(--ease-snap, ease), border-color var(--dur-hover, 0.18s) var(--ease-snap, ease);
+}
+
+.track-backup-row:hover {
+  background: #22222c;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.track-backup-row:has(input:checked) {
+  border-color: color-mix(in srgb, var(--accent-primary, #3b82f6) 45%, var(--border-subtle));
+}
+
+.track-backup-row input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  transition: border-color var(--dur-hover, 0.18s) var(--ease-snap, ease), background var(--dur-hover, 0.18s) var(--ease-snap, ease);
+}
+
+.track-backup-row input[type="checkbox"]:checked {
+  border-color: var(--accent-primary, #3b82f6);
+  background: var(--accent-primary, #3b82f6);
+}
+
+.track-backup-row input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 9px;
+  border-right: 2px solid var(--text-pure-white, #fff);
+  border-bottom: 2px solid var(--text-pure-white, #fff);
+  transform: rotate(45deg);
+}
+
+.track-backup-row input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--accent-primary, #3b82f6);
+  outline-offset: 2px;
+}
+
+.track-backup-row-label {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: #c8c8d0;
+  overflow-wrap: break-word;
+  transition: color var(--dur-hover, 0.18s) var(--ease-snap, ease);
+}
+
+.track-backup-row:has(input:checked) .track-backup-row-label {
+  color: var(--text-pure-white, #fff);
+}
+
+#trackBackupTargetName {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-bright);
+  text-transform: none;
+  letter-spacing: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.track-backup-tracklist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.track-backup-tracklist-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.track-backup-mini-btn {
+  height: var(--btn-h);
+  padding: 0 var(--btn-pad-x);
+  background: #1c1c24;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-btn);
+  font-weight: 600;
+  color: var(--icon-muted);
+  cursor: pointer;
+  transition: background var(--dur-hover, 0.18s) var(--ease-snap, ease), color var(--dur-hover, 0.18s) var(--ease-snap, ease), border-color var(--dur-hover, 0.18s) var(--ease-snap, ease);
+}
+
+.track-backup-mini-btn:hover {
+  color: var(--text-bright);
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+.track-backup-tracklist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.track-backup-track-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: #1c1c24;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.track-backup-track-row input[type="checkbox"] {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-primary, #3b82f6);
+  cursor: pointer;
+}
+
+.track-backup-track-name {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: #c8c8d0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.track-backup-track-size {
+  flex-shrink: 0;
+  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--icon-muted);
+}
+
+.track-backup-size-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 2px 0;
+  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+#trackBackupTotalSize {
+  color: var(--accent-primary, #3b82f6);
+}
+
+/* Importタブ: 常に縦積み(ドロップゾーン/読込済み情報→重複リスト) */
+.track-import-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.track-import-col-main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.track-import-layout #trackImportDuplicateRows {
+  max-height: 280px;
+}
+
+.track-import-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 32px 16px;
+  min-height: 180px;
+  box-sizing: border-box;
+  border: 1.5px dashed var(--border-subtle);
+  border-radius: var(--radius-field);
+  background: #1c1c24;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color var(--dur-hover, 0.18s) var(--ease-snap, ease), background var(--dur-hover, 0.18s) var(--ease-snap, ease);
+}
+
+.track-import-dropzone:hover,
+.track-import-dropzone.dragover {
+  border-color: var(--accent-primary, #3b82f6);
+  background: color-mix(in srgb, var(--accent-primary, #3b82f6) 8%, #1c1c24);
+}
+
+.track-import-dropzone-icon {
+  width: 30px;
+  height: 30px;
+  fill: var(--icon-muted);
+  transform: rotate(180deg);
+}
+
+.track-import-dropzone.dragover .track-import-dropzone-icon {
+  fill: var(--accent-primary, #3b82f6);
+}
+
+.track-import-dropzone-text {
+  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+.track-import-dropzone-sub {
+  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-small);
+  color: var(--icon-muted);
+}
+
+/* ZIP読込後はドロップゾーンの代わりに1行の「読込済み」帯。Cancelが「Back」になりresetImportState()でドロップゾーンへ戻る */
+.track-import-loaded-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 4px;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 0;
+  background: none;
+}
+
+.track-import-loaded-info-icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  fill: var(--accent-primary, #3b82f6);
+}
+
+.track-import-loaded-info-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.track-import-loaded-info-name {
+  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-bright);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.track-import-loaded-info-count {
+  flex-shrink: 0;
+  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-small);
+  color: var(--icon-muted);
+}
+
+.track-import-duplicate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.track-import-duplicate-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#trackImportDuplicateRows {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.track-import-duplicate-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 4px;
+  background: none;
+  border: none;
+  border-radius: 0;
+}
+
+.track-import-duplicate-name {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: #c8c8d0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 上書き/スキップ: .glow-switch(style-controls.css)流用+左に状態ラベル(.track-import-choice-label)。一括操作(すべて上書き/スキップ)も同部品(HTML直組み) */
+.track-import-choice-wrap,
+.track-import-bulk-toggle-wrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.track-import-choice-label {
+  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-btn);
+  font-weight: 600;
+  color: var(--icon-muted);
+  white-space: nowrap;
+  min-width: 42px;
+  text-align: right;
+  transition: color var(--dur-hover, 0.18s) var(--ease-snap, ease);
+}
+
+.track-import-choice-label.is-skip {
+  color: var(--danger, #ef4444);
+}
+
+#trackImportBulkToggleLabel {
+  min-width: 0;
+}
+
+/* 行スイッチ(.track-import-choice-switch): ON(上書き)=accent、OFF(スキップ)=危険色(赤)に個別上書き */
+.track-import-choice-switch[aria-checked="false"],
+#trackImportBulkToggle[aria-checked="false"] {
+  background: var(--danger, #ef4444);
+}
+
+.track-import-summary {
+  padding: 12px 4px;
+  background: none;
+  border: none;
+  border-radius: 0;
+  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-small);
+  line-height: 1.7;
+  color: var(--text-bright);
+  white-space: pre-line;
+}
+
+.track-import-loaded-info,
+.track-import-summary {
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+#trackImportDuplicateRows {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.track-import-duplicate-row {
+  border-bottom: 1px solid var(--border-subtle);
+}

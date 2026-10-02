@@ -1,0 +1,408 @@
+/* style-layout-pc-v2-sp.css — style-layout-pc-v2.cssの続き: SP幅(≤900px)組み替え+下段バー追記(Speed/Keyステッパー等)。style-layout-pc-v2.cssの直後に読む(順序で上書き) */
+
+/* SP幅(≤900px): #pcV2Layoutを縦flex、アイコンバー=最下部固定(横スクロール)、下段バー=その直上(横スクロール)、パネル=通常非表示で.pcv2-panel-open時にヘッダー直下〜下部バー直上の全面オーバーレイ。波形エリアは本体のまま。#pcV2PanelBody配下はPC幅と同DOM/CSS */
+@media screen and (max-width: 900px) {
+  body.pc-v2-active #appHeader {
+    height: 44px;
+    padding: 0 12px;
+    gap: 12px;
+  }
+
+  body.pc-v2-active #appLogo {
+    font-size: 22px;
+  }
+
+  /* 【重要】#pcV2BottomBarと#pcV2IconBarの順序はCSS orderでなくplayer-ui-pc-v2.js(syncBottomBarPosition)がDOMを動かして実現(階層が別: BottomBarは#pcV2Root直下、IconBarは#pcV2Layout内) */
+  #pcV2Layout {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    min-height: 0;
+    flex: 1;
+  }
+
+  #pcV2WaveArea {
+    flex: 1;
+    min-height: 0;
+    order: 1;
+    padding: 8px 16px;
+    padding-bottom: var(--pcv2-wave-fab-space, 62px);
+  }
+
+  /* 【v2.16.1】SPでもシークバーを残り高さに伸ばす: style-layout-sp.cssの#vbarContainer{flex-shrink:0}より詳細度を上げて上書き */
+  #pcV2WaveArea #vbarContainer {
+    flex: 1 1 0;
+    min-height: 0;
+    gap: 24px;
+    padding-top: 22px;
+  }
+
+  #pcV2WaveArea .vbar {
+    min-height: 20px;
+  }
+
+  /* order: 整数のみ有効(小数は無視され先頭に出る不具合があった)。#pcV2WaveArea:1・#pcV2TimeRow:2・アンカータブ:3・#pcV2BottomBar:4・#pcV2IconBar:5 */
+  #pcV2BottomBarAnchorTabs {
+    display: flex;
+    order: 3;
+    flex-shrink: 0;
+  }
+
+  .pcv2-anchor-tab {
+    padding: 10px 20px;
+    background: none;
+    border: 1px solid var(--border-subtle);
+    font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    color: var(--icon-muted);
+    cursor: pointer;
+    transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
+  }
+
+  .pcv2-anchor-tab:hover {
+    color: var(--text-bright);
+    border-color: rgba(255, 255, 255, 0.24);
+  }
+
+  .pcv2-anchor-tab:active {
+    transform: scale(0.94);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  /* シートの開閉アニメ中もボタン群(下段バー・アイコンバー)の背面に潜るよう、パネル(z-index:100)より前面+不透明背景 */
+  #pcV2BottomBar,
+  #pcV2IconBar {
+    position: relative;
+    z-index: 110;
+    background: #0a0a0c;
+  }
+
+  #pcV2BottomBar {
+    order: 4;
+    flex-shrink: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding: 0px 25px;
+    scrollbar-width: none;
+    border-top: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  #pcV2BottomBar::-webkit-scrollbar {
+    display: none;
+  }
+
+  #pcV2BottomBar .pcv2-ctrl-group {
+    flex-shrink: 0;
+  }
+
+  #pcV2WaveFabRow {
+    right: 14px;
+    bottom: 14px;
+    gap: 8px;
+  }
+
+  #pcV2WaveFabRow .panel-fab-btn {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  #pcV2BottomBar .pcv2-ctrl-divider-sp {
+    display: block;
+    flex-shrink: 0;
+  }
+
+  /* #pcV2TimeRow: PC幅共通側はdisplay:none、SP幅でflexに戻す(order:2) */
+  #pcV2TimeRow {
+    display: flex;
+    order: 2;
+    padding: 2px 16px 6px;
+  }
+
+  #pcV2BottomBar .pcv2-ctrl-btn {
+    padding: 14px 12px;
+  }
+
+  #pcV2BottomBar .pcv2-ctrl-btn svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  #pcV2BottomBar .pcv2-ctrl-btn.primary svg {
+    width: 38px;
+    height: 38px;
+  }
+
+  #pcV2BottomBar .pcv2-ctrl-btn span {
+    font-size: 11px;
+  }
+
+  #pcV2BottomBar .tripleNavBtn-third {
+    padding: 10px 6px;
+  }
+
+  #pcV2BottomBar .tripleNavBtn-third svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  #pcV2BottomBar .tripleNavBtn-center svg {
+    width: 38px;
+    height: 38px;
+  }
+
+  #pcV2BottomBar .tripleNavBtn-center,
+  #pcV2BottomBar .loopbtn {
+    min-height: 70px;
+  }
+
+  #pcV2BottomBar .loopbtn {
+    padding: 14px 16px;
+  }
+
+  #pcV2BottomBar .loopbtn svg {
+    width: 26px;
+    height: 26px;
+    margin: 4px auto;
+  }
+
+  /* SP幅アイコンバー: 最下部固定・横並び・横スクロール。padding-bottom=env(safe-area-inset-bottom)+16px(最下端ギリギリだとiPhoneの横スワイプがアプリ切替に奪われる) */
+  #pcV2IconBar {
+    order: 5;
+    flex-direction: row;
+    flex-shrink: 0;
+    align-items: stretch;
+    border-right: none;
+    padding: 6px 6px calc(24px + env(safe-area-inset-bottom, 0px));
+    gap: 2px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  #pcV2IconBar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* 右端ヒント矢印: #pcV2Layout基準で絶対配置。JS(updateIconBarScrollHint)が.visibleを付外し。初期は非表示(チラつき防止) */
+  #pcV2IconBarScrollHint {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    position: absolute;
+    right: 0;
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    height: 66px;
+    width: 44px;
+    padding-right: 4px;
+    pointer-events: none;
+    background: linear-gradient(to right, transparent, #0a0a0c 65%);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 2;
+  }
+
+  #pcV2IconBarScrollHint.visible {
+    opacity: 1;
+  }
+
+  #pcV2IconBarScrollHint svg {
+    width: 20px;
+    height: 20px;
+    fill: var(--icon-muted, #8b8b9e);
+    /* 【v2.16.3】無限アニメ禁止(再計算)。数回で止める(GOTCHAS.md) */
+    animation: pcv2-scroll-hint-nudge 1.6s ease-in-out 3;
+  }
+
+  @keyframes pcv2-scroll-hint-nudge {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(3px); }
+  }
+
+  .pcv2-icon-item {
+    flex-shrink: 0;
+    gap: 8px;
+    padding: 12px 10px;
+  }
+
+  .pcv2-icon-item[data-panel-id="seekbar"] {
+    display: flex;
+  }
+
+  .pcv2-icon-item svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .pcv2-icon-item span {
+    font-size: 12px;
+  }
+
+  .pcv2-icon-item.active::before {
+    left: 8px;
+    right: 8px;
+    top: auto;
+    bottom: 0;
+    width: auto;
+    height: 2px;
+  }
+
+  #pcV2IconBarSpacer {
+    display: none;
+  }
+
+  #pcV2IconBarBottom {
+    flex-direction: row;
+    border-top: none;
+    border-left: 1px solid var(--border-subtle);
+    padding-top: 0;
+    padding-left: 8px;
+    margin-left: 4px;
+    gap: 4px;
+  }
+
+  /* SP幅はKeyboardボタンをCSSで非表示(JSのICON_ITEMSからは消さない=PC表示/機能に影響させない) */
+  .pcv2-icon-item[data-panel-id="keyboard"] {
+    display: none;
+  }
+
+  #pcV2Panel {
+    display: none;
+  }
+
+  #pcV2Layout.pcv2-panel-open #pcV2Panel {
+    animation: qn-sheet-up 280ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+    display: flex;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    /* 下部バー+アイコンバーの高さ分を空ける(bottom:0だと閉じる手段のアイコンバーまで覆い戻れなくなった)。高さはJS(player-ui-pc-v2.js)がCSS変数で設定 */
+    bottom: var(--pcv2-bottom-bars-height, 140px);
+    /* z-index: .vbar-line(50)・.vbar-label(51)より手前 */
+    z-index: 100;
+    width: 100%;
+    border-right: none;
+    background: #0a0a0c;
+    /* 開いている目印: 上端アクセント線+上向きの影+角丸+つまみ */
+    border-top: 2px solid var(--accent-primary);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.55);
+  }
+
+  #pcV2Layout.pcv2-panel-closing #pcV2Panel {
+    animation: qn-sheet-down 230ms cubic-bezier(0.4, 0, 1, 1) both;
+    pointer-events: none;
+  }
+
+  #pcV2Panel #pcV2PanelHeader {
+    position: relative;
+    padding-top: 22px;
+    padding-right: 64px;
+  }
+
+  #pcV2Panel #pcV2PanelHeader::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: 40px;
+    height: 4px;
+    margin-left: -20px;
+    border-radius: 2px;
+    background: var(--accent-primary);
+    opacity: 0.7;
+  }
+
+  #pcV2Panel .qn-sheet-close {
+    display: flex;
+  }
+
+  #pcV2Panel #pcV2PanelHeader { touch-action: none; }
+}
+
+@keyframes qn-sheet-up {
+  from { transform: translateY(100%); opacity: 0.4; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes qn-sheet-down {
+  to { transform: translateY(100%); opacity: 0; }
+}
+
+/* シートの閉じるボタン(PC幅は非表示。SP幅の.qn-sheet-closeはdisplay:flex)。見出し右端に重ねる */
+.qn-sheet-close {
+  display: none;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 6;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-bright);
+  cursor: pointer;
+}
+.qn-sheet-close svg { width: 26px; height: 26px; fill: currentColor; }
+.qn-sheet-close:active { transform: scale(0.92); background: rgba(255, 255, 255, 0.1); }
+
+
+/* scrollbar-gutter: stable(縦スクロールバーの出没で全体が左右にガタつくのを防ぐ) */
+html {
+  scrollbar-gutter: stable;
+}
+
+#pcV2BottomBar .pcv2-stepper { display: inline-flex; align-items: center; gap: 0; }
+#pcV2BottomBar .pcv2-step-btn { min-width: 26px; padding-left: 4px; padding-right: 4px; font-size: 18px; line-height: 1; }
+
+#pcV2BottomBar .pcv2-step-btn { font-size: 18px; min-height: 0; align-self: center; }
+#pcV2BottomBar #setABtn .top-controls-btn-label,
+#pcV2BottomBar #setBBtn .top-controls-btn-label,
+#pcV2BottomBar #clearABBtn .top-controls-btn-label { display: block; white-space: nowrap; }
+
+#pcV2BottomBar .pcv2-stepper { gap: 0; margin: 0 2px; }
+#pcV2BottomBar .pcv2-stepper > .pcv2-ctrl-btn:not(.pcv2-step-btn) { padding-left: 0; padding-right: 0; }
+#pcV2BottomBar .pcv2-stepper > .pcv2-ctrl-btn:not(.pcv2-step-btn) span {
+  display: flex; flex-direction: column; align-items: center;
+  min-width: 36px; line-height: 1.15; text-align: center; white-space: nowrap;
+}
+#pcV2BottomBar .pcv2-stepper > .pcv2-ctrl-btn:not(.pcv2-step-btn) span b { font-weight: 700; font-variant-numeric: tabular-nums; }
+#pcV2BottomBar .pcv2-stepper > .pcv2-ctrl-btn:not(.pcv2-step-btn) span i { font-style: normal; text-transform: uppercase; font-size: 8px; letter-spacing: 0.4px; opacity: 0.85; }
+#pcV2BottomBar .pcv2-step-btn { min-width: 20px; padding: 8px 2px; }
+
+#pcV2BottomBar .pcv2-ctrl-btn,
+#pcV2BottomBar .pcv2-stepper { align-self: flex-start; }
+#pcV2BottomBar .pcv2-stepper { align-items: flex-start; margin: 0; }
+#pcV2BottomBar .pcv2-stepper > .pcv2-ctrl-btn:not(.pcv2-step-btn) { padding-left: 0; padding-right: 0; min-height: 0; }
+#pcV2BottomBar .pcv2-stepper > .pcv2-ctrl-btn:not(.pcv2-step-btn) span { min-width: 26px; }
+#pcV2BottomBar .pcv2-step-btn {
+  min-width: 14px; width: 14px; height: 40px; margin-top: 4px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 0; align-self: flex-start;
+}
+
+#pcV2BottomBar .top-controls-btn-label {
+  display: block;
+  white-space: nowrap;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+#pcV2BottomBar .tripleNavBtn-third:not(.tripleNavBtn-center) svg {
+  margin: 6px auto;
+  display: block;
+  box-sizing: content-box;
+}
+#pcV2BottomBar .tripleNavBtn-third { min-height: 57px; }
+
+#pcV2BottomBar .pcv2-stepper { margin: 0 12px; }
+#pcV2BottomBar #pcV2VolumeBtn,
+#pcV2BottomBar #pcV2BottomEqToggle { margin: 0 6px; }

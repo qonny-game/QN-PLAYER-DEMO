@@ -1,0 +1,708 @@
+/* style-pcv2-panels.css — 中央パネル(#pcV2PanelBody)の中身(Control/EQ/Markers/Library/Text/Backup/Import/Color/Keyboard)、#pcV2PanelHeader、右下FAB(#pcV2PanelFab)。外枠はstyle-layout-pc-v2(.-sp).css */
+
+
+#pcV2PanelHeader {
+  padding: 14px 16px 14px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-title);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--icon-muted);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+
+.pcv2-panel-header-title {
+  display: block;
+  color: var(--accent-primary);
+}
+
+
+/* FAB共通: Markers/Library/Text右下に縦2段(上=Add系/Fullscreen、下=EDIT)。.panel-edit-btn/.panel-addfile-btnはJS制御のフックのみで見た目は持たない(スタイルはここに集約) */
+#pcV2PanelFab {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+
+#pcV2PanelFab .pcv2-fab-addgroup {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+
+.panel-fab-btn {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: var(--radius-pill);
+  color: var(--text-pure-white, #fff);
+  cursor: pointer;
+  background: var(--accent-primary);
+  border: none;
+  flex-shrink: 0;
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-btn-primary);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+
+.panel-fab-btn svg {
+  width: 17px;
+  height: 17px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+
+.panel-fab-btn:hover {
+  background: var(--accent-hover-1);
+}
+
+
+.panel-fab-btn:active {
+  transform: scale(0.96);
+}
+
+
+.panel-fab-btn.active,
+.panel-fab-btn.active:hover {
+  background: var(--text-pure-white, #fff);
+  color: var(--accent-primary);
+}
+
+
+.panel-fab-delete-btn {
+  display: none;
+  background: var(--danger, #ef4444);
+}
+
+
+.panel-fab-delete-btn:hover {
+  background: #dc2626;
+}
+
+
+.panel-fab-delete-btn:disabled {
+  background: rgba(239, 68, 68, 0.35);
+  cursor: not-allowed;
+}
+
+
+/* 【v3.24.0】編集モードのMOVEボタン(曲をフォルダへ。編集モードのみJSで表示。色は通常FAB=アクセント) */
+.panel-fab-move-btn {
+  display: none;
+}
+
+
+.panel-fab-move-btn:disabled {
+  background: var(--accent-primary);
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+
+/* Markers/Playlist操作ボタン: 編集モード時以外はクリックしても反応しない(薄く表示)。無効化はplayer-ui-pc-v2.jsがキャプチャフェーズで止める(player-markers/playlist側は無改造)。削除チェックは編集モードのみ表示。markers=.del-btn自体がgridセル、playlist=.playlist-del-zone(.del-btnを包む広い判定)がgridセル */
+#pcV2PanelBody #pinList .pin-del-zone,
+#pcV2PanelBody #playlistBox .playlist-del-zone {
+  display: none;
+}
+
+
+#pcV2PanelBody.markers-edit-mode #pinList .pin-del-zone,
+#pcV2PanelBody.playlist-edit-mode #playlistBox .playlist-del-zone {
+  display: flex;
+}
+
+
+/* 【v2.15.0】Markers版の広い削除タップゾーン: .pinItemのpadding(10px 12px)を負margin+paddingで打ち消し行いっぱいに広げ、●の位置は保つ */
+#pcV2PanelBody.markers-edit-mode #pinList .pin-del-zone {
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  flex-shrink: 0;
+  margin: -10px -12px -10px 0;
+  padding: 10px 16px 10px 8px;
+  cursor: pointer;
+}
+
+
+#pcV2PanelBody.markers-edit-mode #pinList .toggle-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+
+#pcV2PanelBody #pinList .toggle-btn,
+#pcV2PanelBody #pinList .pin-edit-btn,
+#pcV2PanelBody #playlistBox .toggle-btn,
+#pcV2PanelBody #playlistBox .pin-edit-btn {
+  cursor: default;
+}
+
+
+#pcV2PanelBody.markers-edit-mode #pinList .toggle-btn,
+#pcV2PanelBody.markers-edit-mode #pinList .pin-edit-btn,
+#pcV2PanelBody.playlist-edit-mode #playlistBox .toggle-btn,
+#pcV2PanelBody.playlist-edit-mode #playlistBox .pin-edit-btn {
+  opacity: 1;
+  cursor: pointer;
+}
+
+
+/* .playlist-del-zone: .del-btn(20x20)より広い判定。負margin+paddingで行の上下・右端いっぱい(.playlistItemのpadding 9px 12px相殺)。左(PLAY/SKIP側)へは広げない */
+#pcV2PanelBody.playlist-edit-mode #playlistBox .playlist-del-zone {
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin: -9px -12px -9px 0;
+  padding: 9px 16px 9px 8px;
+  cursor: pointer;
+}
+
+
+#pcV2PanelBody.markers-edit-mode #pinList .del-btn,
+#pcV2PanelBody.playlist-edit-mode #playlistBox .del-btn {
+  display: flex;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.24);
+  background: none;
+  color: transparent;
+  font-size: 0;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+
+/* ●自体はpointer-events:none、タップは外側ゾーン(.pin-del-zone/.playlist-del-zone)が受ける。ゾーン無しで透過するとe.target.closest(".del-btn")が失敗し削除選択不能になる */
+#pcV2PanelBody.playlist-edit-mode #playlistBox .del-btn,
+#pcV2PanelBody.markers-edit-mode #pinList .del-btn {
+  pointer-events: none;
+}
+
+
+#pcV2PanelBody.markers-edit-mode #pinList .del-btn.pcv2-selected,
+#pcV2PanelBody.playlist-edit-mode #playlistBox .del-btn.pcv2-selected {
+  background: var(--danger);
+  border-color: var(--danger);
+}
+
+
+#pcV2PanelBody.markers-edit-mode #pinList .del-btn.pcv2-selected::after,
+#pcV2PanelBody.playlist-edit-mode #playlistBox .del-btn.pcv2-selected::after {
+  content: "";
+  display: block;
+  width: 5px;
+  height: 9px;
+  border-right: 2px solid var(--text-pure-white);
+  border-bottom: 2px solid var(--text-pure-white);
+  transform: rotate(45deg) translate(-1px, -1px);
+}
+
+
+/* 一括削除: 削除前にこのクラスでフェードアウト+縮小。deleteSelectedItems()がFADE_MS(260ms)待ってからperformDelete */
+.pcv2-row-deleting {
+  opacity: 0;
+  transform: scale(0.97);
+  transition: opacity 0.26s ease, transform 0.26s ease;
+  pointer-events: none;
+}
+
+
+/* ヘッダーの「選択項目を削除」: 編集モード中のみ。表示はtoggleEditMode()がstyle.displayを直接制御(DOM順の都合でCSS兄弟結合子は不可) */
+#pcV2PanelBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
+
+#pcV2PanelBody.pcv2-panel-playlist,
+#pcV2PanelBody.pcv2-panel-markers {
+  padding: 8px 0;
+}
+
+
+/* スクロール終端をリスト約2行分伸ばす(右下FABにリスト末尾が隠れる。#pcV2PanelFabはabsoluteなのでこの擬似要素が末尾余白) */
+#pcV2PanelBody.pcv2-panel-playlist::after,
+#pcV2PanelBody.pcv2-panel-markers::after {
+  content: "";
+  display: block;
+  height: 140px;
+}
+
+
+/* Backup/Importパネル(v2.13.6〜)。【v3.18.0】YouTube(.qn-yt-sec-*)、【v3.23.0】PITCH(.qn-pt-sec-*)にも:is()で共用(ここを直せば全部に効く) */
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) .export-modal-footer,
+:is(#pcV2PanelBody.pcv2-panel-import, .qn-yt-sec-import, .qn-pt-sec-import) .export-modal-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 0 24px;
+  flex-shrink: 0;
+}
+
+
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) .export-status,
+:is(#pcV2PanelBody.pcv2-panel-import, .qn-yt-sec-import, .qn-pt-sec-import) .export-status {
+  flex-basis: 100%;
+}
+
+
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) .export-status:empty,
+:is(#pcV2PanelBody.pcv2-panel-import, .qn-yt-sec-import, .qn-pt-sec-import) .export-status:empty {
+  display: none;
+}
+
+
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) .export-run-btn,
+:is(#pcV2PanelBody.pcv2-panel-import, .qn-yt-sec-import, .qn-pt-sec-import) .export-run-btn {
+  flex: 1;
+  width: auto;
+}
+
+
+/* 【v2.15.1/v2.16.7】Backupパネル: 曲選択リストはflex:1で埋めない(overflow-y:autoの要素内で多段flex:1はiOS Safariでリスト高さ確定前に後続セクションが重なって描画される既知不具合。GOTCHAS.md)。リスト=max-height固定上限(内側のみスクロール)、パネル全体=#pcV2PanelBodyの1箇所だけスクロール。行は線区切り(角丸枠なし) */
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) .export-section {
+  padding: 18px 0;
+}
+
+
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) .export-section:first-child {
+  padding-top: 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) .track-backup-options {
+  border-bottom: none;
+}
+
+
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) .track-backup-tracklist-header {
+  margin-bottom: 12px;
+}
+
+
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) .track-backup-tracklist-header .export-section-label {
+  margin-bottom: 0;
+}
+
+
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) .track-backup-mini-btn {
+  padding: 0 var(--btn-pad-x);
+  border-radius: var(--radius-pill);
+  background: none;
+}
+
+
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) .track-backup-tracklist {
+  /* 【v2.16.9】リスト上限は低めに(58vh/520pxだとSPで内外2つのスクロール領域が競合し、外側へ渡すのが困難だった)。曲数が少なければ内容分(min-heightなし) */
+  max-height: min(38vh, 340px);
+  gap: 0;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) .track-backup-track-row,
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) .track-backup-row {
+  gap: 12px;
+  padding: 12px 4px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border-subtle);
+  border-radius: 0;
+}
+
+
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) .track-backup-track-row:last-child,
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) .track-backup-row:last-child {
+  border-bottom: none;
+}
+
+
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) .track-backup-row:hover,
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) .track-backup-row:has(input:checked) {
+  background: none;
+  border-color: var(--border-subtle);
+}
+
+
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) .track-backup-track-row input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  background: transparent;
+  position: relative;
+}
+
+
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) .track-backup-track-row input[type="checkbox"]:checked {
+  border-color: var(--accent-primary, #3b82f6);
+  background: var(--accent-primary, #3b82f6);
+}
+
+
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) .track-backup-track-row input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 9px;
+  border-right: 2px solid var(--text-pure-white, #fff);
+  border-bottom: 2px solid var(--text-pure-white, #fff);
+  transform: rotate(45deg);
+}
+
+
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) .track-backup-track-name {
+  font-size: var(--fs-body);
+}
+
+
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) .track-backup-size-row {
+  flex-shrink: 0;
+  padding: 12px 4px 0;
+}
+
+
+/* .track-backup-checklistは常時表示(折りたたみ廃止。.is-open前提のdisplay:noneは付けない) */
+#pcV2PanelBody .track-backup-options .track-backup-checklist {
+  display: flex;
+  gap: 0;
+  margin-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+
+#trackBackupSizeAudio {
+  color: var(--accent-primary);
+}
+
+
+:is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) #trackBackupCancelBtn,
+:is(#pcV2PanelBody.pcv2-panel-import, .qn-yt-sec-import, .qn-pt-sec-import) #trackImportCancelBtn[data-mode="cancel"] {
+  display: none;
+}
+
+
+#pcV2PanelBody .mobile-tab-panel,
+:is(#pcV2PanelBody, .qn-yt-sec-backup, .qn-pt-sec-backup, .qn-yt-sec-import, .qn-pt-sec-import) .export-modal-body {
+  display: block !important;
+  width: auto;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+
+#pcV2PanelBody .markers-heading-row {
+  display: none !important;
+}
+
+
+:is(#pcV2PanelBody, .qn-yt-sec-backup, .qn-pt-sec-backup, .qn-yt-sec-import, .qn-pt-sec-import) .export-modal-body {
+  padding: 0;
+}
+
+
+:is(#pcV2PanelBody, .qn-yt-sec-backup, .qn-pt-sec-backup, .qn-yt-sec-import, .qn-pt-sec-import) .export-section {
+  display: block;
+  padding: 26px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+
+:is(#pcV2PanelBody, .qn-yt-sec-backup, .qn-pt-sec-backup, .qn-yt-sec-import, .qn-pt-sec-import) .export-section:first-child {
+  padding-top: 0;
+}
+
+
+:is(#pcV2PanelBody, .qn-yt-sec-backup, .qn-pt-sec-backup, .qn-yt-sec-import, .qn-pt-sec-import) .export-section:last-of-type {
+  border-bottom: none;
+}
+
+
+:is(#pcV2PanelBody, .qn-yt-sec-backup, .qn-pt-sec-backup, .qn-yt-sec-import, .qn-pt-sec-import) .export-section-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: var(--fs-heading);
+}
+
+
+:is(#pcV2PanelBody, .qn-yt-sec-backup, .qn-pt-sec-backup, .qn-yt-sec-import, .qn-pt-sec-import) .export-modal-footer {
+  display: block;
+  padding: 16px 0 0;
+  border-top: none;
+}
+
+
+#pcV2PanelBody #exportCancelBtn {
+  display: none;
+}
+
+
+:is(#pcV2PanelBody, .qn-yt-sec-backup, .qn-pt-sec-backup, .qn-yt-sec-import, .qn-pt-sec-import) .export-run-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--accent-primary);
+  border-radius: var(--radius-pill);
+  box-shadow: none;
+}
+
+
+:is(#pcV2PanelBody, .qn-yt-sec-backup, .qn-pt-sec-backup, .qn-yt-sec-import, .qn-pt-sec-import) .export-cancel-btn {
+  border-radius: var(--radius-pill);
+}
+
+
+:is(#pcV2PanelBody, .qn-yt-sec-backup, .qn-pt-sec-backup, .qn-yt-sec-import, .qn-pt-sec-import) .export-run-btn:hover:not(:disabled) {
+  background: var(--accent-hover-1);
+  box-shadow: none;
+  transform: none;
+}
+
+
+#pcV2PanelBody .export-range-options,
+#pcV2PanelBody .export-format-options,
+#pcV2PanelBody .export-effect-options {
+  display: flex;
+  gap: 0;
+  flex-wrap: nowrap;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+
+#pcV2PanelBody .export-radio-row,
+#pcV2PanelBody .export-checkbox-row {
+  flex: 1;
+  justify-content: center;
+  padding: 9px 4px;
+  background: none;
+  border: none;
+  border-radius: 0;
+  border-right: 1px solid var(--border-subtle);
+  color: var(--icon-muted);
+  font-size: var(--fs-small);
+}
+
+
+#pcV2PanelBody .export-radio-row:last-child,
+#pcV2PanelBody .export-checkbox-row:last-child {
+  border-right: none;
+}
+
+
+#pcV2PanelBody .export-radio-row:hover,
+#pcV2PanelBody .export-checkbox-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--border-subtle);
+}
+
+
+#pcV2PanelBody .export-radio-row:has(input:checked),
+#pcV2PanelBody .export-checkbox-row:has(input:checked) {
+  background: var(--accent-primary);
+  color: var(--text-pure-white);
+  font-weight: 600;
+}
+
+
+#pcV2PanelBody .export-radio-row input,
+#pcV2PanelBody .export-checkbox-row input {
+  display: none;
+}
+
+
+#pcV2PanelBody:has(#exportRangeAll:checked) #exportMarkerRangeSelects {
+  display: none;
+}
+
+
+#pcV2PanelBody .export-marker-select {
+  background: none;
+  border: 1px solid var(--border-subtle);
+}
+
+
+#pcV2PanelBody .export-filename-input {
+  background: none;
+  border: 1px solid var(--border-subtle);
+}
+
+
+#pcV2PanelBody .export-filename-input:focus {
+  background: none;
+}
+
+
+#pcV2PanelBody .auto-speed-number {
+  background: none;
+}
+
+
+.pcv2-control-eq-heading {
+  margin-top: 20px;
+}
+
+
+.pcv2-section-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 0 0 16px;
+}
+
+
+.pcv2-eq-heading-row {
+  display: flex;
+  align-items: center;
+  min-height: 26px;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+
+.pcv2-eq-heading-title {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-height: 26px;
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-heading);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--icon-muted);
+  margin: 0;
+}
+
+
+.pcv2-eq-heading-row .control-effect-toggle {
+  width: 30px;
+  height: 17px;
+  flex-shrink: 0;
+}
+
+
+.pcv2-eq-heading-row .mini-reset-btn {
+  margin: 0;
+}
+
+
+.pcv2-eq-heading-row .control-effect-toggle .glow-switch-knob {
+  width: 11px;
+  height: 11px;
+}
+
+
+.pcv2-eq-heading-row .control-effect-toggle[aria-checked="true"] .glow-switch-knob {
+  transform: translateX(13px);
+}
+
+
+#pcV2PanelBody.pcv2-panel-keyboard .qn-menu-section,
+#pcV2PanelBody.pcv2-panel-color .qn-menu-section {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+
+#pcV2PanelBody.pcv2-panel-keyboard .qn-menu-section-label,
+#pcV2PanelBody.pcv2-panel-color .qn-menu-section-label {
+  display: none;
+}
+
+
+#pcV2PanelBody {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+
+#pcV2PanelBody::-webkit-scrollbar {
+  width: 8px;
+}
+
+
+#pcV2PanelBody::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+
+#pcV2PanelBody::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+}
+
+
+#pcV2PanelBody::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+
+#pcV2PanelBody.pcv2-panel-text {
+  display: flex;
+  flex-direction: column;
+}
+
+
+#pcV2PanelBody.pcv2-panel-text .mobile-tab-panel[data-tab-panel="text"] {
+  display: flex !important;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+
+#pcV2PanelBody.pcv2-panel-text .note-textarea {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+
+
+#pcV2PanelBody.pcv2-panel-text .note-textarea:read-only {
+  background: none;
+  border-color: transparent;
+}
+
+
+#pcV2PanelBody.pcv2-panel-text .note-textarea:read-write {
+  background: #1c1c24;
+  border-color: var(--border-subtle);
+}

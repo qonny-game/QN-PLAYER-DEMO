@@ -1,0 +1,1238 @@
+/* style-youtube.css — YouTubeアプリ(.qn-yt*)専用。JSはqn-app-youtube.js。style-apps.cssの直後に読む(順序で上書き) */
+
+/* PC=左パネル(375px、#pcV2Panelと同幅)+右ステージ。SP=縦積み(ステージ→パネル)、全体が1本スクロール */
+.qn-yt {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 375px 1fr;
+  grid-template-rows: minmax(0, 1fr) auto;
+  color: var(--text-bright);
+  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-body);
+}
+
+.qn-yt-panel {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.qn-yt-panel-header {
+  padding: 14px 16px 14px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-title);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--icon-muted);
+  flex-shrink: 0;
+}
+
+.qn-yt-panel-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 0 16px;
+  scrollbar-gutter: stable;
+}
+
+.qn-yt-sec {
+  padding: 16px 16px 4px 20px;
+}
+
+.qn-yt-sec {
+  display: none;
+}
+
+.qn-yt[data-panel="library"] .qn-yt-sec-library,
+.qn-yt[data-panel="markers"] .qn-yt-sec-markers,
+.qn-yt[data-panel="playlists"] .qn-yt-sec-playlists,
+.qn-yt[data-panel="backup"] .qn-yt-sec-backup,
+.qn-yt[data-panel="import"] .qn-yt-sec-import,
+.qn-yt[data-panel="keyboard"] .qn-yt-sec-keyboard {
+  display: block;
+}
+
+.qn-yt-sec-head {
+  display: none;
+}
+
+
+.qn-yt-sec-head h3 {
+  margin: 0;
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-heading);
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-bright);
+}
+
+.qn-yt-count {
+  font-size: var(--fs-small);
+  color: var(--icon-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.qn-yt-input-block {
+  padding-bottom: 8px;
+}
+
+.qn-yt-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.qn-yt-input {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: var(--radius-field);
+  border: 1px solid var(--border-strong);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-bright);
+  font-family: inherit;
+  font-size: var(--fs-body);
+  outline: none;
+  transition: border-color var(--dur-hover, 130ms) ease, background var(--dur-hover, 130ms) ease;
+}
+
+.qn-yt-input::placeholder {
+  color: var(--icon-muted);
+}
+
+.qn-yt-input:focus {
+  border-color: var(--accent-primary);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.qn-yt-btn {
+  flex-shrink: 0;
+  height: var(--btn-h);
+  padding: 0 var(--btn-pad-x);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-strong);
+  background: none;
+  color: var(--text-bright);
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-btn);
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--dur-hover, 130ms) ease, border-color var(--dur-hover, 130ms) ease,
+              color var(--dur-hover, 130ms) ease, transform var(--dur-press, 100ms) ease;
+}
+
+.qn-yt-btn:hover:not(:disabled) {
+  background: var(--bg-hover-subtle);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.qn-yt-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.qn-yt-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.qn-yt-btn.primary {
+  background: var(--accent-primary);
+  border-color: transparent;
+  color: var(--text-pure-white, #fff);
+}
+
+.qn-yt-btn.primary:hover:not(:disabled) {
+  background: var(--accent-hover-1);
+  border-color: transparent;
+}
+
+.qn-yt-btn.on {
+  background: var(--accent-primary);
+  border-color: transparent;
+  color: var(--text-pure-white, #fff);
+}
+
+.qn-yt-btn.mini {
+  height: 26px;
+  padding: 0 10px;
+  font-size: var(--fs-micro);
+}
+
+.qn-yt-btn.danger {
+  background: var(--danger, #ef4444);
+  border-color: transparent;
+  color: #fff;
+}
+
+.qn-yt-message {
+  min-height: 18px;
+  font-size: var(--fs-small);
+  color: var(--danger, #ef4444);
+}
+
+.qn-yt-message.ok {
+  color: #34d399;
+}
+
+.qn-yt-sync {
+  min-height: 18px;
+  font-size: var(--fs-small);
+  color: var(--icon-muted);
+  cursor: default;
+}
+.qn-yt-sync:empty { display: none; }
+.qn-yt-sync.can { cursor: pointer; }
+.qn-yt-sync.can:hover { color: var(--text-bright); }
+.qn-yt-sync.err { color: var(--danger, #ef4444); }
+
+.qn-yt-empty {
+  margin: 4px 0 12px;
+  font-size: var(--fs-small);
+  color: var(--icon-muted);
+}
+
+
+.qn-yt-btn.ab {
+  width: 30px;
+  padding: 0;
+}
+
+.qn-yt-btn.ab.active-a {
+  background: var(--accent-primary);
+  border-color: transparent;
+  color: #fff;
+}
+
+.qn-yt-btn.ab.active-b {
+  background: #f59e0b;
+  border-color: transparent;
+  color: #1a1204;
+}
+
+/* ---------- Backup/Import: 本体と同部品を流用(ベースはstyle-export.css)。#pcV2PanelBody.pcv2-panel-backupと同じ枠なし・線区切りに揃える ---------- */
+.qn-yt-panel .export-section-label {
+  display: block;
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-heading);
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-bright);
+  margin: 0;
+}
+
+.qn-yt-panel .track-backup-tracklist-header {
+  margin-bottom: 12px;
+}
+
+.qn-yt-panel .track-backup-mini-btn {
+  background: none;
+}
+
+.qn-yt-panel .track-backup-tracklist {
+  max-height: min(38vh, 340px);
+  gap: 0;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.qn-yt-panel .track-backup-track-row,
+.qn-yt-panel .track-backup-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 4px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border-subtle);
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.qn-yt-panel .track-backup-track-row:last-child,
+.qn-yt-panel .track-backup-row:last-child {
+  border-bottom: none;
+}
+
+.qn-yt-panel .track-backup-checklist {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.qn-yt-panel .track-backup-row-label {
+  font-size: var(--fs-body);
+  color: #c8c8d0;
+}
+
+.qn-yt-panel .track-backup-options {
+  margin-top: 16px;
+}
+
+.qn-yt-panel .track-backup-row input[type="checkbox"] {
+  accent-color: var(--accent-primary);
+  width: 16px;
+  height: 16px;
+}
+
+
+.qn-yt-panel .track-import-dropzone {
+  margin-bottom: 12px;
+}
+
+.qn-yt-panel .track-import-duplicate-list {
+  margin-top: 16px;
+}
+
+.qn-yt-stage {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 24px 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* プレイヤー(規約): 切り抜き・隠蔽・重ね・変形禁止。16:9。角丸/overflow:hiddenを付けない(切り抜きに当たる) */
+.qn-yt-player-wrap {
+  width: 100%;
+  max-width: 1280px;
+  aspect-ratio: var(--qn-yt-ar, 1.7778); /* 動画の縦横比(oEmbedの幅/高さ)。取得前・不明は16:9 */
+  min-height: 200px; /* 規約: 最小200px */
+  background: #000;
+  flex-shrink: 0;
+}
+
+.qn-yt-player-wrap iframe,
+#qnYtPlayer {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 自前UIはプレイヤーの外(下)(規約) */
+.qn-yt-custom {
+  margin-top: 24px;
+  max-width: 1280px;
+  width: 100%;
+}
+
+.qn-yt-fetched-title {
+  margin: 0 0 10px;
+  min-height: 24px;
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-heading);
+  font-weight: 600;
+  color: var(--text-bright);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+/* 3分割シークバー: 本体のシークバーと同見た目(角丸なし・#111帯・再生済み=テーマ色・マーカー=縦線+上に番号/メモ)。波形は使わない(YouTubeの音声・映像データに触れない)。土台はstyle-core.cssの.vbar/.vfillを流用 */
+.qn-yt-seek {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  padding-top: 24px;
+  margin: 4px 0 16px;
+}
+
+.qn-yt-track.vbar {
+  position: relative;
+  flex: none;
+  height: 40px;
+  background: #111;
+  border: none;
+  border-radius: 0;
+  overflow: visible;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.qn-yt-track.vbar:hover { border-color: transparent; }
+
+.qn-yt-fill.vfill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  height: auto;
+  width: 0;
+  background: var(--accent-primary);
+  opacity: 0.9;
+  border-radius: 0;
+  pointer-events: none;
+}
+
+.qn-yt-range {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+.qn-yt-range-bg,
+.qn-yt-range-on {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+}
+.qn-yt-range-bg { width: 100%; opacity: 0.22; }
+.qn-yt-range-on { width: 0; opacity: 0.95; }
+
+.qn-yt-head {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--text-pure-white, #fff);
+  left: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.qn-yt-loop-range {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--accent-primary) 26%, transparent);
+  box-shadow: inset 0 3px 0 var(--accent-primary), inset 0 -3px 0 var(--accent-primary);
+  border-radius: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+.qn-yt-loop-range.is-on {
+  background: color-mix(in srgb, var(--accent-primary) 42%, transparent);
+}
+
+.qn-yt-loop-range[hidden] {
+  display: none;
+}
+
+.qn-yt-marker-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.qn-yt-marker {
+  position: absolute;
+  top: 0;
+  width: 6px;
+  transform: translateX(-50%);
+  background: transparent;
+  cursor: ew-resize;
+  pointer-events: auto;
+  touch-action: none;
+  z-index: 2;
+}
+
+.qn-yt-marker::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  background: var(--marker-color, var(--accent-primary));
+}
+
+.qn-yt-marker::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  left: -9px;
+  right: -9px;
+}
+
+.qn-yt-marker:hover::before { background-color: var(--accent-hover-1); }
+
+.qn-yt-marker-label {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 3px;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+.qn-yt-marker-label .n {
+  display: block;
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--marker-color, var(--accent-primary));
+}
+
+.qn-yt-marker-label .memo {
+  position: absolute;
+  left: 100%;
+  top: 4px;
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #b0b0b8;
+}
+
+.qn-yt-marker.flip .qn-yt-marker-label .memo {
+  left: auto;
+  right: 100%;
+  margin-left: 0;
+  margin-right: 6px;
+}
+
+.qn-yt-marker.dragging::before { background-color: var(--accent-hover-1); }
+
+
+.qn-yt-hint {
+  margin: 4px 0 0;
+  font-size: var(--fs-small);
+  color: var(--icon-muted);
+}
+
+
+/* 将来の広告枠: プレイヤーから離れた位置(今は高さ0・広告コードなし) */
+.qn-yt-ad-slot {
+  min-height: 0;
+}
+
+/* ---------- SP幅: 縦積み ---------- */
+@media screen and (max-width: 900px) {
+  .qn-yt {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+  }
+
+  /* SP: プレイヤーは左右・上いっぱい(ヘッダー線の直下)。自前UIだけ左右16px */
+  .qn-yt-stage {
+    order: 1;
+    overflow: visible;
+    padding: 0 0 8px;
+    flex-shrink: 0;
+    container-type: inline-size;
+  }
+
+  /* プレイヤー枠は高さを明示して滑らかに縮む(上端固定=上基準で縮小)。閉じ=幅÷縦横比、パネル開=max(200px,30dvh) */
+  .qn-yt-player-wrap {
+    aspect-ratio: auto;
+    height: calc(100cqw / var(--qn-yt-ar, 1.7778));
+    transition: height 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .qn-yt-custom {
+    margin-top: 16px;
+    padding: 0 16px;
+    box-sizing: border-box;
+  }
+
+  .qn-yt-stage-fab { margin-right: 16px; }
+
+
+  /* SP幅: パネル開時もプレイヤーを上部に小さく残す(規約: 覆わない・隠さない・最低200x200px)。パネルはその下の残り領域 */
+  .qn-yt-panel {
+    order: 2;
+    border-right: none;
+    border-top: 1px solid var(--border-subtle);
+    flex: 1;
+    min-height: 0;
+  }
+
+  .qn-yt[data-panel="none"] .qn-yt-panel {
+    display: none;
+  }
+
+  .qn-yt-panel-scroll {
+    overflow-y: auto;
+  }
+
+  .qn-yt:not([data-panel="none"]) {
+    overflow: hidden;
+  }
+
+  .qn-yt:not([data-panel="none"]) .qn-yt-stage {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .qn-yt:not([data-panel="none"]) .qn-yt-custom{
+    display: none;
+  }
+
+  .qn-yt:not([data-panel="none"]):not(.qn-yt-closing) .qn-yt-player-wrap {
+    height: max(200px, 30dvh);
+    min-height: 200px;
+  }
+
+  /* シート: 開く=下からスライド、閉じる=下へスライド。開いている目印=上端アクセント線+角丸+影+つまみ */
+  .qn-yt-panel {
+    position: relative;
+    border-top: 2px solid var(--accent-primary);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.55);
+    animation: qn-sheet-up 280ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+    z-index: 1;
+  }
+  .qn-yt.qn-yt-closing .qn-yt-panel {
+    animation: qn-sheet-down 230ms cubic-bezier(0.4, 0, 1, 1) both;
+    pointer-events: none;
+  }
+  .qn-yt-panel .qn-yt-panel-header { position: relative; padding-top: 22px; padding-right: 64px; touch-action: none; }
+  .qn-yt .qn-yt-bar { position: relative; z-index: 3; background: #0a0a0c; }
+  .qn-yt-panel .qn-yt-panel-header::before {
+    content: "";
+    position: absolute; top: 8px; left: 50%;
+    width: 40px; height: 4px; margin-left: -20px;
+    border-radius: 2px; background: var(--accent-primary); opacity: 0.7;
+  }
+  .qn-yt-panel .qn-sheet-close { display: flex; }
+
+  .qn-yt-panel-header {
+    font-size: var(--fs-heading);
+    padding: 12px 16px;
+  }
+
+  .qn-yt-sec {
+    padding-left: 16px;
+  }
+
+
+  .qn-yt-btn {
+    height: 34px;
+  }
+
+  .qn-yt-btn.mini {
+    height: 30px;
+  }
+
+  .qn-yt-btn.ab {
+    width: 34px;
+  }
+
+  .qn-yt-track.vbar {
+    height: 36px;
+  }
+}
+
+/* ---------- Library/Markers: 行ベースはstyle-playlist.css(.playlistItem)/style-markers.css(.pinItem)を流用。本体の「#pcV2PanelBody …」限定ルールだけ.qn-yt用に再掲 ---------- */
+.qn-yt-panel { position: relative; }
+
+.qn-yt-sec-library,
+.qn-yt-sec-markers { padding: 0; }
+.qn-yt-sec-library .qn-yt-input-block { padding: 16px 16px 12px 20px; }
+.qn-yt-sec-library .qn-yt-empty,
+.qn-yt-sec-markers .qn-yt-empty { margin: 16px 20px; }
+.qn-yt[data-panel="library"] .qn-yt-panel-scroll,
+.qn-yt[data-panel="markers"] .qn-yt-panel-scroll { padding-bottom: 140px; }
+
+.qn-yt-libbox, .qn-yt-pinbox { display: flex; flex-direction: column; }
+.qn-yt-libbox .playlistItem.drop-before { box-shadow: inset 0 2px 0 var(--accent-primary); }
+.qn-yt-libbox .playlistItem.drop-after { box-shadow: inset 0 -2px 0 var(--accent-primary); }
+
+.qn-yt-libbox .playlist-del-zone,
+.qn-yt-pinbox .pin-del-zone { display: none; }
+.qn-yt[data-edit="library"] .qn-yt-libbox .playlist-del-zone,
+.qn-yt[data-edit="markers"] .qn-yt-pinbox .pin-del-zone { display: flex; }
+
+.qn-yt[data-edit="library"] .qn-yt-libbox .playlist-del-zone {
+  align-items: center; justify-content: center; flex-shrink: 0;
+  margin: -9px -12px -9px 0; padding: 9px 16px 9px 8px; cursor: pointer;
+}
+.qn-yt[data-edit="markers"] .qn-yt-pinbox .pin-del-zone {
+  align-items: center; justify-content: center; align-self: stretch; flex-shrink: 0;
+  margin: -10px -12px -10px 0; padding: 10px 16px 10px 8px; cursor: pointer;
+}
+.qn-yt[data-edit] .del-btn {
+  display: flex; width: 20px; height: 20px; align-items: center; justify-content: center;
+  border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.24);
+  background: none; color: transparent; font-size: 0; padding: 0; flex-shrink: 0;
+  pointer-events: none;
+}
+.qn-yt[data-edit] .del-btn.pcv2-selected { background: var(--danger); border-color: var(--danger); }
+.qn-yt[data-edit] .del-btn.pcv2-selected::after {
+  content: ""; display: block; width: 5px; height: 9px;
+  border-right: 2px solid var(--text-pure-white); border-bottom: 2px solid var(--text-pure-white);
+  transform: rotate(45deg) translate(-1px, -1px);
+}
+.qn-yt[data-edit="markers"] .qn-yt-pinbox .toggle-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.qn-yt-pinbox .pinItem { grid-template-columns: auto 1fr auto auto auto; }
+.qn-yt[data-edit="markers"] .qn-yt-ab-cell { display: none; }
+.qn-yt[data-edit="markers"] .qn-yt-pinbox .pinItem { grid-template-columns: auto 1fr auto auto; }
+@media (hover: none), (pointer: coarse) {
+  .qn-yt[data-edit="markers"] .qn-yt-pinbox .pin-edit-btn { display: flex; }
+}
+.qn-yt-libbox .playlistItem.playing .playlist-title { color: var(--accent-primary); }
+
+.qn-yt-fab {
+  position: absolute; right: 20px; bottom: 20px; z-index: 5;
+  display: none; flex-direction: column; align-items: flex-end; gap: 10px;
+  pointer-events: none;
+}
+.qn-yt[data-panel="library"] .qn-yt-fab,
+.qn-yt[data-panel="markers"] .qn-yt-fab { display: flex; }
+.qn-yt-fab-add { display: none; flex-direction: column; align-items: flex-end; gap: 10px; }
+.qn-yt[data-panel="markers"]:not([data-edit]) .qn-yt-fab-add { display: flex; }
+.qn-yt[data-edit] .panel-fab-delete-btn { display: flex; }
+/* FOLDER: Libraryパネルの通常時のみ。MOVE: Library EDIT時のみ(選択した動画をフォルダへ) */
+.qn-yt-fab-folder { display: none; }
+.qn-yt[data-panel="library"]:not([data-edit]) .qn-yt-fab-folder { display: flex; }
+.qn-yt[data-edit="library"] .panel-fab-move-btn { display: flex; }
+.qn-yt .playlistFolderHeader.drop-after { box-shadow: inset 0 -2px 0 var(--accent-primary); }
+
+.qn-yt-chapter { padding: 16px 16px 8px 20px; }
+.qn-yt-chapter-box { margin-top: 10px; }
+.qn-yt-chapter-box[hidden] { display: none; }
+.qn-yt-chapter-text {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 110px;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  resize: vertical;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+.qn-yt-chapter-text::placeholder { color: rgba(255, 255, 255, 0.28); }
+.qn-yt-chapter .qn-yt-hint { margin: 8px 0; }
+
+
+.qn-yt .playlist-thumb.qn-yt-thumb {
+  width: 64px;
+  height: 36px;
+  border-radius: 0;
+}
+.qn-yt .playlist-thumb.qn-yt-thumb img {
+  display: block;
+  width: 64px;
+  height: 36px;
+  object-fit: contain;
+}
+.qn-yt .playlist-thumb.qn-yt-thumb { position: relative; }
+.qn-yt .playlist-thumb.qn-yt-thumb img { position: absolute; inset: 0; opacity: 0; }
+.qn-yt .playlist-thumb.qn-yt-thumb.has-img img { opacity: 1; }
+.qn-yt .playlist-thumb.qn-yt-thumb.has-img svg { display: none; }
+
+.qn-yt-legal {
+  margin: 28px 0 88px;
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--icon-muted);
+}
+.qn-yt-legal p { margin: 0 0 6px; }
+.qn-yt-legal a { color: var(--accent-primary); text-decoration: underline; }
+
+.qn-yt-kbd .qn-menu-section { border-bottom: none; padding-bottom: 0; }
+.qn-yt-kbd .qn-menu-section-label { display: none; }
+.qn-yt-kbd .qn-shortcut-table { width: 100%; border-collapse: collapse; }
+.qn-yt-kbd-note {
+  margin: 12px 0 0;
+  font-size: var(--fs-small);
+  color: var(--text-dim, rgba(255, 255, 255, 0.45));
+  line-height: 1.6;
+}
+
+/* コントロールバー(v3.2.0〜): PLAYER下段バーと同デザイン。PC=ステージ下端に吸着(左パネル側へ伸ばさない)、SP=アイコンバー直上固定・横スクロール */
+.qn-yt-bar {
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 24px;
+  background: var(--bg-base, #0a0a0c);
+  border-top: 1px solid var(--border-subtle);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.qn-yt-bar::-webkit-scrollbar { display: none; }
+
+.qn-yt-bgroup { display: flex; align-items: center; gap: 0; flex-shrink: 0; }
+.qn-yt-bdiv { width: 1px; height: 24px; background: var(--border-subtle); margin: 0 10px; flex-shrink: 0; }
+.qn-yt-bspacer { flex: 1 1 0; min-width: 8px; }
+
+.qn-yt-bbtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  flex: 0 0 auto;
+  padding: 8px 7px;
+  cursor: pointer;
+  color: var(--icon-muted);
+  background: none;
+  border: none;
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  position: relative;
+  transition: transform var(--dur-press, 100ms) var(--ease-snap, ease);
+}
+.qn-yt-bbtn svg,
+.qn-yt-bstep-mid svg {
+  width: 20px;
+  height: 20px;
+  margin: 6px auto;
+  display: block;
+  fill: currentColor;
+}
+.qn-yt-bbtn.center { color: var(--accent-primary); }
+.qn-yt-bbtn.center svg { width: 32px; height: 32px; margin: 0; }
+.qn-yt-bbtn span,
+.qn-yt-bstep-mid span {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.qn-yt-bbtn:active { transform: scale(0.94); }
+.qn-yt-bbtn.is-active,
+.qn-yt-bbtn.is-active:hover { color: var(--accent-primary); }
+.qn-yt-bbtn:disabled { opacity: 0.35; pointer-events: none; }
+@media (hover: hover) and (pointer: fine) {
+  .qn-yt-bbtn:hover { color: var(--text-bright); }
+  .qn-yt-bbtn.center:hover { color: var(--accent-primary); }
+}
+
+
+.qn-yt-bstep { display: flex; align-items: center; gap: 0; flex-shrink: 0; }
+.qn-yt-bstep-mid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 2px;
+  color: var(--accent-primary);
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+}
+.qn-yt-bstep-mid b { font-weight: 700; }
+.qn-yt-bstep-btn {
+  width: 24px;
+  height: 32px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--icon-muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform var(--dur-press, 100ms) var(--ease-snap, ease);
+}
+.qn-yt-bstep-btn:active { transform: scale(0.88); }
+@media (hover: hover) and (pointer: fine) {
+  .qn-yt-bstep-btn:hover { color: var(--text-bright); }
+}
+
+@media screen and (max-width: 900px) {
+  .qn-yt-bar {
+    order: 4;
+    grid-column: auto;
+    grid-row: auto;
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin-top: auto;
+    flex-shrink: 0;
+    padding: 0 25px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .qn-yt-bbtn { padding: 10px 10px; }
+  .qn-yt-bbtn svg, .qn-yt-bstep-mid svg { width: 26px; height: 26px; margin: 6px auto; }
+  .qn-yt-bbtn.center svg { width: 38px; height: 38px; margin: 0; }
+  .qn-yt-bbtn span, .qn-yt-bstep-mid span { font-size: 11px; }
+  .qn-yt-bstep-btn { width: 30px; height: 44px; font-size: 22px; }
+  .qn-yt-bspacer { flex: 0 0 12px; }
+  .qn-yt:not([data-panel="none"]) .qn-yt-bar { display: none; }
+}
+
+/* ---------- シークバー1タップのポップアップ(A/B/+Marker)(v3.3.0〜): body直下fixed、押した位置の真上(収まらなければ真下) ---------- */
+.qn-yt-seekpop {
+  position: fixed;
+  z-index: 330;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 8px 8px 6px;
+  background: #101013;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-popup, 12px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+}
+.qn-yt-seekpop[hidden] { display: none; }
+.qn-yt-seekpop-time {
+  text-align: center;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--text-bright);
+  font-variant-numeric: tabular-nums;
+}
+.qn-yt-seekpop-row { display: flex; gap: 2px; }
+.qn-yt-seekpop-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  min-width: 52px;
+  padding: 6px 8px;
+  background: none;
+  border: none;
+  color: var(--icon-muted);
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform var(--dur-press, 100ms) var(--ease-snap, ease);
+}
+.qn-yt-seekpop-btn b { font-size: 20px; line-height: 26px; font-weight: 700; color: var(--accent-primary); }
+.qn-yt-seekpop-btn span { font-size: 9px; font-weight: 600; letter-spacing: 0.3px; }
+.qn-yt-seekpop-btn:active { transform: scale(0.94); }
+@media (hover: hover) and (pointer: fine) {
+  .qn-yt-seekpop-btn:hover { color: var(--text-bright); }
+}
+@media screen and (max-width: 900px) {
+  .qn-yt-seekpop-btn { min-width: 54px; padding: 8px 6px; }
+  .qn-yt-seekpop-btn b { font-size: 24px; line-height: 30px; }
+  .qn-yt-seekpop-btn span { font-size: 11px; }
+}
+
+/* ---------- PC幅パネル格納(v3.4.0〜): パネル(375px)が左へ縮む。プレイヤーは格納前幅(JSが--qn-yt-player-wに入れる)。SP幅では使わない ---------- */
+.qn-yt { transition: grid-template-columns 220ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+.qn-yt.qn-yt-collapsed { grid-template-columns: 0 1fr; }
+.qn-yt-panel { overflow: hidden; }
+.qn-yt-panel > .qn-yt-panel-header,
+.qn-yt-panel > .qn-yt-panel-scroll { min-width: 374px; }
+.qn-yt.qn-yt-collapsed .qn-yt-panel {
+  border-right-color: transparent;
+  visibility: hidden;
+  transition: visibility 0s linear 220ms;
+}
+.qn-yt.qn-yt-collapsed .qn-yt-player-wrap {
+  width: var(--qn-yt-player-w, 100%);
+  max-width: var(--qn-yt-player-w, 1280px);
+}
+@media screen and (max-width: 900px) {
+  .qn-yt { transition: none; }
+}
+
+/* PC幅: プレイヤーを縦いっぱいに/シークバー3本まで1画面(v3.5.0〜)。ステージ=プレイヤー領域(余り高さ)+タイトル+シークバー3本。container queriesで収まる最大の16:9を計算。最小は規約どおり200px(それ以下の窓はステージがスクロール)。SPは従来(幅いっぱい16:9・縦スクロール) */
+@media screen and (min-width: 901px) {
+  .qn-yt-stage { padding: 16px 24px 12px; }
+  .qn-yt-player-wrap {
+    flex: 1 1 0;
+    width: 100%;
+    max-width: none;
+    aspect-ratio: auto;
+    min-height: 200px;
+    background: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    container-type: size;
+  }
+  .qn-yt-player-wrap iframe,
+  #qnYtPlayer {
+    width: min(100cqw, calc(100cqh * var(--qn-yt-ar, 1.7778)));
+    height: min(100cqh, calc(100cqw / var(--qn-yt-ar, 1.7778)));
+    background: #000;
+  }
+  .qn-yt-custom { margin-top: 12px; max-width: none; flex-shrink: 0; }
+  .qn-yt-fetched-title { margin-bottom: 4px; }
+  .qn-yt-seek { margin-bottom: 4px; }
+}
+
+.qn-yt-fetched-title:empty { display: none; }
+
+/* ---------- A/B点の強調(v3.5.0〜) ---------- */
+/* v3.8.0〜: A/Bはマーカーではない独立点(.qn-yt-abpt)。マーカーより太い線+旗 */
+.qn-yt-abpt { z-index: 3; }
+.qn-yt-abpt::before { width: 4px; background: var(--accent-primary); }
+.qn-yt-marker-ab {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  box-sizing: border-box;
+  background: var(--accent-primary);
+  color: var(--sidebar-on-accent, #fff);
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 15px;
+  text-align: center;
+  pointer-events: none;
+  z-index: 2;
+}
+.qn-yt-abpt.is-a .qn-yt-marker-ab { transform: translateX(2px); }
+.qn-yt-abpt.is-b .qn-yt-marker-ab { transform: translateX(calc(-100% - 2px)); }
+
+.qn-yt-bbtn.has-point { color: var(--accent-primary); }
+
+.qn-yt-seekpop-btn[hidden] { display: none; }
+.qn-yt-seekpop-del b { color: var(--icon-muted); }
+.qn-yt-seekpop-btn b svg { color: var(--icon-muted); width: 20px; height: 26px; fill: currentColor; display: block; }
+.qn-yt-seekpop-btn b { display: flex; align-items: center; justify-content: center; height: 26px; }
+@media screen and (max-width: 900px) {
+  .qn-yt-seekpop-btn b { height: 30px; }
+  .qn-yt-seekpop-btn b svg { height: 30px; }
+}
+.qn-yt-seekpop-dot { display: block; width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.35); }
+.qn-yt-seekpop-del.is-armed, .qn-yt-seekpop-del.is-armed b { color: var(--danger, #ff5a5a); }
+
+@media screen and (min-width: 901px) {
+  .qn-yt-bar { padding: 10px 12px; }
+  .qn-yt-bbtn { padding: 8px 4px; }
+  .qn-yt-bdiv { margin: 0 6px; }
+}
+
+/* ---------- PLAYER側 A/B(v3.7.0〜) ---------- */
+.vbar-ab-pt {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 6px;
+  margin-left: -3px;
+  z-index: 6;
+  cursor: ew-resize;
+  touch-action: none;
+}
+.vbar-ab-pt::before {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0; left: 1px;
+  width: 4px;
+  background: var(--accent-primary);
+}
+.vbar-ab-pt::after {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0; left: -8px; right: -8px;
+}
+.vbar-ab-pt .vbar-ab-flag {
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  z-index: 1;
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: var(--accent-primary);
+  color: #0b0b0d;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  pointer-events: none;
+  transform: translateX(3px);
+}
+.vbar-ab-pt.is-b .vbar-ab-flag { transform: translateX(calc(-100% - 3px)); }
+#pcV2BottomBar .ab-set-btn.has-point { color: var(--accent-primary); }
+.qn-yt-seekpop-btn.is-set { background: color-mix(in srgb, var(--accent-primary) 20%, transparent); border-radius: 8px; }
+
+/* ---------- ポップアップColor: ラベル入力+プリセット+色(v3.9.0・PLAYER/YouTube共通) ---------- */
+.qn-style-pop {
+  z-index: 340;
+  box-sizing: border-box;
+  width: min(320px, calc(100vw - 16px));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background: #101013;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-popup, 12px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+}
+.qn-style-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+}
+.qn-style-input:focus { outline: none; border-color: var(--accent-primary); }
+.qn-style-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.qn-style-swatches { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.qn-yt-preroll { display: flex; align-items: center; gap: 0; flex-shrink: 0; padding: 8px 4px; }
+.qn-yt-preroll-btn {
+  width: 20px; height: 20px; padding: 0;
+  background: none; border: none; cursor: pointer;
+  color: var(--icon-muted); font-size: 13px; line-height: 1;
+}
+@media (hover: hover) and (pointer: fine) { .qn-yt-preroll-btn:hover { color: var(--text-bright); } }
+.qn-yt-preroll-value {
+  min-width: 16px; text-align: center;
+  font-size: 22px; font-weight: 400;
+  color: var(--accent-primary, #3b82f6);
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+}
+.qn-yt-preroll-value b { font-weight: 400; }
+.qn-yt-preroll-unit { font-size: 0.6em; margin-left: 1px; }
+
+.qn-yt-loop-pre {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--accent-primary) 14%, transparent);
+  border-top: 2px dashed color-mix(in srgb, var(--accent-primary) 60%, transparent);
+  border-bottom: 2px dashed color-mix(in srgb, var(--accent-primary) 60%, transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+.qn-yt-loop-pre[hidden] { display: none; }
+
+.qn-yt.qn-yt-collapsed .qn-yt-player-wrap { margin-left: auto; margin-right: auto; }
+
+.qn-yt-panel-scroll, .qn-yt-stage, .qn-yt .qn-yt-bar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+.qn-yt-panel-scroll::-webkit-scrollbar, .qn-yt-stage::-webkit-scrollbar { width: 8px; }
+.qn-yt-panel-scroll::-webkit-scrollbar-track, .qn-yt-stage::-webkit-scrollbar-track { background: transparent; }
+.qn-yt-panel-scroll::-webkit-scrollbar-thumb, .qn-yt-stage::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+}
+.qn-yt-panel-scroll::-webkit-scrollbar-thumb:hover, .qn-yt-stage::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+/* v3.12.6: PLAYER下部バー(#pcV2BottomBar)とYouTube下段バー(.qn-yt-bar)の寸法を1仕様に(Speed/Keyトグルのみ例外)。最後に読まれるので個別指定を上書き。PC: バーpadding 10px 12px/ボタン 8px 4px/アイコン20px(中央32px)/ラベル9px/区切り余白6px。SP: ボタンpadding 10px/アイコン26px(中央38px)/ラベル11px */
+@media screen and (min-width: 901px) {
+  #pcV2BottomBar, .qn-yt-bar { box-sizing: border-box; min-height: 80px; padding: 10px 12px; gap: 4px; }
+  #pcV2BottomBar .pcv2-ctrl-btn:not(.pcv2-step-btn),
+  #pcV2BottomBar .tripleNavBtn-third,
+  #pcV2BottomBar .loopbtn,
+  .qn-yt-bbtn { padding: 8px 4px; min-height: 59px; box-sizing: border-box; }
+  #pcV2BottomBar .pcv2-stepper > .pcv2-ctrl-btn:not(.pcv2-step-btn) { padding-left: 0; padding-right: 0; }
+  #pcV2BottomBar .pcv2-ctrl-btn:not(.pcv2-step-btn) svg,
+  #pcV2BottomBar .tripleNavBtn-third:not(.tripleNavBtn-center) svg,
+  #pcV2BottomBar .loopbtn svg { width: 20px; height: 20px; margin: 6px auto; }
+  #pcV2BottomBar .tripleNavBtn-center svg { width: 32px; height: 32px; margin: 0; }
+  #pcV2BottomBar .top-controls-btn-label,
+  #pcV2BottomBar .pcv2-ctrl-btn span { font-size: 9px; }
+  #pcV2BottomBar .pcv2-ctrl-divider, .qn-yt-bdiv { margin: 0 6px; }
+}
+@media screen and (max-width: 900px) {
+  #pcV2BottomBar .pcv2-ctrl-btn:not(.pcv2-step-btn),
+  #pcV2BottomBar .tripleNavBtn-third,
+  #pcV2BottomBar .loopbtn,
+  .qn-yt-bbtn { padding: 10px 10px; min-height: 0; }
+  #pcV2BottomBar .pcv2-ctrl-btn:not(.pcv2-step-btn) svg,
+  #pcV2BottomBar .tripleNavBtn-third:not(.tripleNavBtn-center) svg,
+  #pcV2BottomBar .loopbtn svg { width: 26px; height: 26px; margin: 6px auto; }
+  #pcV2BottomBar .tripleNavBtn-center svg { width: 38px; height: 38px; margin: 0; }
+  #pcV2BottomBar .top-controls-btn-label,
+  #pcV2BottomBar .pcv2-ctrl-btn span { font-size: 11px; }
+}
+
+
+/* v3.16.0: PLAYER下部バーのラベル・Speed/Keyステッパーもyoutube下段バーと同表示に(PLは大文字化+行高9pxで幅広・1px低かった) */
+#pcV2BottomBar .top-controls-btn-label,
+#pcV2BottomBar .pcv2-ctrl-btn span {
+  text-transform: none;
+  line-height: normal;
+  white-space: nowrap;
+}
+
+/* Speed/Keyも1行(「1.00x Speed」)でバー高さをYouTubeと同じ80pxに。区切り周り(グループ4px+区切り余白6px)もYouTube準拠 */
+#pcV2BottomBar .pcv2-stepper > .pcv2-ctrl-btn:not(.pcv2-step-btn) span {
+  display: block;
+  min-width: 0;
+  line-height: normal;
+  text-align: center;
+  white-space: nowrap;
+}
+#pcV2BottomBar .pcv2-stepper > .pcv2-ctrl-btn:not(.pcv2-step-btn) { min-height: 59px; }
+#pcV2BottomBar #topControls.top-controls { gap: 4px; }
+
+.track-backup-group-label {
+  padding: 8px 4px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--icon-muted);
+}
+.track-backup-group-label:not(:first-child) { margin-top: 6px; border-top: 1px solid var(--border-subtle); }
+
+/* v3.30.2: ステージ右下のMARKERボタン(PLの#pcV2WaveFabRowと同位置。プレイヤーの外・通常フローで重ねない) */
+.qn-yt-stage-fab {
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  margin-top: 12px;
+}
+@media screen and (max-width: 900px) {
+  .qn-yt-stage-fab { margin-top: 12px; }
+  .qn-yt-stage-fab .panel-fab-btn { padding: 10px 16px; font-size: 13px; }
+  .qn-yt:not([data-panel="none"]) .qn-yt-stage-fab { display: none; }
+}
+
+/* Playlists パネル(v3.31.0): 取得した再生リストの一覧。行は.playlistItemを流用(つかみの代わりに選択チェック) */
+.qn-yt-sec-playlists { padding: 0; }
+.qn-yt-sec-playlists .qn-yt-input-block { padding: 16px 16px 12px 20px; }
+.qn-yt-linkbtn {
+  background: none; border: none; padding: 0; margin-top: 4px;
+  color: var(--icon-muted); font-family: inherit; font-size: var(--fs-small); cursor: pointer;
+}
+.qn-yt-linkbtn:hover { color: var(--text-bright); }
+.qn-yt-plkey[hidden] { display: none; }
+.qn-yt-plhead {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 16px 8px 20px; border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-hover-subtle);
+}
+.qn-yt-plhead[hidden] { display: none; }
+.qn-yt-pltitle { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; color: var(--text-bright); }
+.qn-yt-pllist .playlistItem.qn-yt-plrow { grid-template-columns: auto auto 1fr; cursor: pointer; }
+.qn-yt-pllist .playlistItem.in-lib { opacity: 0.55; }
+.qn-yt-pllist .playlistItem button.qn-yt-plcheck {
+  width: 22px; height: 22px; min-width: 22px; border-radius: 50%; box-sizing: border-box; padding: 0;
+  border: 1.5px solid var(--border-strong); background: none; color: var(--icon-muted);
+  font-size: 13px; line-height: 1; cursor: pointer; flex-shrink: 0; margin-left: 4px;
+}
+.qn-yt-pllist .playlistItem button.qn-yt-plcheck:hover:not(:disabled):not(.on) { border-color: var(--accent-primary); background: none; }
+.qn-yt-pllist .playlistItem button.qn-yt-plcheck.on { background: var(--accent-primary); border-color: var(--accent-primary); }
+.qn-yt-pllist .playlistItem button.qn-yt-plcheck:disabled { cursor: default; border-color: transparent; color: var(--accent-primary); }
+.qn-yt-plmine { margin: 0 0 4px; }
+.qn-yt-pllist .playlistItem.qn-yt-pllistrow { grid-template-columns: auto 1fr auto; }
+.qn-yt-plicon { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; color: var(--icon-muted); }
+.qn-yt-plicon svg { width: 22px; height: 22px; fill: currentColor; }

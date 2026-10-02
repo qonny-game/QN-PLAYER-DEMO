@@ -1,0 +1,1071 @@
+/* style-core.css — PC幅デフォルトのレイアウト+共通デザイン(色/フォント/部品)。メディアクエリ無し。SP上書きはstyle-layout-sp.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --accent-primary: #3b82f6;
+  --accent-secondary: #1d4ed8;
+  --accent-glow: rgba(59, 130, 246, 0.35);
+  --accent-hover-1: #2563eb;
+  --accent-hover-2: #1e40af;
+  --font-display: 'Instrument Sans';
+  --font-body: 'Instrument Sans';
+
+  /* アイコン/補助テキストの既定グレー(一元化) */
+  --icon-muted: #8b8b9e;
+
+  /* --text-bright=#f0f0f3(本文寄り強調)、--text-pure-white=#fff。テーマ非依存の白系 */
+  --text-bright: #f0f0f3;
+  --text-pure-white: #fff;
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --bg-hover-subtle: rgba(255, 255, 255, 0.06);
+
+  /* 削除/警告の赤はテーマ非依存(--accent-primaryはテーマで変わるため独立) */
+  --danger: #ef4444;
+
+  /* 【v2.16.0】UI統一ルール: パネル内/ポップアップ/ボタン/入力欄は下のトークンを使い、個別px直書き禁止。例外=下部コントロールバー/アイコンバーラベル/ロゴ/スプラッシュ/波形上ラベル/料金モーダル大見出し */
+  /* 角丸: ボタン/チップ/トグル/ステッパー=pill、アイコン丸ボタン=round、入力欄=field、ポップアップ/ドロップダウン=popup、モーダル=modal。リスト行/パネル内区切りは角丸枠でなく線(--border-subtle) */
+  --radius-pill: 999px;
+  --radius-round: 50%;
+  --radius-field: 10px;
+  --radius-popup: 14px;
+  --radius-modal: 20px;
+
+  --fs-title: 20px; /* パネル見出し(#pcV2PanelHeader) */
+  --fs-heading: 15px; /* セクション見出し(SPEED/KEY/EQUALIZER、含める項目 等) */
+  --fs-body: 14px; /* リストの主テキスト・入力欄・行ラベル */
+  --fs-small: 12px; /* 補足・説明・サイズ表示・アーティスト名 等 */
+  --fs-micro: 11px; /* EQ目盛り数値・バッジ等の極小表示 */
+  --fs-btn: 12px; /* 二次ボタン(RESET・プリセット・全選択 等) */
+  --fs-btn-primary: 14px; /* 主ボタン(DOWNLOAD/IMPORT/ADD AUDIO 等) */
+
+  --btn-h: 30px;
+  --btn-pad-x: 14px;
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  /* モーション(イージング4種): Snap=即応(press/hover/toggle/drag)、Glide=滑走(値変化/タブ/パネル/テーマ)、Pop=弾む(出現/確定)、Dismiss=退出(閉じる/消失) */
+  --ease-snap: cubic-bezier(0.2, 0, 0, 1);
+  --ease-glide: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-dismiss: cubic-bezier(0.4, 0, 1, 1);
+
+  --dur-hover: 130ms;
+  --dur-press: 100ms;
+  --dur-open: 240ms;
+  --dur-modal: 300ms;
+  --dur-dismiss: 200ms;
+}
+
+/* ピンチズーム無効(viewportのuser-scalable=noと二重の保険。通常スクロールは許可) */
+html {
+  touch-action: pan-x pan-y;
+}
+
+[data-qn-theme="blue"] {
+  --accent-primary: #3b82f6;
+  --accent-secondary: #1d4ed8;
+  --accent-glow: rgba(59, 130, 246, 0.35);
+  --accent-hover-1: #2563eb;
+  --accent-hover-2: #1e40af;
+}
+
+[data-qn-theme="emerald"] {
+  --accent-primary: #10b981;
+  --accent-secondary: #047857;
+  --accent-glow: rgba(16, 185, 129, 0.35);
+  --accent-hover-1: #059669;
+  --accent-hover-2: #065f46;
+}
+
+[data-qn-theme="purple"] {
+  --accent-primary: #8b5cf6;
+  --accent-secondary: #6d28d9;
+  --accent-glow: rgba(139, 92, 246, 0.35);
+  --accent-hover-1: #7c3aed;
+  --accent-hover-2: #5b21b6;
+}
+
+[data-qn-theme="rose"] {
+  --accent-primary: #f43f5e;
+  --accent-secondary: #be123c;
+  --accent-glow: rgba(244, 63, 94, 0.35);
+  --accent-hover-1: #e11d48;
+  --accent-hover-2: #9f1239;
+}
+
+[data-qn-theme="amber"] {
+  --accent-primary: #f59e0b;
+  --accent-secondary: #b45309;
+  --accent-glow: rgba(245, 158, 11, 0.35);
+  --accent-hover-1: #d97706;
+  --accent-hover-2: #92400e;
+}
+
+[data-qn-theme="cyan"] {
+  --accent-primary: #06b6d4;
+  --accent-secondary: #0e7490;
+  --accent-glow: rgba(6, 182, 212, 0.35);
+  --accent-hover-1: #0891b2;
+  --accent-hover-2: #155e75;
+}
+
+[data-qn-theme="indigo"] {
+  --accent-primary: #6366f1;
+  --accent-secondary: #4338ca;
+  --accent-glow: rgba(99, 102, 241, 0.35);
+  --accent-hover-1: #4f46e5;
+  --accent-hover-2: #3730a3;
+}
+
+[data-qn-theme="pink"] {
+  --accent-primary: #ec4899;
+  --accent-secondary: #be185d;
+  --accent-glow: rgba(236, 72, 153, 0.35);
+  --accent-hover-1: #db2777;
+  --accent-hover-2: #9d174d;
+}
+
+[data-qn-theme="lime"] {
+  --accent-primary: #84cc16;
+  --accent-secondary: #4d7c0f;
+  --accent-glow: rgba(132, 204, 22, 0.35);
+  --accent-hover-1: #65a30d;
+  --accent-hover-2: #3f6212;
+}
+
+[data-qn-theme="orange"] {
+  --accent-primary: #f97316;
+  --accent-secondary: #c2410c;
+  --accent-glow: rgba(249, 115, 22, 0.35);
+  --accent-hover-1: #ea580c;
+  --accent-hover-2: #9a3412;
+}
+
+[data-qn-theme="teal"] {
+  --accent-primary: #14b8a6;
+  --accent-secondary: #0f766e;
+  --accent-glow: rgba(20, 184, 166, 0.35);
+  --accent-hover-1: #0d9488;
+  --accent-hover-2: #115e59;
+}
+
+[data-qn-theme="violet"] {
+  --accent-primary: #a855f7;
+  --accent-secondary: #7e22ce;
+  --accent-glow: rgba(168, 85, 247, 0.35);
+  --accent-hover-1: #9333ea;
+  --accent-hover-2: #6b21a8;
+}
+
+[data-qn-theme="red"] {
+  --accent-primary: #ef4444;
+  --accent-secondary: #b91c1c;
+  --accent-glow: rgba(239, 68, 68, 0.35);
+  --accent-hover-1: #dc2626;
+  --accent-hover-2: #991b1b;
+}
+
+[data-qn-theme="sky"] {
+  --accent-primary: #0ea5e9;
+  --accent-secondary: #0369a1;
+  --accent-glow: rgba(14, 165, 233, 0.35);
+  --accent-hover-1: #0284c7;
+  --accent-hover-2: #075985;
+}
+
+body {
+  background:
+    radial-gradient(circle at 15% 0%, color-mix(in srgb, var(--accent-primary) 12%, transparent), transparent 45%),
+    radial-gradient(circle at 100% 15%, color-mix(in srgb, var(--accent-secondary) 10%, transparent), transparent 40%),
+    #0d0d0f;
+  color: var(--text-bright);
+  font-family: var(--font-body, 'Instrument Sans'), -apple-system, BlinkMacSystemFont, sans-serif;
+  padding: 24px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+#appHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+  /* z-index: #appHeaderはサイドバー(400)/吸着タブ(410)より低く保つ(SP幅でサイドバー開時はヘッダーが隠れるのが仕様。ハンバーガー(.qn-menu-popup)はfixedで外に出られる) */
+  z-index: 200;
+}
+
+#appLogo {
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin: 0;
+  color: var(--text-bright);
+  text-transform: uppercase;
+}
+
+#appLogoQN {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+#appVersion {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  color: #6b6b7b;
+  text-transform: none;
+  vertical-align: middle;
+}
+
+#appTitle {
+  /* #appTitleの上下: 親gap20pxとの重複を相殺するマイナスmargin(実質15px間隔) */
+  margin: 0 0 -5px;
+  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #d0d0d8;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 100%;
+  /* line-heightを明示(Webフォント読込前後で上端がoverflow:hiddenで切れるのを防ぐ) */
+  line-height: 1.4;
+}
+
+#appTitleInner {
+  display: inline-flex;
+  white-space: nowrap;
+}
+
+#appTitleText {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* 【v2.16.3】マーキーは3周で止める(無限アニメは毎フレーム再計算。GOTCHAS.md)。hover/タップで再3周(player-core.js replayAppTitleMarquee) */
+#appTitle.marquee #appTitleInner {
+  animation: appTitleMarquee var(--marquee-duration, 12s) linear 3;
+}
+
+#appTitle.marquee #appTitleText.marquee-clone {
+  display: inline-block;
+  padding-left: 60px;
+}
+
+@keyframes appTitleMarquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+
+/* 【大手術後】.app-container/.player-section/.sidebar-section/.mobile-tabs/.sidebar-section h3(この節末尾まで)は常にdisplay:noneで表示されないが削除禁止: PC v2のbuild()は表示中パネルだけ.app-container外へ移し、非アクティブはこの構造内に残る。.markers-heading-rowはPC v2側でdisplay:none !importantされ独自見出し(.pcv2-panel-header-title)に置換される。markAnchor/restoreAnchorの前提なのでCSSごと消すと壊れる */
+.app-container {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 24px;
+  align-items: start;
+  margin-top: 15px;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+}
+
+.player-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  height: fit-content;
+}
+
+/* Textタブ表示中のみサイドバーを残り高さに固定(JSがheightをインライン設定)。他タブはfit-content */
+.sidebar-section.text-tab-active {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.sidebar-section.text-tab-active .mobile-tab-panel.mobile-tab-active {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-section.text-tab-active .note-textarea {
+  flex: 1;
+  min-height: 0;
+}
+
+.sidebar-section h3 {
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-heading);
+  margin: 0;
+  color: var(--icon-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.mobile-tabs {
+  display: flex;
+  gap: 6px;
+  background: #16161b;
+  border: 1px solid var(--bg-hover-subtle);
+  border-bottom: none;
+  border-radius: 14px 14px 0 0;
+  padding: 6px;
+  position: relative;
+  z-index: 1;
+}
+
+.mobile-tab-btn {
+  flex: 1;
+  padding: 13px 6px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: var(--icon-muted);
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.mobile-tab-btn.active {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: var(--text-pure-white);
+}
+
+.mobile-tab-btn:not(.active):hover {
+  background: #22222c;
+  color: var(--text-bright);
+}
+
+.mobile-tab-panel {
+  display: none;
+  width: 100%;
+  box-sizing: border-box;
+  background: #16161b;
+  border: 1px solid var(--bg-hover-subtle);
+  border-top: none;
+  border-radius: 0 0 16px 16px;
+  padding: 10px 20px 20px;
+}
+
+.mobile-tab-panel.mobile-tab-active {
+  display: block;
+  width: 100%;
+}
+
+/* Markers/Playlistパネル内見出しは非表示(タブ名と重複)。ただしTextの.markers-heading-rowはフルスクリーンボタンを含む操作行なので除外 */
+.mobile-tab-panel:not([data-tab-panel="text"]) .markers-heading-row {
+  display: none;
+}
+
+/* CONTROLタブ: .control-cardをBasic欄と同じ物で展開。idは別にして値を双方向同期(player-ui-shared.js) */
+.control-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.control-list .control-card {
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border-subtle);
+  border-radius: 0;
+  padding: 14px 0;
+  min-width: 0;
+}
+
+.control-list .control-card:first-child {
+  padding-top: 0;
+}
+
+.control-list .control-card:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.markers-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.top-controls {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+  background: rgba(13, 13, 15, 0.92);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border-subtle);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.top-controls-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* 固定表示の高さ分をコンテンツ側に余白で確保(高さはJSが動的計算) */
+.top-controls-spacer {
+  flex-shrink: 0;
+}
+
+.tripleNavBtn-third {
+  flex: 1;
+  padding: 12px 0 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-pure-white);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: background var(--dur-hover) var(--ease-snap), color var(--dur-hover) var(--ease-snap), transform var(--dur-press) var(--ease-snap);
+}
+
+.tripleNavBtn-center {
+  flex: 1.3;
+  color: var(--accent-primary);
+}
+
+.tripleNavBtn-third:active {
+  transform: scale(0.94);
+  background: #2a2a35;
+}
+
+.tripleNavBtn-third svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+
+.tripleNavBtn-third:hover {
+  background: #252530;
+  color: var(--accent-primary);
+}
+
+.tripleNavBtn-left {
+  border-radius: 14px 0 0 14px;
+}
+
+.tripleNavBtn-right {
+  border-radius: 0 14px 14px 0;
+}
+
+.tripleNavBtn-divider {
+  width: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+#timeDisplay {
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0;
+  width: 100%;
+  text-align: center;
+}
+
+
+#timeDisplay .time-val {
+  font-size: 12px;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  white-space: nowrap;
+}
+
+#timeDisplay .time-sep {
+  font-size: 12px;
+  text-align: center;
+  color: var(--icon-muted);
+  padding: 0 6px;
+}
+
+#timeDisplay .time-dur {
+  font-size: 12px;
+  text-align: left;
+  color: var(--icon-muted);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  white-space: nowrap;
+}
+
+/* 外枠は非表示だが構造コンテナは維持(VOL/SPEED/KEY行とEQ/Export/AddFile行を束ねる) */
+.basic-panel-box {
+  background: transparent;
+  border: none;
+}
+
+.basic-panel-box > .adjust-controls-row:nth-child(2) .av-toggle-btn {
+  border-top-width: 0 !important;
+}
+
+.time-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px 20px;
+  position: relative;
+}
+
+/* TIME行だけがadjust-controls-rowを持たないtime-controls-rowなので一意に特定できる */
+.time-controls-row:not(.adjust-controls-row) {
+  justify-content: center;
+}
+
+.time-controls-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.adjust-controls-row {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+}
+
+.adjust-controls-row .time-controls-buttons {
+  flex-grow: 1;
+  width: 100%;
+  gap: 0;
+}
+
+.adjust-controls-row #eqToggleBtn,
+.adjust-controls-row #exportToggleBtn{
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 0%;
+  width: 100%;
+  min-width: 0;
+}
+
+
+.adjust-controls-row .time-controls-buttons .av-toggle-btn {
+  border-radius: 0 !important;
+  border-left-width: 0 !important;
+  justify-content: center;
+}
+
+.adjust-controls-row .time-controls-buttons > *:first-child .av-toggle-btn {
+  border-left-width: 1px !important;
+}
+
+#keyToggleBtn {
+  border-top-right-radius: 16px !important;
+}
+
+#eqToggleBtn {
+  border-bottom-left-radius: 16px !important;
+}
+
+#fileUploadWrapper .av-toggle-btn {
+  border-bottom-right-radius: 16px !important;
+}
+
+
+.av-toggle-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  box-sizing: border-box;
+  padding: 10px 18px;
+  background: #1c1c24;
+  border: 1px solid color-mix(in srgb, var(--accent-primary) 22%, var(--border-subtle));
+  border-radius: 14px;
+  cursor: pointer;
+  color: var(--text-bright);
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  transition: background var(--dur-hover) var(--ease-snap), border-color var(--dur-hover) var(--ease-snap), color var(--dur-hover) var(--ease-snap), transform var(--dur-press) var(--ease-snap);
+}
+
+.av-toggle-btn:active {
+  transform: scale(0.97);
+}
+
+.av-toggle-btn:hover {
+  background: #252530;
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.av-toggle-btn.active {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  background: var(--accent-glow);
+}
+
+.av-toggle-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+.av-toggle-btn-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+}
+
+
+.av-toggle-btn-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: inherit;
+  opacity: 0.65;
+}
+
+#eqToggleBtn .av-toggle-btn-text {
+  justify-content: center;
+}
+
+.av-toggle-btn.key-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: auto;
+}
+
+.av-toggle-btn.key-disabled:hover {
+  background: #1c1c24;
+  border-color: var(--border-subtle);
+  color: var(--text-bright);
+}
+
+
+#loopInfo,
+#playlistInfo {
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-micro);
+  color: var(--accent-primary);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background: var(--accent-glow);
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+}
+
+#vbarContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vbar {
+  width: 100%;
+  height: 44px;
+  background: #16161b;
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.vbar:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.vfill {
+  height: 100%;
+  width: 0%;
+  background: var(--accent-primary);
+  border-radius: 0;
+  pointer-events: none;
+  position: relative;
+  z-index: 2;
+  mix-blend-mode: normal;
+  opacity: 0.9;
+}
+
+.vwave {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.vbar-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background-color: var(--accent-primary);
+  transform: translateX(-50%);
+  z-index: 50;
+  pointer-events: auto;
+  cursor: ew-resize;
+  transition: background-color 0.2s;
+}
+
+.vbar-line:hover {
+  background-color: var(--accent-hover-1);
+}
+
+.vbar-line.disabled {
+  background-color: #6b6b7b;
+  opacity: 0.5;
+}
+
+.vbar-label {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 8px;
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  /* マーカー番号バッジは常に黒背景(視認性)。renderPins()もこの値をインラインで上書きしない */
+  background: rgba(13, 13, 15, 0.85);
+  padding: 2px 6px;
+  border-radius: 4px;
+  pointer-events: auto;
+  cursor: ew-resize;
+  z-index: 51;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  user-select: none;
+}
+
+.vbar-line.disabled .vbar-label {
+  color: var(--icon-muted);
+  text-decoration: line-through;
+}
+
+.vbar-label-memo {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.85;
+  margin-left: 4px;
+}
+
+.segmentHighlight {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: var(--accent-glow);
+  border-top: 2px solid var(--accent-primary);
+  border-bottom: 2px solid var(--accent-primary);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.segmentHighlight-preroll {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: color-mix(in srgb, var(--accent-primary) 14%, transparent);
+  border-top: 2px dashed color-mix(in srgb, var(--accent-primary) 60%, transparent);
+  border-bottom: 2px dashed color-mix(in srgb, var(--accent-primary) 60%, transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.control-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  min-width: 180px;
+  box-sizing: border-box;
+}
+
+.control-card label {
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-heading);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--icon-muted);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+}
+
+/* labelの子はテキスト/トグル/リセットの3つ→space-betweenでなくflex-start+リセットをmargin-left:auto */
+.control-card label .mini-reset-btn {
+  margin-left: auto;
+}
+
+.control-card .control-effect-toggle {
+  width: 30px;
+  height: 17px;
+  flex-shrink: 0;
+}
+
+.control-stepper { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.control-card .control-stepper .control-step-btn,
+.control-card .control-stepper .control-effect-toggle.control-effect-icon {
+  box-sizing: border-box;
+  width: 28px;
+  height: 22px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a22;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  color: var(--icon-muted);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform var(--dur-press, 100ms) var(--ease-snap, ease), color 0.15s;
+}
+.control-card .control-stepper .control-step-btn:active,
+.control-card .control-stepper .control-effect-icon:active { transform: scale(0.93); }
+.control-card .control-stepper .control-step-btn:disabled { opacity: 0.4; cursor: default; }
+.control-card .control-effect-icon svg { width: 14px; height: 14px; fill: currentColor; display: block; }
+.control-card .control-effect-icon[aria-checked="true"] { color: var(--accent-primary); border-color: color-mix(in srgb, var(--accent-primary) 45%, transparent); }
+.control-card .control-effect-icon[aria-checked="false"] { opacity: 0.55; }
+@media (hover: hover) and (pointer: fine) {
+  .control-card .control-stepper .control-step-btn:hover { color: var(--text-bright, #fff); }
+}
+@media screen and (max-width: 900px) {
+  .control-card .control-stepper .control-step-btn,
+  .control-card .control-stepper .control-effect-toggle.control-effect-icon { width: 34px; height: 28px; }
+}
+
+.control-card .control-effect-toggle .glow-switch-knob {
+  width: 11px;
+  height: 11px;
+}
+
+.control-card .control-effect-toggle[aria-checked="true"] .glow-switch-knob {
+  transform: translateX(13px);
+}
+
+.control-card input[type="range"] {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+
+/* range: --range-progress(0〜100、player-ui-shared.jsが入力毎に更新)で進捗側だけaccent色のグラデトラック */
+.control-card input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to right,
+    var(--accent-primary) 0%,
+    var(--accent-primary) calc(var(--range-progress, 50) * 1%),
+    #2a2a35 calc(var(--range-progress, 50) * 1%),
+    #2a2a35 100%
+  );
+  border: none;
+}
+
+.control-card input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: #2a2a35;
+  border: none;
+}
+
+.control-card input[type="range"]::-moz-range-progress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--accent-primary);
+}
+
+.control-card input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  border: none;
+  cursor: pointer;
+}
+
+.control-card input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  border: none;
+  cursor: pointer;
+}
+
+
+
+
+
+
+/* 【v2.19.1】テキスト選択: シークバーエリア(波形/マーカー)と操作系(ボタン/下段バー/サイドバー/つまみ/ドラッグのつかみ)のみ選択不可。他は選択・コピー可。YouTubeアプリも同様 */
+body {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.vbar-line, .vbar, .vbar-label, #vbarContainer, #pcV2WaveArea,
+#pcV2BottomBar, #pcV2BottomBarAnchorTabs, #pcV2IconBar, #appHeader,
+.playlist-drag-handle, input[type="range"],
+.qn-yt-seek, .qn-yt-marker, .qn-yt-track,
+button {
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+input[type="text"], input[type="number"], textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+
+
+
+
+/* モーダルeasing: 開く=オーバーシュート cubic-bezier(0.34,1.56,0.64,1)、閉じる=cubic-bezier(0.4,0,1,1)(非対称で閉じ操作を軽く) */
+
+/* 起動スプラッシュ(#splashOverlay): body背景色で全面を覆い初期化中の画面を隠す。フェード後pointer-events:none→display:none(JS制御) */
+#splashOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #0b0b0d;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+
+#splashOverlay.splash-fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#splashLogo {
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: 60px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--text-bright);
+  text-transform: uppercase;
+  opacity: 0;
+  transform: scale(0.55);
+  filter: blur(8px);
+  animation: splashLogoIn 1.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+#splashVersion {
+  margin-top: 10px;
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  color: #6b6b7b;
+  opacity: 0;
+  transform: scale(0.55);
+  filter: blur(8px);
+  animation: splashLogoIn 1.3s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
+}
+
+#splashOverlay.splash-fade-out #splashLogo,
+#splashOverlay.splash-fade-out #splashVersion {
+  animation: splashLogoOut 0.5s ease forwards;
+}
+
+#splashLogoQN {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+@keyframes splashLogoIn {
+  from {
+    opacity: 0;
+    transform: scale(0.55);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes splashLogoOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.15);
+    filter: blur(4px);
+  }
+}
+
+@media (max-width: 360px) {
+  #splashLogo {
+    font-size: 44px;
+  }
+  #splashVersion {
+    font-size: 16px;
+  }
+}
+

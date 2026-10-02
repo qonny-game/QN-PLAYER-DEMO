@@ -1,0 +1,397 @@
+/* style-apps.css — アプリ名バッジ/フライアウト(#qnAppFlyout)/アプリ表示領域(#qnAppHost)/トースト。JSはqn-apps.js、YouTube専用はstyle-youtube.css。項目は.pcv2-icon-itemを流用。配色はstyle-core.cssの:rootトークン(テーマ追従) */
+
+/* ---------- サイドバー: アプリ表示中 ---------- */
+
+#pcV2IconBar.qn-app-sidebar > .pcv2-icon-item:not(.qn-appside-item):not(#qnAppBadge) {
+  display: none;
+}
+
+#pcV2IconBar.qn-app-sidebar #pcV2IconBarBottom > .pcv2-icon-item:not([data-panel-id="color"]):not(.qn-appside-item) {
+  display: none;
+}
+
+/* ---------- アプリ一覧フライアウト ----------
+body直下fixed。PC=サイドバー右に重ねる(clip-pathで縁から出る)、SP=アイコンバー真上。位置はJSが実測。#qnAppScrimで暗幕 */
+#qnAppFlyout {
+  position: fixed;
+  z-index: 320; /* z-index: #qnColorPop(300)・幕(310)より上 */
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 84px;
+  padding: 16px 0;
+  gap: 4px;
+  background: color-mix(in srgb, var(--accent-primary) 7%, #050507);
+  border-right: 2px solid var(--accent-primary);
+  box-shadow: 14px 0 36px rgba(0, 0, 0, 0.6);
+  transform: translateX(-100%);
+  clip-path: inset(0 -48px 0 100%);
+  transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
+              clip-path 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+#qnAppFlyout[hidden] { display: none; }
+#qnAppFlyout.qn-flyout-in {
+  transform: none;
+  clip-path: inset(0 -48px 0 0);
+}
+
+#qnAppFlyout.qn-flyout-sp {
+  flex-direction: row;
+  width: auto;
+  padding: 6px 6px;
+  gap: 2px;
+  border-right: none;
+  border-top: 2px solid var(--accent-primary);
+  box-shadow: 0 -14px 36px rgba(0, 0, 0, 0.6);
+  overflow-x: auto;
+  transform: translateY(100%);
+  clip-path: inset(0 0 100% 0);
+}
+#qnAppFlyout.qn-flyout-sp.qn-flyout-in {
+  transform: none;
+  clip-path: inset(-48px 0 0 0);
+}
+
+#qnAppFlyout .qn-flyout-item {
+  flex-shrink: 0;
+}
+
+#qnAppScrim {
+  position: fixed;
+  inset: 0;
+  z-index: 310;
+  background: rgba(0, 0, 0, 0.42);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+#qnAppScrim[hidden] { display: none; }
+#qnAppScrim.qn-scrim-in { opacity: 1; }
+#qnAppScrim.qn-scrim-sp { background: rgba(0, 0, 0, 0.55); }
+
+/* v3.11.1: OS視覚効果低減でもtransition:noneにしない(Windowsでフライアウトが一瞬でパッと出る原因だった) */
+
+#pcV2IconBar #qnAppBadge {
+  position: relative;
+}
+#qnAppBadge .qn-badge-chev {
+  position: absolute;
+  right: 3px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  fill: currentColor;
+  opacity: 0.85;
+  transition: transform 120ms ease;
+}
+@media screen and (max-width: 900px) {
+  #qnAppBadge .qn-badge-chev {
+    right: 50%;
+    top: 2px;
+    margin-top: 0;
+    margin-right: -7px;
+    width: 12px;
+    height: 12px;
+    transform: rotate(-90deg);
+  }
+  #qnAppBadge.qn-badge-open .qn-badge-chev { transform: rotate(90deg); }
+}
+
+#qnColorPop {
+  position: fixed;
+  z-index: 300;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--bg-base, #0a0a0c);
+  border-right: 1px solid var(--border-subtle);
+}
+#qnColorPop.qn-colorpanel-sp { border-right: none; border-top: 1px solid var(--border-subtle); }
+#qnColorPop[hidden] { display: none; }
+#qnColorPop .qn-colorpanel-head {
+  padding: 14px 16px 14px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-title);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+#qnColorPop .qn-colorpanel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+#qnColorPop .qn-menu-section { border-bottom: none; padding-bottom: 0; }
+#qnColorPop .qn-menu-section-label { display: none; }
+#qnColorPop.qn-colorpanel-sp .qn-colorpanel-head { padding: 8px 16px; }
+
+/* 現在のアプリ。.activeは本体JSがdata-panel-id無し要素から外すため別クラス */
+.pcv2-icon-item.qn-app-active {
+  color: var(--accent-primary);
+}
+
+.pcv2-icon-item.qn-app-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: var(--accent-primary);
+}
+
+.pcv2-icon-item.qn-app-soon {
+  opacity: 0.45;
+}
+
+.pcv2-icon-item.qn-app-soon:hover {
+  opacity: 0.7;
+}
+
+/* ---------- ホバー/バッジ色(v2.18.1) ----------
+ホバー=背景テーマ色+文字白(#fff)。ホバー可能端末のみ(タッチは:hoverが残る)。#qnAppBadgeは常にテーマ背景+白文字 */
+:root {
+  --sidebar-on-accent: #fff;
+}
+
+#pcV2IconBar #qnAppBadge {
+  background: var(--accent-primary);
+  color: var(--sidebar-on-accent);
+}
+
+#pcV2IconBar #qnAppBadge {
+  margin-bottom: 8px;
+}
+
+@media screen and (max-width: 900px) {
+  #pcV2IconBar #qnAppBadge {
+    margin-bottom: 0;
+    margin-right: 6px;
+  }
+}
+
+@media (hover: hover) {
+  #pcV2IconBar .pcv2-icon-item:hover,
+  #pcV2IconBar .pcv2-icon-item.active:hover,
+  #pcV2IconBar .pcv2-icon-item.qn-app-active:hover {
+    background: var(--accent-primary);
+    color: var(--sidebar-on-accent);
+  }
+
+  #qnAppFlyout .pcv2-icon-item:hover,
+  #qnAppFlyout .pcv2-icon-item.qn-app-active:hover {
+    background: var(--accent-primary);
+    color: var(--sidebar-on-accent);
+  }
+
+  #pcV2IconBar #qnAppBadge:hover {
+    background: var(--accent-hover-1);
+    color: var(--sidebar-on-accent);
+  }
+}
+
+#pcV2IconBar #qnAppBadge:active {
+  background: var(--accent-hover-1);
+}
+
+@media screen and (max-width: 900px) {
+  .pcv2-icon-item.qn-app-active::before {
+    left: 8px;
+    right: 8px;
+    top: auto;
+    bottom: 0;
+    width: auto;
+    height: 2px;
+  }
+}
+
+/* ---------- トースト ---------- */
+#qnAppToast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(110px + env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 8px);
+  z-index: 9000;
+  padding: 10px 18px;
+  border-radius: var(--radius-pill);
+  background: rgba(30, 30, 36, 0.96);
+  border: 1px solid var(--border-strong);
+  color: var(--text-bright);
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-open, 240ms) var(--ease-glide, ease),
+              transform var(--dur-open, 240ms) var(--ease-glide, ease);
+}
+
+#qnAppToast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ---------- アプリ表示領域 ---------- */
+
+/* アプリ表示中は本体の再生系バーをdisplay:noneで隠すだけ(DOM/状態は変えない) */
+body.qn-app-open #pcV2BottomBar,
+body.qn-app-open #pcV2BottomBarAnchorTabs,
+body.qn-app-open #pcV2TimeRow {
+  display: none !important;
+}
+
+/* 位置はqn-apps.js layoutHost()が実測 */
+#qnAppHost {
+  position: fixed;
+  /* z-index: .vbar-label(51)・SPパネルオーバーレイ(100)より手前、ヘッダー(200)より奥 */
+  z-index: 150;
+  background: #0a0a0c;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#qnAppHost[hidden] {
+  display: none;
+}
+
+.qn-app-view {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.qn-app-view[hidden] {
+  display: none;
+}
+
+/* ---------- マイク使用中の表示(TUNER/PITCH共通)。静止表示のみ(無限アニメ禁止=GOTCHAS §3) ---------- */
+.qn-mic-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  height: var(--btn-h);
+  padding: 0 var(--btn-pad-x);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--danger);
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger);
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-btn);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.qn-mic-pill[hidden] { display: none; }
+.qn-mic-dot { width: 8px; height: 8px; border-radius: var(--radius-round); background: var(--danger); flex-shrink: 0; }
+.qn-mic-lv { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
+.qn-mic-lv b { width: 3px; border-radius: 1px; background: rgba(255, 255, 255, 0.22); }
+.qn-mic-lv b:nth-child(1) { height: 4px; }
+.qn-mic-lv b:nth-child(2) { height: 6px; }
+.qn-mic-lv b:nth-child(3) { height: 8px; }
+.qn-mic-lv b:nth-child(4) { height: 10px; }
+.qn-mic-lv b:nth-child(5) { height: 12px; }
+.qn-mic-lv b.on { background: var(--danger); }
+
+/* どの画面でもわかるように、アプリ名バッジにも赤丸 */
+body.qn-mic-on #qnAppBadge::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  width: 9px;
+  height: 9px;
+  border-radius: var(--radius-round);
+  background: var(--danger);
+  box-shadow: 0 0 0 2px var(--accent-primary);
+}
+
+
+/* v3.32.0 PC幅: アプリ一覧(フライアウト)だけ「アイコン＋文字」の1行・広め。サイドバー本体/バッジは従来のまま */
+@media screen and (min-width: 901px) {
+  #qnAppFlyout .qn-flyout-item {
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px 14px 18px;
+  }
+  #qnAppFlyout .qn-flyout-item svg { width: 24px; height: 24px; flex-shrink: 0; }
+  #qnAppFlyout .qn-flyout-item span {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+  }
+  #qnAppFlyout { width: 190px; }
+}
+
+/* v3.33.0 SP: リスト行の横スワイプで出る□アイコンボタン(編集/SKIP(HIDE)/削除)。ボタン群は行の右外(left:100%)に置き、行を左へずらして見せる。はみ出しはリスト側でclip */
+@media screen and (max-width: 900px) {
+  .qn-swipe-list { overflow-x: clip; }
+  .qn-swipe-list .qn-swipe-row { position: relative; touch-action: pan-y; will-change: transform; }
+  .qn-swipe-tray {
+    position: absolute;
+    left: 100%;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: stretch;
+  }
+  .qn-swipe-list .qn-swipe-tray .qn-swipe-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 64px !important;
+    min-width: 64px;
+    height: auto;
+    margin: 0;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: #2f3a52;
+    color: #fff !important;
+    font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .qn-swipe-list .qn-swipe-tray .qn-swipe-btn svg { width: 22px; height: 22px; fill: currentColor; }
+  .qn-swipe-list .qn-swipe-tray .qn-swipe-btn span { color: #fff; font-size: 10px; }
+  .qn-swipe-list .qn-swipe-tray .qn-swipe-btn.is-edit { background: var(--accent-primary); }
+  .qn-swipe-list .qn-swipe-tray .qn-swipe-btn.is-skip, .qn-swipe-list .qn-swipe-tray .qn-swipe-btn.is-hide { background: #b45309; }
+  .qn-swipe-list .qn-swipe-tray .qn-swipe-btn.is-del { background: var(--danger, #ef4444); }
+  .qn-swipe-list .qn-swipe-tray .qn-swipe-btn.is-del.confirm { background: #991b1b; }
+  .qn-swipe-list .qn-swipe-tray .qn-swipe-btn:active { filter: brightness(0.85); }
+  .qn-swipe-list .playlistItem, .qn-swipe-list .pinItem { touch-action: pan-y; }
+}
+.qn-swipe-tray { display: none; }
+@media screen and (max-width: 900px) { .qn-swipe-tray { display: flex; } }
+
+/* SP: 行の編集/HIDEアイコンはスワイプで出すので通常時は非表示(編集モード中は従来どおり) */
+@media (max-width: 900px) {
+  .playlistItem .playlist-hover-edit-btn { display: none !important; }
+  #pcV2PanelBody:not(.markers-edit-mode) #pinList .pin-edit-btn,
+  #pcV2PanelBody:not(.markers-edit-mode) #pinList .toggle-btn,
+  .qn-yt:not([data-edit="markers"]) .qn-yt-pinbox .pin-edit-btn,
+  .qn-yt:not([data-edit="markers"]) .qn-yt-pinbox .toggle-btn { display: none !important; }
+  .qn-yt[data-edit="markers"] .qn-yt-pinbox .pinItem { grid-template-columns: auto 1fr auto auto; }
+}
+
+/* マーカー行・再生中の曲の左端をパネルタイトル(左20px)に揃える */
+#pinList .pinItem, .qn-yt-pinbox .pinItem { padding-left: 20px; }
+#markersNowPlaying .playlistItem.is-nowplaying { padding-left: 20px; }

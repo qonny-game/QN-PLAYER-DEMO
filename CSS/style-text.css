@@ -1,0 +1,87 @@
+/* style-text.css — Textタブ(textarea/フルスクリーン/文字サイズボタン/.tab-icon-btn) */
+
+
+.note-textarea {
+  width: 100%;
+  min-height: 320px;
+  box-sizing: border-box;
+  background: #1c1c24;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-field);
+  padding: 14px 16px;
+  color: var(--text-bright);
+  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-body);
+  line-height: 1.6;
+  resize: vertical;
+}
+.note-textarea::placeholder {
+  color: #6b6b7b;
+}
+.note-textarea:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.tab-icon-btn {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-round);
+  border: 1px solid var(--border-subtle);
+  background: #1c1c24;
+  color: var(--icon-muted);
+  font-size: 13px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--dur-hover, 130ms) var(--ease-snap, ease), color var(--dur-hover, 130ms) var(--ease-snap, ease), border-color var(--dur-hover, 130ms) var(--ease-snap, ease), transform var(--dur-press, 100ms) var(--ease-snap, ease);
+}
+.tab-icon-btn svg {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+}
+.tab-icon-btn:hover {
+  background: #252530;
+  color: var(--text-bright);
+  border-color: var(--accent-primary);
+}
+.tab-icon-btn:active {
+  transform: scale(0.9);
+}
+
+/* フルスクリーン: 本体#noteTextAreaと値を相互同期(player-ui-shared.js)。文字サイズはフルスクリーン側だけ独立(本体font-sizeは変えない) */
+.text-fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: none;
+  flex-direction: column;
+  padding: 20px;
+  padding-top: calc(20px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+  background: #0d0d0f;
+}
+.text-fullscreen-overlay.open {
+  display: flex;
+}
+.text-fullscreen-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.text-fullscreen-font-controls {
+  display: flex;
+  gap: 6px;
+}
+.note-textarea-fullscreen {
+  flex: 1;
+  min-height: 0;
+  font-size: 20px;
+}

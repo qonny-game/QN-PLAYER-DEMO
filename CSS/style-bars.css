@@ -1,0 +1,183 @@
+/* style-bars.css — 可変長シークバー: #vbarContainer内の#vbarScroll(縦スクロール)/#vbarRows(行の親)/.vbar(1行=BAR_SEC秒)/.vbar-time(行左の開始時刻)、歯車ボタン(.qn-bar-gear)、秒数ポップアップ(.qn-bar-pop)。
+   style-pcv2-panels.cssの後に読み、旧「6本をflexで等分」前提の指定(#pcV2WaveArea #vbarContainer / #pcV2WaveArea .vbar)を上書きする。寸法の元は#vbarContainerのカスタムプロパティ(player-bars.jsがgetComputedStyleで読む。ここを変えれば行ピッチも追従) */
+
+#vbarContainer {
+  --qn-bar-h: 44px;
+  --qn-bar-gap: 28px;
+  --qn-bar-label-w: 44px;
+  --qn-bar-pad-top: 26px;
+  --qn-bar-pad-bottom: 12px;
+  --qn-bar-pad-right: 12px;
+}
+#vbarContainer.qn-bars-hours { --qn-bar-label-w: 58px; }
+
+@media screen and (max-width: 900px) {
+  #vbarContainer {
+    --qn-bar-h: 40px;
+    --qn-bar-gap: 26px;
+    --qn-bar-label-w: 40px;
+  }
+  #vbarContainer.qn-bars-hours { --qn-bar-label-w: 54px; }
+}
+
+#pcV2WaveArea #vbarContainer {
+  display: block;
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  padding: 0;
+  gap: 0;
+}
+
+/* iOS: flex:1の入れ子で高さを埋めない(GOTCHAS.md)。スクロール入れ物は親いっぱいに絶対配置 */
+#vbarScroll {
+  position: absolute;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+#vbarRows {
+  position: relative;
+  width: 100%;
+}
+
+#vbarRows .vbar {
+  position: absolute;
+  left: var(--qn-bar-label-w);
+  right: var(--qn-bar-pad-right);
+  height: var(--qn-bar-h);
+  min-height: 0;
+  max-height: none;
+  flex: none;
+  background: none;
+  border: none;
+  border-radius: 0;
+  overflow: visible;
+}
+
+/* 地の背景。最終行は曲の終わりまで(--row-frac)だけ塗る */
+#vbarRows .vbar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--row-frac, 100%);
+  background: #111;
+  z-index: 0;
+  pointer-events: none;
+}
+
+#vbarRows .vbar-time {
+  position: absolute;
+  right: calc(100% + 6px);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  color: var(--icon-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+#vbarRows .vbar.is-current .vbar-time {
+  color: var(--text-bright);
+}
+
+#vbarContainer #swLoopCounter {
+  right: 18px;
+}
+
+/* ---------- 歯車ボタン(#pcV2WaveHead内。orderで常に右端) ---------- */
+.qn-bar-gear {
+  order: 10;
+  align-self: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin-left: 8px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: var(--radius-round);
+  color: var(--icon-muted);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--dur-press, 100ms) var(--ease-snap, ease);
+}
+.qn-bar-gear svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  fill: currentColor;
+}
+.qn-bar-gear:active { transform: scale(0.92); }
+.qn-bar-gear.is-open { color: var(--accent-primary); }
+@media (hover: hover) and (pointer: fine) {
+  .qn-bar-gear:hover { color: var(--text-bright); }
+  .qn-bar-gear.is-open:hover { color: var(--accent-primary); }
+}
+
+/* ---------- 秒数ポップアップ(body直下fixed) ---------- */
+.qn-bar-pop {
+  position: fixed;
+  z-index: 330;
+  box-sizing: border-box;
+  min-width: 140px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  background: #101013;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-popup, 12px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+}
+.qn-bar-pop[hidden] { display: none; }
+.qn-bar-pop-title {
+  padding: 4px 10px 6px;
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--icon-muted);
+}
+.qn-bar-pop-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 10px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  color: var(--text-bright);
+  font-family: inherit;
+  font-size: var(--fs-body);
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.qn-bar-pop-item:active { background: rgba(255, 255, 255, 0.06); }
+@media (hover: hover) and (pointer: fine) {
+  .qn-bar-pop-item:hover { background: rgba(255, 255, 255, 0.06); }
+}
+.qn-bar-pop-check {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: currentColor;
+  visibility: hidden;
+}
+.qn-bar-pop-item[aria-checked="true"] { color: var(--accent-primary); }
+.qn-bar-pop-item[aria-checked="true"] .qn-bar-pop-check { visibility: visible; }

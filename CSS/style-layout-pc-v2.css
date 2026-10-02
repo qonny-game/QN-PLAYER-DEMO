@@ -1,0 +1,982 @@
+/* style-layout-pc-v2.css — PC幅の3カラム(左アイコンバー+中央パネル+右波形)。常時有効(JSが常時activate)。SP組み替えはstyle-layout-pc-v2-sp.css、パネル中身はstyle-pcv2-panels.css。#pcV2Layout配下のみスコープ。既存DOMはid依存なので変更せずJSが骨組みへ移動 */
+
+#pcV2Root {
+  display: none;
+}
+
+
+html.pc-v2-active-html {
+  height: 100%;
+  overflow: hidden;
+}
+
+
+body.pc-v2-active {
+  height: 100vh;
+  height: 100dvh; /* dvh: Android ChromeのURLバー等でビューポート実寸が変わっても下端(アイコンバー)が隠れないよう実高さに追従 */
+  box-sizing: border-box;
+  overflow: hidden;
+  background: #0a0a0c;
+  padding: 0;
+}
+
+
+body.pc-v2-active #pcV2Root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  flex: 1;
+}
+
+
+#pcV2Layout {
+  display: grid;
+  /* パネル幅=SP実機のオーバーレイ幅(iPhone標準375px)に合わせる(意図的) */
+  grid-template-columns: 76px 375px 1fr;
+  grid-template-rows: 1fr;
+  gap: 0;
+  align-items: stretch;
+  width: 100%;
+  min-height: 0;
+  flex: 1;
+}
+
+
+#pcV2TimeRow {
+  display: none;
+}
+
+
+body.pc-v2-active > .app-container {
+  display: none;
+}
+
+
+#pcV2IconBar {
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 16px 0;
+  gap: 4px;
+  min-height: 0;
+}
+
+
+#pcV2IconBarScrollHint {
+  display: none;
+}
+
+
+.pcv2-icon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 4px;
+  cursor: pointer;
+  color: var(--icon-muted);
+  background: none;
+  border: none;
+  position: relative;
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+
+.pcv2-icon-item:hover {
+  color: var(--text-bright);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+
+.pcv2-icon-item.active {
+  color: var(--accent-primary);
+}
+
+
+.pcv2-icon-item.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: var(--accent-primary);
+}
+
+
+.pcv2-icon-item svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+
+.pcv2-icon-item span {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+
+.pcv2-icon-item[data-panel-id="seekbar"] {
+  display: none;
+}
+
+
+#pcV2IconBarSpacer {
+  flex: 1;
+}
+
+
+#pcV2IconBarBottom {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 8px;
+}
+
+
+#pcV2Panel {
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  position: relative;
+}
+
+
+#pcV2WaveArea {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 20px 24px;
+  /* 右下ADD AUDIO/ADD MARKER(絶対配置)に最下段のシークバーが隠れないよう下を空ける */
+  padding-bottom: var(--pcv2-wave-fab-space, 84px);
+  overflow-y: auto;
+  position: relative;
+}
+
+
+/* 【v2.13.6】ADD AUDIO+ADD MARKERの入れ物(右下固定はここ) */
+#pcV2WaveFabRow {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  z-index: 5;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+
+
+#pcV2WaveHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+#pcV2WaveHead #appTitle {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#pcV2WaveHead .time-controls-row {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+#pcV2WaveHead #timeDisplay .time-val { font-size: 14px; }
+#pcV2WaveHead #timeDisplay .time-dur { font-size: 13px; }
+
+
+#pcV2WaveArea #appTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-bright);
+  /* 1行分の高さを確保(flex縮小で文字上端がoverflow:hiddenで切れる) */
+  flex-shrink: 0;
+}
+
+
+#pcV2WaveArea #vbarContainer {
+  gap: 26px;
+  padding-top: 24px;
+  flex: 1 1 0;
+  min-height: 0;
+  justify-content: center;
+}
+
+
+#pcV2TimeRow {
+  justify-content: flex-end;
+  padding: 4px 24px;
+  flex-shrink: 0;
+}
+
+
+#pcV2TimeRow .time-controls-row, #pcV2WaveHead .time-controls-row {
+  padding: 0;
+  margin-left: 0;
+  flex-shrink: 0;
+}
+
+
+#pcV2TimeRow #timeDisplay, #pcV2WaveHead #timeDisplay {
+  justify-content: flex-start;
+  align-items: baseline;
+  gap: 3px;
+  font-weight: 400;
+}
+
+
+#pcV2TimeRow #timeDisplay .time-val, #pcV2WaveHead #timeDisplay .time-val {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-bright);
+}
+
+
+#pcV2TimeRow #timeDisplay .time-sep, #pcV2WaveHead #timeDisplay .time-sep {
+  font-size: 11px;
+  color: #55555f;
+}
+
+
+#pcV2TimeRow #timeDisplay .time-dur, #pcV2WaveHead #timeDisplay .time-dur {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--icon-muted);
+}
+
+
+#pcV2WaveArea .vbar {
+  flex: 1 1 0;
+  height: auto;
+  min-height: 24px;
+  max-height: 180px;
+  background: #111;
+  border: none;
+  border-radius: 0;
+  overflow: visible;
+}
+
+
+#pcV2WaveArea .vbar:hover {
+  border-color: transparent;
+}
+
+
+#pcV2WaveArea .vbar-line {
+  background-color: transparent;
+  touch-action: none;
+}
+
+
+#pcV2WaveArea .vbar-line::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  left: -9px;
+  right: -9px;
+}
+
+
+#pcV2WaveArea .vbar-label {
+  touch-action: none;
+}
+
+
+#pcV2WaveArea .vbar-line::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  background-color: var(--marker-color, var(--accent-primary));
+}
+
+
+#pcV2WaveArea .vbar-line:hover::before {
+  background-color: var(--accent-hover-1);
+}
+
+
+#pcV2WaveArea .vbar-line.disabled::before {
+  background-color: #6b6b7b;
+  opacity: 0.5;
+}
+
+
+/* 数字(.vbar-label-num)は線の真上(left:50%+translateX(-50%))、メモ(.vbar-label-memo)は数字の右に絶対配置。右端付近は.pcv2-label-flip(player-markers.js renderPins()が付与)でメモを左へ */
+#pcV2WaveArea .vbar-label {
+  top: auto;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-left: 0;
+  margin-bottom: 3px;
+  display: block;
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  white-space: nowrap;
+}
+
+
+#pcV2WaveArea .vbar-label-num {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--marker-color, var(--accent-primary));
+  text-align: center;
+}
+
+
+#pcV2WaveArea .vbar-label-memo {
+  position: absolute;
+  left: 100%;
+  bottom: 0;
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #b0b0b8;
+  opacity: 1;
+  top: 4px;
+}
+
+
+#pcV2WaveArea .vbar-label.pcv2-label-flip .vbar-label-memo {
+  left: auto;
+  right: 100%;
+  margin-left: 0;
+  margin-right: 6px;
+}
+
+
+#pcV2WaveArea .vbar-line.disabled .vbar-label-num,
+#pcV2WaveArea .vbar-line.disabled .vbar-label-memo {
+  color: var(--icon-muted);
+}
+
+
+/* 再生位置はcanvas色分け(pcv2DrawWaveform)で表現。既存.vfillオーバーレイは使わない */
+#pcV2WaveArea .vfill {
+  display: none;
+}
+
+
+#pcV2BottomBarAnchorTabs {
+  display: none;
+}
+
+
+#pcV2BottomBar {
+  border-top: 1px solid var(--border-subtle);
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+
+/* 【v3.13.0】PC幅: 下段バーは右カラム真下。#pcV2Layoutを2行grid(1行目=サイドバー/パネル/波形、2行目=バー=3列目のみ)。バー必要幅(約1000px)が右カラムより広い時は横スクロール(スクロールバー非表示)。SP幅はflex縦積みで対象外 */
+@media screen and (min-width: 901px) {
+  #pcV2Layout {
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  #pcV2IconBar {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+  #pcV2Panel {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+  #pcV2WaveArea {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  #pcV2BottomBar {
+    grid-column: 3;
+    grid-row: 2;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+  #pcV2BottomBar::-webkit-scrollbar {
+    display: none;
+  }
+  #pcV2BottomBar .pcv2-ctrl-group {
+    flex-shrink: 0;
+  }
+  #pcV2BottomBar .pcv2-ctrl-spacer {
+    min-width: 16px;
+  }
+}
+
+
+/* 【v3.15.0】PC幅が狭い時はVolume/Speed/Key/EQ(右グループ)を非表示(操作はControlパネル)。閾値: パネル展開時1340px以下、格納時960px以下(バー必要幅約883px。右カラム幅=画面幅−451px/−76px。) */
+@media screen and (min-width: 901px) and (max-width: 1340px) {
+  #pcV2Layout:not(.pcv2-collapsed) #pcV2BottomBarGroupRight,
+  #pcV2Layout:not(.pcv2-collapsed) #pcV2BottomBar > .pcv2-ctrl-spacer {
+    display: none;
+  }
+}
+@media screen and (min-width: 901px) and (max-width: 960px) {
+  #pcV2BottomBarGroupRight,
+  #pcV2BottomBar > .pcv2-ctrl-spacer {
+    display: none;
+  }
+}
+
+
+@media screen and (min-width: 901px) {
+  #pcV2Layout {
+    transition: grid-template-columns 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  #pcV2Layout.pcv2-collapsed {
+    grid-template-columns: 76px 0 1fr;
+  }
+  #pcV2Panel {
+    overflow: hidden;
+  }
+  #pcV2Panel > #pcV2PanelHeader,
+  #pcV2Panel > #pcV2PanelBody {
+    min-width: 374px;
+    box-sizing: border-box;
+  }
+  #pcV2Layout.pcv2-collapsed #pcV2Panel {
+    border-right-color: transparent;
+    visibility: hidden;
+    transition: visibility 0s linear 220ms;
+  }
+}
+
+
+#pcV2BottomBar .top-controls {
+  position: static;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  background: none;
+  backdrop-filter: none;
+  border-top: none;
+  box-shadow: none;
+  z-index: auto;
+  flex-shrink: 0;
+}
+
+
+#pcV2BottomBar .pcv2-ctrl-group {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+
+#pcV2BottomBar .pcv2-ctrl-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border-subtle);
+  margin: 0 10px;
+}
+
+
+#pcV2BottomBar .pcv2-ctrl-spacer {
+  flex: 1;
+}
+
+
+#pcV2BottomBar .pcv2-ctrl-divider-sp {
+  display: none;
+}
+
+
+#pcV2BottomBar .pcv2-ctrl-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 8px 7px;
+  cursor: pointer;
+  color: var(--icon-muted);
+  background: none;
+  border: none;
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  position: relative;
+  transition: transform var(--dur-press) var(--ease-snap);
+}
+
+
+@media (hover: hover) and (pointer: fine) {
+  #pcV2BottomBar .pcv2-ctrl-btn:hover {
+    color: var(--text-bright);
+  }
+}
+
+
+#pcV2BottomBar .pcv2-ctrl-btn:active {
+  transform: scale(0.94);
+}
+
+
+#pcV2BottomBar #pcV2BottomSpeedToggle:not(.effect-off),
+#pcV2BottomBar #pcV2BottomKeyToggle:not(.effect-off),
+#pcV2BottomBar #pcV2BottomEqToggle:not(.effect-off),
+#pcV2BottomBar #pcV2VolumeBtn.is-open,
+#pcV2BottomBar .pcv2-ctrl-btn.primary,
+#pcV2BottomBar .pcv2-ctrl-btn.active {
+  color: var(--accent-primary);
+}
+
+
+#pcV2BottomBar .pcv2-ctrl-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+
+#pcV2BottomBar .pcv2-ctrl-btn.primary svg {
+  width: 26px;
+  height: 26px;
+}
+
+
+#pcV2BottomBar .pcv2-ctrl-btn span {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  display: block;
+  white-space: nowrap;
+}
+#pcV2BottomBar .pcv2-ctrl-btn:not(.pcv2-step-btn) svg { margin: 6px auto; box-sizing: content-box; }
+#pcV2BottomBar .pcv2-ctrl-btn:not(.pcv2-step-btn) { min-height: 57px; }
+
+
+#pcV2VolumePopup {
+  position: fixed;
+  bottom: auto;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -100%);
+  background: #101013;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-popup);
+  padding: 16px 12px 14px;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 56px;
+  z-index: 1000;
+  touch-action: none;
+}
+
+
+#pcV2VolumePopup.open {
+  display: flex;
+}
+
+
+#pcV2VolumePopup .pcv2-volume-slider-track {
+  position: relative;
+  width: 4px;
+  height: 90px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+
+#pcV2VolumePopup .pcv2-volume-slider-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: var(--accent-primary);
+  border-radius: 2px;
+}
+
+
+#pcV2VolumePopup .pcv2-volume-slider-thumb {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text-pure-white);
+  cursor: pointer;
+}
+
+
+#pcV2VolumePopup .pcv2-volume-popup-icon {
+  color: var(--icon-muted);
+  display: flex;
+}
+
+
+#pcV2VolumePopup .pcv2-volume-popup-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+
+#pcV2BottomBar #topControls {
+  position: static !important;
+  display: flex !important;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  background: none !important;
+  backdrop-filter: none !important;
+  border-top: none !important;
+  box-shadow: none !important;
+  z-index: auto;
+}
+
+
+body.pc-v2-active #topControlsSpacer {
+  display: none;
+}
+
+
+#pcV2BottomBar .tripleNavBtn {
+  flex: 0 0 auto;
+  width: auto;
+  height: auto;
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+
+#pcV2BottomBar .tripleNavBtn-third {
+  padding: 8px 7px;
+  color: var(--icon-muted);
+  gap: 0;
+  flex: 0 0 auto;
+}
+
+
+#pcV2BottomBar .tripleNavBtn-third:hover {
+  background: none;
+  color: var(--text-bright);
+}
+
+
+#pcV2BottomBar .tripleNavBtn-third:active {
+  background: none;
+  transform: scale(0.94);
+}
+
+
+#pcV2BottomBar .tripleNavBtn-center {
+  color: var(--accent-primary);
+  background: none !important;
+  box-shadow: none !important;
+}
+
+
+#pcV2BottomBar .tripleNavBtn-center:hover {
+  background: none !important;
+  box-shadow: none !important;
+  color: var(--accent-primary);
+}
+
+
+#pcV2BottomBar .tripleNavBtn-third svg {
+  width: 20px;
+  height: 20px;
+}
+
+
+#pcV2BottomBar .tripleNavBtn-center svg {
+  width: 32px;
+  height: 32px;
+  display: block;
+}
+
+
+#pcV2BottomBar .loopbtn svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+  margin: 6px auto;
+  box-sizing: content-box;
+}
+
+
+#pcV2BottomBar .tripleNavBtn-center,
+#pcV2BottomBar .loopbtn {
+  min-height: 57px;
+}
+
+
+#pcV2BottomBar .tripleNavBtn-divider {
+  display: none;
+}
+
+
+#pcV2BottomBar .loopbtn {
+  flex: 0 0 auto;
+  width: auto;
+  height: auto;
+  padding: 8px 7px;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  color: var(--icon-muted);
+  gap: 0;
+}
+
+
+#pcV2BottomBar .loopbtn:hover {
+  background: none;
+  color: var(--text-bright);
+  transform: none;
+  box-shadow: none;
+}
+
+
+#pcV2BottomBar .loopbtn:active {
+  transform: scale(0.94);
+  box-shadow: none;
+}
+
+
+/* ON状態: PC版のIDセレクタが.loopbtn.is-activeより詳細度が高いので、#pcV2BottomBar付きの専用ルールでaccentを適用 */
+#pcV2BottomBar .loopbtn.is-active {
+  color: var(--accent-primary, #3b82f6);
+}
+
+
+#pcV2BottomBar .loopbtn.is-active:hover {
+  color: var(--accent-primary, #3b82f6);
+}
+
+
+#pcV2BottomBar .top-controls-btn-label {
+  display: none;
+  font-size: 9px;
+  opacity: 1;
+}
+
+
+#pcV2BottomBar #addPinBtn .top-controls-btn-label,
+#pcV2BottomBar #loopToggleBtn .top-controls-btn-label {
+  display: block;
+}
+
+
+#pcV2BottomBar .loop-preroll-control {
+  padding: 8px 4px;
+  background: none;
+  border: none;
+  box-shadow: none;
+  gap: 0;
+}
+
+
+#pcV2BottomBar .loop-preroll-btn {
+  width: 20px;
+  height: 20px;
+  color: var(--icon-muted);
+  font-size: 13px;
+}
+
+
+#pcV2BottomBar .loop-preroll-btn:hover {
+  background: none;
+  color: var(--text-bright);
+}
+
+
+#pcV2BottomBar .loop-preroll-value {
+  min-width: 16px;
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--icon-muted);
+}
+
+
+#pcV2BottomBar .loop-preroll-control.is-active .loop-preroll-value {
+  color: var(--accent-primary, #3b82f6);
+}
+
+
+body.pc-v2-active #appHeader {
+  height: 52px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin: 0;
+  padding: 0 20px;
+  width: 100%;
+  gap: 24px;
+  box-sizing: border-box;
+}
+
+
+body.pc-v2-active #appLogo {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+
+body.pc-v2-active #appVersion {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  color: #55555f;
+  white-space: nowrap;
+  margin-left: 6px;
+}
+
+
+body.pc-v2-active #qnMenuMount {
+  display: none;
+}
+
+
+#pcV2HeaderNav {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+
+.pcv2-header-nav-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--icon-muted);
+  cursor: pointer;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-pill);
+  transition: color 120ms ease, background 120ms ease;
+}
+
+
+.pcv2-header-nav-trigger:hover,
+#pcV2HeaderNav.open .pcv2-header-nav-trigger {
+  color: var(--text-bright);
+  background: var(--bg-hover-subtle);
+}
+
+
+.pcv2-header-nav-trigger svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  transition: transform 120ms ease;
+}
+
+
+#pcV2HeaderNav.open .pcv2-header-nav-trigger svg {
+  transform: rotate(180deg);
+}
+
+
+.pcv2-header-nav-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  background: #101013;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-popup);
+  padding: 8px;
+  min-width: 320px;
+  max-width: 360px;
+  display: none;
+  flex-direction: column;
+  z-index: 300;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+
+#pcV2HeaderNav.open .pcv2-header-nav-dropdown {
+  display: flex;
+}
+
+
+.pcv2-header-nav-link {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: var(--radius-field);
+  text-decoration: none;
+}
+
+
+.pcv2-header-nav-link:hover {
+  background: var(--bg-hover-subtle);
+}
+
+
+.pcv2-header-nav-link-name {
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--text-bright);
+  flex-shrink: 0;
+}
+
+
+.pcv2-header-nav-link-name-qn {
+  color: var(--accent-primary);
+}
+
+
+.pcv2-header-nav-link-desc {
+  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
+  font-size: 11px;
+  color: var(--icon-muted);
+  text-align: right;
+  flex: 1;
+  white-space: normal;
+  word-break: break-word;
+}
+
+
+#pcV2WaveArea #topControls {
+  margin-top: 4px;
+}
+
+
+.pcv2-qn-loading {
+  color: #6b6b7b;
+  font-size: var(--fs-small);
+  padding: 8px 0;
+}
+
+
