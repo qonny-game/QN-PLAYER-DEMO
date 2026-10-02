@@ -1,0 +1,140 @@
+/* style-settings.css — 設定UIの共通CSS。PLAYER本体の設定パネル(#pcV2SettingsBody)と各アプリのSettings(#qnColorPop)が共用(部品はJS/qn-settings-ui.js)。
+   ここ以外に設定行/ステッパー/スイッチのCSSを新設しない。 */
+
+/* ---------- 設定パネル(#pcV2PanelBody内。v3.37.0) ---------- */
+.qn-set-body, #pcV2SettingsBody { display: flex; flex-direction: column; padding-bottom: 24px; }
+.qn-set-sec { padding: 14px 0 6px; border-bottom: 1px solid var(--border-subtle); }
+.qn-set-sec:last-child { border-bottom: none; }
+.qn-set-sec-title {
+  padding-bottom: 6px;
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--icon-muted);
+}
+.qn-set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; min-height: 44px; }
+.qn-set-row.is-disabled { opacity: 0.4; pointer-events: none; }
+.qn-set-label { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.qn-set-label span { font-size: var(--fs-body); color: var(--text-bright); }
+.qn-set-label small { font-size: var(--fs-micro); color: var(--icon-muted); }
+.qn-set-ctl { display: flex; align-items: center; flex-shrink: 0; }
+.qn-set-switch {
+  position: relative;
+  width: 46px;
+  height: 28px;
+  padding: 0;
+  background: #2a2a35;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 120ms ease;
+}
+.qn-set-switch span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--text-bright);
+  transition: transform 120ms ease;
+}
+.qn-set-switch.is-on { background: var(--accent-primary); border-color: var(--accent-primary); }
+.qn-set-switch.is-on span { transform: translateX(18px); }
+.qn-set-list { display: flex; flex-direction: column; padding: 2px 0 8px; }
+.qn-set-list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 4px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border-subtle);
+  border-radius: 0;
+  color: var(--text-bright);
+  font-family: inherit;
+  font-size: var(--fs-body);
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.qn-set-list-item:last-child { border-bottom: none; }
+.qn-set-list-item span { flex: 1; min-width: 0; }
+.qn-set-list-ico { width: 20px; height: 20px; fill: var(--icon-muted); flex-shrink: 0; }
+.qn-set-list-chev { width: 20px; height: 20px; fill: var(--icon-muted); flex-shrink: 0; }
+.qn-set-list-item:active { background: rgba(255, 255, 255, 0.04); }
+
+/* 設定の下層ビューのヘッダー戻るボタン */
+.pcv2-panel-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-right: 4px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-round);
+  color: var(--icon-muted);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.pcv2-panel-back svg { width: 24px; height: 24px; fill: currentColor; }
+.pcv2-panel-back:active { transform: scale(0.92); }
+@media (hover: hover) and (pointer: fine) {
+  .qn-stepper-btn:hover:not(:disabled), .qn-set-list-item:hover, .pcv2-panel-back:hover { color: var(--accent-primary); }
+}
+
+/* アイコンバーのKeyboard/Colorは常に隠す(設定の下層ビューへ移設。DOMは残す=player-ui-pc-v2.js/qn-apps.jsの参照用) */
+#pcV2IconBarBottom > .pcv2-icon-item[data-panel-id="keyboard"],
+#pcV2IconBarBottom > .pcv2-icon-item[data-panel-id="color"] { display: none; }
+.pcv2-panel-back + .pcv2-panel-header-title { margin-right: auto; }
+
+/* ---------- 設定の部品ルール(v3.43.0) ----------
+   行の高さ=56px、操作部の高さ=40px、枠=1px var(--border-subtle)・背景#1c1c24・角丸0(スイッチのみピル)。
+   選択肢は全て「‹ 値 ›」(.qn-stepper)。ON/OFFだけスイッチ。階層に入る行は右に›(.qn-set-list-item)。 */
+.qn-stepper {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  box-sizing: border-box;
+  background: #1c1c24;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0;
+  flex-shrink: 0;
+}
+.qn-stepper-btn {
+  width: 40px;
+  height: 100%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 0;
+  color: var(--text-bright);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.qn-stepper-btn svg { width: 22px; height: 22px; fill: currentColor; display: block; }
+.qn-stepper-btn:active:not(:disabled) { background: rgba(255, 255, 255, 0.06); }
+.qn-stepper-btn:disabled { color: var(--icon-muted); opacity: 0.4; cursor: default; }
+.qn-stepper-val {
+  min-width: 64px;
+  padding: 0 4px;
+  text-align: center;
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  color: var(--text-pure-white);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.qn-stepper-unit { font-size: inherit; font-weight: inherit; }
+.qn-set-row { min-height: 56px; padding: 8px 0; }
+.qn-set-list-item { min-height: 56px; padding-top: 0; padding-bottom: 0; }

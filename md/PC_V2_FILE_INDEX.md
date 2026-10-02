@@ -104,3 +104,5 @@
 `grep -n "// ----------"`で見出し。`measure/ensureRows/addRow/releaseRow`（寸法・仮想スクロール・行の再利用）、`rowOf/pctInRow/timeFromPoint/timeInRow`（時刻⇔行。行番号は0始まり）、`rowPeaks/paintRow/draw`（波形、行ごとの署名で再描画を最小化）、`followTick/ensureVisible`（再生位置追従）、`setSec/createGearButton/openPop`（秒数設定）、`startEdgeScroll`（ドラッグ中の端スクロール）。行ができたら`decorateBarRow`（player-markers.js）が線・A/B・区間を付ける。
 
 - v3.37.0: `ICON_ITEMS`に`settings`(hidden、歯車から`openPanelOverlay("settings")`)。`ensureSettingsBody()/syncSettingsBody()`が設定パネルを作る(stashPanelContentsの退避対象に`settingsBody`)。Backup/Import/Transferの`ICON_ITEMS`はhidden:true(switchPanel/handleIconClickの参照用に残す)。`syncTimeRowPosition()`は常に波形ヘッダーの歯車の左へ。
+
+- v3.44.0: `JS/qn-settings-ui.js`(設定部品、player-controls.jsの後・player-ui-pc-v2.jsの前に読む)、`CSS/style-settings.css`(設定CSS)を追加。

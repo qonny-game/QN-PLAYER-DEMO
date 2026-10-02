@@ -789,20 +789,21 @@
   });
 
   // 【v3.41.0】設定の下層ビュー(Backup/Import/Color/Keyboard)を開いている間true。ヘッダーに戻るボタンを出し、アイコンバーは「Settings」を点灯させる
-  let settingsSub = false;
+  let settingsSub = false, settingsScroll = 0;
   function openSettingsPanel() {
     if (settingsSub) { switchPanel("settings"); return; }
     openPanelOverlay("settings");
   }
   function openSettingsSub(id) {
     if (id === "transfer") { if (window.QNP2P) window.QNP2P.open(); return; }
+    const pb = document.getElementById("pcV2PanelBody");
+    if (pb) settingsScroll = pb.scrollTop; // 戻った時に同じ位置を見せる
     settingsSub = true;
     switchPanel(id, { fromSettings: true });
   }
   function addSettingsBackBtn(panelHeader) {
     if (!settingsSub) return;
-    const back = el('<button type="button" class="pcv2-panel-back" title="Back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg></button>');
-    back.addEventListener("click", () => { if (typeof hapticTap === "function") hapticTap(); switchPanel("settings"); });
+    const back = QNSettingsUI.backButton(() => switchPanel("settings"));
     panelHeader.appendChild(back);
   }
 
@@ -820,6 +821,7 @@
 
     currentPanel = "seekbar";
     settingsSub = false;
+    settingsScroll = 0;
     document.querySelectorAll("#pcV2IconBar .pcv2-icon-item").forEach(btn => {
       btn.classList.toggle("active", btn.getAttribute("data-panel-id") === "seekbar");
     });
@@ -940,133 +942,43 @@
   }
 
 
-  // ---------- 設定パネル(v3.37.0) ----------
-  // 中身は初回に1度だけ作り、パネルを離れる時はstashへ退避(stashPanelContents)。プリロード操作は既存の#loopPreRollControl要素をそのまま移す(player-controls.jsのハンドラを生かす)
-  function settingsRow(label, hint) {
-    const row = el('<div class="qn-set-row"><div class="qn-set-label"><span></span><small></small></div><div class="qn-set-ctl"></div></div>');
-    row.querySelector(".qn-set-label span").textContent = label;
-    const sm = row.querySelector("small");
-    if (hint) sm.textContent = hint; else sm.remove();
-    return row;
-  }
-
-  // 複数選択肢の設定は全て「‹ 値 ›」の同じ部品(.qn-stepper)。値の一覧と取得/設定はSETTING_DEFSに集約(新しい項目はここに足すだけ)
-  const CHEV_L = '<svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>';
-  const CHEV_R = '<svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>';
-  const SETTING_DEFS = {
-    bar:   { values: () => QNBars.OPTIONS, get: () => QNBars.getSec(), set: v => QNBars.setSec(v), fmt: v => v + "s" },
-    rows:  { values: () => QNBars.ROWS_OPTIONS, get: () => QNBars.getRows(), set: v => QNBars.setRows(v), fmt: v => v === 0 ? "Auto" : String(v) },
-    pause: { values: () => { const a = []; for (let i = QNBars.PAUSE_MIN; i <= QNBars.PAUSE_MAX; i++) a.push(i); return a; }, get: () => QNBars.getPause(), set: v => QNBars.setPause(v), fmt: v => v + "s" },
-    skip:  { values: () => SKIP_OPTIONS, get: () => skipSec, set: v => setSkipSec(v), fmt: v => v + "s" },
-    scope: { values: () => ["folder", "all"], get: () => (typeof getAutoNextScope === "function" ? getAutoNextScope() : "folder"), set: v => { if (typeof setAutoNextScope === "function") setAutoNextScope(v); }, fmt: v => v === "folder" ? "Folder" : "All" },
-    speed: { values: () => (typeof SPEED_STEP_OPTIONS !== "undefined" ? SPEED_STEP_OPTIONS : [1, 2, 5, 10]), get: () => (typeof getSpeedStepPct === "function" ? getSpeedStepPct() : 5), set: v => { if (typeof setSpeedStepPct === "function") setSpeedStepPct(v); }, fmt: v => v + "%" }
-  };
-
-  function settingsStepper(kind) {
-    const st = el('<div class="qn-stepper"><button type="button" class="qn-stepper-btn" data-d="-1" aria-label="Previous">' + CHEV_L + '</button><span class="qn-stepper-val"></span><button type="button" class="qn-stepper-btn" data-d="1" aria-label="Next">' + CHEV_R + '</button></div>');
-    st.dataset.kind = kind;
-    return st;
-  }
-
+  // ---------- 設定パネル(v3.37.0 / v3.44.0で共通部品化) ----------
+  // 部品はJS/qn-settings-ui.js(アプリのSettingsと共用)。中身は初回に1度だけ作り、パネルを離れる時はstashへ退避(stashPanelContents)。
+  // プリロード操作は既存の#loopPreRollControl要素をそのまま移す(player-controls.jsのハンドラを生かす)。新しい項目はここのrowsに足すだけ。
+  let settingsUI = null;
   function ensureSettingsBody() {
     if (settingsBody) return settingsBody;
-    const body = el('<div id="pcV2SettingsBody"></div>');
-
-    const sec1 = el('<div class="qn-set-sec"><div class="qn-set-sec-title">Seek bar</div></div>');
-    const rBar = settingsRow("Bar length", "1 bar = seconds");
-    rBar.querySelector(".qn-set-ctl").appendChild(settingsStepper("bar"));
-    sec1.appendChild(rBar);
-
-    const rRows = settingsRow("Bars on screen", "Rows shown at once");
-    rRows.querySelector(".qn-set-ctl").appendChild(settingsStepper("rows"));
-    sec1.appendChild(rRows);
-
-    const rFollow = settingsRow("Follow playhead", "Auto-scroll while playing");
-    const sw = el('<button type="button" class="qn-set-switch" id="qnSetFollowSwitch" role="switch" aria-checked="true"><span></span></button>');
-    rFollow.querySelector(".qn-set-ctl").appendChild(sw);
-    sec1.appendChild(rFollow);
-
-    const rPause = settingsRow("Pause after scrolling", "Seconds before follow resumes");
-    rPause.id = "qnSetPauseRow";
-    rPause.querySelector(".qn-set-ctl").appendChild(settingsStepper("pause"));
-    sec1.appendChild(rPause);
-    body.appendChild(sec1);
-
-    const sec2 = el('<div class="qn-set-sec"><div class="qn-set-sec-title">Playback</div></div>');
-    const rPre = settingsRow("Loop pre/post-roll", "Seconds added around loop");
     const preCtl = document.getElementById("loopPreRollControl");
-    if (preCtl) rPre.querySelector(".qn-set-ctl").appendChild(preCtl);
-    sec2.appendChild(rPre);
-    const rSkip = settingsRow("Skip buttons", "Seconds for back / forward");
-    rSkip.querySelector(".qn-set-ctl").appendChild(settingsStepper("skip"));
-    sec2.appendChild(rSkip);
-    const rScope = settingsRow("Library repeat range", "Auto Next / Repeat scope");
-    rScope.querySelector(".qn-set-ctl").appendChild(settingsStepper("scope"));
-    sec2.appendChild(rScope);
-    const rSpd = settingsRow("Speed step", "For the speed − / ＋ buttons");
-    rSpd.querySelector(".qn-set-ctl").appendChild(settingsStepper("speed"));
-    sec2.appendChild(rSpd);
-    body.appendChild(sec2);
-
-    const sec3 = el('<div class="qn-set-sec"><div class="qn-set-sec-title">More</div><div class="qn-set-list"></div></div>');
-    const list = sec3.querySelector(".qn-set-list");
-    [
-      { id: "backup", label: "Backup", icon: '<path d="M6 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13zM8 13h8v2H8v-2zm0 4h5v2H8v-2z"/>' },
-      { id: "import", label: "Import", icon: '<path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>' },
-      { id: "color", label: "Color", icon: '<path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10c1.38 0 2.5-1.12 2.5-2.5 0-.61-.23-1.2-.64-1.67-.08-.09-.13-.21-.13-.33 0-.28.22-.5.5-.5H16c3.31 0 6-2.69 6-6 0-4.96-4.49-9-10-9zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 8 6.5 8 8 8.67 8 9.5 7.33 11 6.5 11zm3-4C8.67 7 8 6.33 8 5.5S8.67 4 9.5 4s1.5.67 1.5 1.5S10.33 7 9.5 7zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 4 14.5 4s1.5.67 1.5 1.5S15.33 7 14.5 7zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 8 17.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>' },
-      { id: "keyboard", label: "Keyboard", icon: '<path d="M20 5H4c-1.1 0-1.99.9-1.99 2L2 17c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zM11 8h2v2h-2V8zM11 11h2v2h-2v-2zM8 8h2v2H8V8zM8 11h2v2H8v-2zM5 8h2v2H5V8zm0 3h2v2H5v-2zm10 6H9v-2h6v2zm0-4h-2v-2h2v2zm0-3h-2V8h2v2zm3 3h-2v-2h2v2zm0-3h-2V8h2v2z"/>' },
-      { id: "transfer", label: "Transfer", icon: '<path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/>' }
-    ].forEach(d => {
-      const b = el('<button type="button" class="qn-set-list-item" data-panel-id="' + d.id + '"><svg class="qn-set-list-ico" viewBox="0 0 24 24">' + d.icon + '</svg><span>' + d.label + '</span><svg class="qn-set-list-chev" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg></button>');
-      if (d.id === "transfer" && !(window.QNLibSync && window.QNLibSync.isActive())) b.style.display = "none";
-      b.addEventListener("click", () => { if (typeof hapticTap === "function") hapticTap(); openSettingsSub(d.id); });
-      list.appendChild(b);
-    });
-    body.appendChild(sec3);
-
-    body.addEventListener("click", (e) => {
-      const t = e.target.closest ? e.target.closest("button") : null;
-      if (!t) return;
-      const st = t.closest(".qn-stepper[data-kind]");
-      if (st && t.dataset.d) {
-        const def = SETTING_DEFS[st.dataset.kind];
-        const vals = def.values();
-        const i = vals.indexOf(def.get()) + parseInt(t.dataset.d, 10);
-        if (i >= 0 && i < vals.length) {
-          if (typeof hapticTap === "function") hapticTap();
-          def.set(vals[i]);
-        }
-        syncSettingsBody();
-        return;
-      }
-      if (t.id === "qnSetFollowSwitch") {
-        if (typeof hapticTap === "function") hapticTap();
-        QNBars.setFollow(!QNBars.getFollow());
-        syncSettingsBody();
-        return;
-      }
-    });
-
+    const rowsBar = [
+      { label: "Bar length", hint: "1 bar = seconds", type: "stepper", values: () => QNBars.OPTIONS, get: () => QNBars.getSec(), set: v => QNBars.setSec(v), fmt: v => v + "s" },
+      { label: "Bars on screen", hint: "Rows shown at once", type: "stepper", values: () => QNBars.ROWS_OPTIONS, get: () => QNBars.getRows(), set: v => QNBars.setRows(v), fmt: v => v === 0 ? "Auto" : String(v) },
+      { label: "Follow playhead", hint: "Auto-scroll while playing", type: "switch", get: () => QNBars.getFollow(), set: on => QNBars.setFollow(on) },
+      { label: "Pause after scrolling", hint: "Seconds before follow resumes", type: "stepper",
+        values: () => { const a = []; for (let i = QNBars.PAUSE_MIN; i <= QNBars.PAUSE_MAX; i++) a.push(i); return a; },
+        get: () => QNBars.getPause(), set: v => QNBars.setPause(v), fmt: v => v + "s", disabledWhen: () => !QNBars.getFollow() }
+    ];
+    const rowsPlay = [
+      { label: "Loop pre/post-roll", hint: "Seconds added around loop", type: "node", node: preCtl },
+      { label: "Skip buttons", hint: "Seconds for back / forward", type: "stepper", values: () => SKIP_OPTIONS, get: () => skipSec, set: v => setSkipSec(v), fmt: v => v + "s" },
+      { label: "Library repeat range", hint: "Auto Next / Repeat scope", type: "stepper", values: () => ["folder", "all"],
+        get: () => (typeof getAutoNextScope === "function" ? getAutoNextScope() : "folder"), set: v => { if (typeof setAutoNextScope === "function") setAutoNextScope(v); }, fmt: v => v === "folder" ? "Folder" : "All" },
+      { label: "Speed step", hint: "For the speed − / ＋ buttons", type: "stepper", values: () => (typeof SPEED_STEP_OPTIONS !== "undefined" ? SPEED_STEP_OPTIONS : [1, 2, 5, 10]),
+        get: () => (typeof getSpeedStepPct === "function" ? getSpeedStepPct() : 5), set: v => { if (typeof setSpeedStepPct === "function") setSpeedStepPct(v); }, fmt: v => v + "%" }
+    ];
+    if (!preCtl) rowsPlay.shift();
+    settingsUI = QNSettingsUI.build([{ title: "Seek bar", rows: rowsBar }, { title: "Playback", rows: rowsPlay }]);
+    const body = settingsUI.el;
+    body.id = "pcV2SettingsBody";
+    const more = QNSettingsUI.list(["backup", "import", "color", "keyboard", "transfer"], openSettingsSub);
+    const tr = more.querySelector('[data-panel-id="transfer"]');
+    if (tr && !(window.QNLibSync && window.QNLibSync.isActive())) tr.style.display = "none";
+    body.appendChild(more);
     settingsBody = body;
     return body;
   }
 
   function syncSettingsBody() {
-    if (!settingsBody) return;
-    settingsBody.querySelectorAll(".qn-stepper[data-kind]").forEach(st => {
-      const def = SETTING_DEFS[st.dataset.kind];
-      const vals = def.values();
-      const cur = def.get();
-      const i = vals.indexOf(cur);
-      st.querySelector(".qn-stepper-val").textContent = def.fmt(cur);
-      st.querySelector('[data-d="-1"]').disabled = i <= 0;
-      st.querySelector('[data-d="1"]').disabled = i < 0 || i >= vals.length - 1;
-    });
-    const on = QNBars.getFollow();
-    const sw = settingsBody.querySelector("#qnSetFollowSwitch");
-    sw.classList.toggle("is-on", on);
-    sw.setAttribute("aria-checked", on ? "true" : "false");
-    settingsBody.querySelector("#qnSetPauseRow").classList.toggle("is-disabled", !on);
+    if (settingsUI) settingsUI.sync();
   }
 
   function switchPanel(panelId, opts) {
@@ -1171,6 +1083,8 @@
     } else if (item.panelType === "settings") {
       panelBody.appendChild(ensureSettingsBody());
       syncSettingsBody();
+      panelBody.scrollTop = settingsScroll; // 下層から戻った時は元の位置(通常の表示は0)
+      settingsScroll = 0;
     } else if (item.panelType === "backup" || item.panelType === "import") {
       panelBody.classList.add("pcv2-panel-aux");
       if (typeof window.qnBackupMount === "function") window.qnBackupMount(item.panelType, panelBody);

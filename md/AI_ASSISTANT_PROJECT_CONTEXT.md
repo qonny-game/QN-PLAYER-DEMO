@@ -92,6 +92,7 @@ favicon/  md/  pricing*.html  QUICK_START.md
 | シークバーの1画面の本数 | localStorage | `qn_bar_rows`（0=自動/3/4/5/6/8、既定0） |
 | 送り戻しボタンの秒数 | localStorage | `qn_skip_sec`（5/10/15/30/60、既定10） |
 | 速度±ボタンの刻み(%) | localStorage | `qn_speed_step_pct`（1/2/5/10、既定5） |
+| YouTubeの送り戻し秒数 | localStorage | `qn_yt_skip_sec`（5/10/15/30/60、既定10） |
 | パネル格納／最後のアプリ | localStorage | `qn_panel_collapsed`（PLAYER）／`qn_yt_panel_collapsed`／`qn_last_app` |
 | TUNER | localStorage | `qn_tuner_display` `qn_tuner_sens` `qn_tuner_smooth` `qn_tuner_panel_collapsed`（詳細は`TUNER_APP.md`） |
 | PITCH | localStorage／IndexedDB | `qn_pitch_filters` `qn_pitch_rec_meta`(録音の改名) `qn_pitch_panel_collapsed`／IndexedDB `qn_pitch_db`(録音実体。レコードは再putしない)（詳細は`PITCH_APP.md`） |

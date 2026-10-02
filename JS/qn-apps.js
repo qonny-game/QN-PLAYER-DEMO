@@ -1,6 +1,6 @@
 // qn-apps.js — アプリ名バッジ(#qnAppBadge)・アプリ一覧フライアウト(#qnAppFlyout)・アプリ表示領域(#qnAppHost)。
 // PC幅=バッジhover/クリックでフライアウト、SP/タッチ=タップでアイコンバー上に一覧(再タップ・外側タップ・Escで閉じる)。アプリ選択で#qnAppHostがそのアプリ画面に。PLAYER選択で本体へ戻る。
-// 【アプリ追加】JS/qn-app-xxx.jsでQNApps.register({id, label, icon(24x24 svg path), order(小さいほど上), ready(falseで準備中トースト), sidebar:[{id,label,icon}], onSidebar(itemId)(選択表示はQNApps.setSideActive(itemId|null)), shortcuts:[{key,action}]("Space / K"形式で複数キー可), shortcutsNote, mount(viewEl)(初回のみ), onShow(), onHide()})。Keyboardパネルの中身はQNApps.renderShortcuts(hostEl,"<id>")。index.htmlにqn-apps.jsより後で<script>追加。同idのregisterは置き換え。準備中アプリ(PITCH)は末尾のregister。
+// 【アプリ追加】JS/qn-app-xxx.jsでQNApps.register({id, label, icon(24x24 svg path), order(小さいほど上), ready(falseで準備中トースト), sidebar:[{id,label,icon}], onSidebar(itemId)(選択表示はQNApps.setSideActive(itemId|null)), settings:[{title,rows:[...]}](Settingsパネルの先頭に出る行。書式はJS/qn-settings-ui.jsのbuild。配列か、それを返す関数), shortcuts:[{key,action}]("Space / K"形式で複数キー可), shortcutsNote, mount(viewEl)(初回のみ), onShow(), onHide()})。Keyboardパネルの中身はQNApps.renderShortcuts(hostEl,"<id>")。index.htmlにqn-apps.jsより後で<script>追加。同idのregisterは置き換え。準備中アプリ(PITCH)は末尾のregister。
 // 【接点】#pcV2IconBar/#pcV2IconBarBottom/#pcV2IconBarSpacer/#pcV2Layout(player-ui-pc-v2.js build()が作る。出来上がるのを待つ)。アプリ表示中はbody.qn-app-open(player-ui-shared.jsのショートカット無効化に使う)。アプリを開く時QNPLAYERのaudioは一時停止
 (function () {
   "use strict";
@@ -372,16 +372,7 @@
 
   // 【v3.42.0】アプリ表示中の「Settings」パネル(旧Color用ポップを拡張)。一覧(Backup/Import/Color/Keyboard/Transfer)→下層ビュー(戻るボタンで一覧へ)。
   // Backup/Importは本体共通画面(qnBackupMountInto)、Keyboardはrender Shortcuts、Colorは本体のテーマセクションを借りる。閉じる/切替時は借りたものを元へ戻す。関数名のcolorPopは互換のため据え置き
-  var colorPop = null, colorSec = null, colorHome = null, colorNext = null, setView = "root";
-  var SET_ICONS = {
-    backup: '<path d="M6 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13zM8 13h8v2H8v-2zm0 4h5v2H8v-2z"/>',
-    import: '<path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>',
-    color: '<path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10c1.38 0 2.5-1.12 2.5-2.5 0-.61-.23-1.2-.64-1.67-.08-.09-.13-.21-.13-.33 0-.28.22-.5.5-.5H16c3.31 0 6-2.69 6-6 0-4.96-4.49-9-10-9zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 8 6.5 8 8 8.67 8 9.5 7.33 11 6.5 11zm3-4C8.67 7 8 6.33 8 5.5S8.67 4 9.5 4s1.5.67 1.5 1.5S10.33 7 9.5 7zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 4 14.5 4s1.5.67 1.5 1.5S15.33 7 14.5 7zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 8 17.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>',
-    keyboard: '<path d="M20 5H4c-1.1 0-1.99.9-1.99 2L2 17c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zM11 8h2v2h-2V8zM11 11h2v2h-2v-2zM8 8h2v2H8V8zM8 11h2v2H8v-2zM5 8h2v2H5V8zm0 3h2v2H5v-2zm10 6H9v-2h6v2zm0-4h-2v-2h2v2zm0-3h-2V8h2v2zm3 3h-2v-2h2v2zm0-3h-2V8h2v2z"/>',
-    transfer: '<path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/>'
-  };
-  var SET_LABELS = { backup: "Backup", import: "Import", color: "Color", keyboard: "Keyboard", transfer: "Transfer" };
-
+  var colorPop = null, colorSec = null, colorHome = null, colorNext = null, setView = "root", setUI = null;
   function findColorSection() {
     return document.querySelector('.qn-menu-section[data-qn-section="theme"]');
   }
@@ -441,8 +432,10 @@
     setActiveBtn(false);
   }
 
-  function showSetView(name) {
+  var rootScroll = 0; // 一覧から下層へ入る時のスクロール位置(戻ったら復元。一覧を開き直す時は0)
+  function showSetView(name, restore) {
     if (!colorPop) return;
+    if (name !== "root" && setView === "root") rootScroll = colorPop.querySelector(".qn-colorpanel-body").scrollTop;
     releaseSetView();
     setView = name;
     var head = colorPop.querySelector(".qn-colorpanel-head");
@@ -450,40 +443,29 @@
     head.textContent = "";
     body.textContent = "";
     if (name !== "root") {
-      var back = document.createElement("button");
-      back.type = "button";
-      back.className = "pcv2-panel-back";
-      back.title = "Back";
-      back.setAttribute("aria-label", "Back");
-      back.innerHTML = '<svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>';
-      back.addEventListener("click", function () { haptic(); showSetView("root"); });
+      var back = QNSettingsUI.backButton(function () { showSetView("root", true); });
       head.appendChild(back);
     }
     var title = document.createElement("span");
     title.className = "pcv2-panel-header-title";
-    title.textContent = name === "root" ? "Settings" : SET_LABELS[name];
+    title.textContent = name === "root" ? "Settings" : QNSettingsUI.LABELS[name];
     head.appendChild(title);
     if (name === "root") {
-      var list = document.createElement("div");
-      list.className = "qn-set-list";
-      ["backup", "import", "color", "keyboard", "transfer"].forEach(function (id) {
-        if (id === "transfer" && !(window.QNLibSync && window.QNLibSync.isActive())) return;
-        if (id === "color" && !findColorSection()) return;
-        var b = document.createElement("button");
-        b.type = "button";
-        b.className = "qn-set-list-item";
-        b.setAttribute("data-panel-id", id);
-        b.innerHTML = '<svg class="qn-set-list-ico" viewBox="0 0 24 24">' + SET_ICONS[id] + '</svg><span></span>' +
-          '<svg class="qn-set-list-chev" viewBox="0 0 24 24">' + CHEVRON_ICON + '</svg>';
-        b.querySelector("span").textContent = SET_LABELS[id];
-        b.addEventListener("click", function () {
-          haptic();
-          if (id === "transfer") { if (window.QNP2P) window.QNP2P.open(); return; }
-          showSetView(id);
-        });
-        list.appendChild(b);
+      // アプリ固有の設定行(register({settings}) = セクション配列 or それを返す関数)を上に、共通の一覧(More)を下に。部品はQNSettingsUI(PLAYER本体と共用)
+      var secs = current && current.settings;
+      if (typeof secs === "function") secs = secs();
+      setUI = QNSettingsUI.build(secs || []);
+      var host = setUI.el;
+      var ids = ["backup", "import", "color", "keyboard", "transfer"].filter(function (id) {
+        if (id === "transfer") return !!(window.QNLibSync && window.QNLibSync.isActive());
+        if (id === "color") return !!findColorSection();
+        return true;
       });
-      body.appendChild(list);
+      host.appendChild(QNSettingsUI.list(ids, function (id) {
+        if (id === "transfer") { if (window.QNP2P) window.QNP2P.open(); return; }
+        showSetView(id);
+      }));
+      body.appendChild(host);
     } else if (name === "color") {
       var sec = findColorSection();
       if (sec) {
@@ -498,9 +480,9 @@
       var hostEl = document.createElement("div");
       hostEl.className = name === "backup" ? "qn-pt-sec-backup" : "qn-pt-sec-import";
       body.appendChild(hostEl);
-      if (typeof window.qnBackupMountInto === "function") window.qnBackupMountInto(name, hostEl, function () { showSetView("root"); });
+      if (typeof window.qnBackupMountInto === "function") window.qnBackupMountInto(name, hostEl, function () { showSetView("root", true); });
     }
-    body.scrollTop = 0;
+    body.scrollTop = (name === "root" && restore) ? rootScroll : 0;
   }
 
   function openColorPop() {
@@ -603,7 +585,8 @@
       ready: def.ready !== false,
       sidebar: def.sidebar || null, onSidebar: def.onSidebar,
       shortcuts: def.shortcuts || null, shortcutsNote: def.shortcutsNote || "",
-      mount: def.mount, onShow: def.onShow, onHide: def.onHide
+      mount: def.mount, onShow: def.onShow, onHide: def.onHide,
+      settings: def.settings || null
     };
     if (idx >= 0) apps[idx] = app; else apps.push(app);
     apps.sort(function (a, b) { return a.order - b.order; });

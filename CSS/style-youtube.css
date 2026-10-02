@@ -1090,22 +1090,6 @@
 .qn-style-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .qn-style-swatches { display: flex; flex-wrap: wrap; gap: 6px; }
 
-.qn-yt-preroll { display: flex; align-items: center; gap: 0; flex-shrink: 0; padding: 8px 4px; }
-.qn-yt-preroll-btn {
-  width: 20px; height: 20px; padding: 0;
-  background: none; border: none; cursor: pointer;
-  color: var(--icon-muted); font-size: 13px; line-height: 1;
-}
-@media (hover: hover) and (pointer: fine) { .qn-yt-preroll-btn:hover { color: var(--text-bright); } }
-.qn-yt-preroll-value {
-  min-width: 16px; text-align: center;
-  font-size: 22px; font-weight: 400;
-  color: var(--accent-primary, #3b82f6);
-  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
-}
-.qn-yt-preroll-value b { font-weight: 400; }
-.qn-yt-preroll-unit { font-size: 0.6em; margin-left: 1px; }
-
 .qn-yt-loop-pre {
   position: absolute;
   top: 0;

@@ -89,3 +89,8 @@
 ## 設定パネルの部品ルール(v3.43.0)
 - 設定の選択肢は`.qn-stepper`(‹ 値 ›)だけを使う。ボタン列(セグメント)や別デザインの＋/−を新設しない。項目を足す時は`SETTING_DEFS`に{values,get,set,fmt}を足し、`settingsStepper(kind)`で置く。
 - `#loopPreRollControl`はindex.htmlで`.qn-stepper`のマークアップ。`#loopPreRollValue`は`textNode + .qn-stepper-unit`構造(player-controls.jsが`firstChild.textContent`を書き換える)なので構造を変えない。
+
+## 設定UIの共通化(v3.44.0)
+- 設定の行/ステッパー/スイッチ/Moreの一覧は`JS/qn-settings-ui.js`(QNSettingsUI)だけで作る。CSSは`CSS/style-settings.css`だけ。PLAYER(player-ui-pc-v2.js)にもアプリ(qn-apps.js)にも個別の行ビルダーを書かない。
+- アプリ固有の設定は`QNApps.register({settings: [{title, rows:[...]}] | () => [...]})`。`build()`が返す`el`のクリック処理は`el`自体に付くので、子要素だけ別の親へ移さない(動かなくなる)。
+- 下層(Color/Keyboard等)から戻る時のスクロール位置は`settingsScroll`(PLAYER)/`rootScroll`(アプリ)で復元。

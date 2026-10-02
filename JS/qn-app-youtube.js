@@ -347,11 +347,6 @@
         bbtn("setABtn", "", BI.setA, "A --", "現在地をA点に設定") +
         bbtn("setBBtn", "", BI.setB, "B --", "現在地をB点に設定") +
         bbtn("loopToggleBtn", "", BI.loop, "Loop", "LOOP：OFF → A-B → 区間 → OFF") +
-        '<div class="qn-yt-preroll" title="ループのプリロール/ポストロール秒数（区間の何秒前から・何秒後まで）">' +
-          '<button type="button" data-yt="preDown" class="qn-yt-preroll-btn" title="Decrease">−</button>' +
-          '<span class="qn-yt-preroll-value"><b data-yt="preVal">0</b><span class="qn-yt-preroll-unit">s</span></span>' +
-          '<button type="button" data-yt="preUp" class="qn-yt-preroll-btn" title="Increase">＋</button>' +
-        '</div>' +
         bbtn("loopClearBtn", "", BI.clear, "Clear AB", "AB点をクリア") +
       '</div>' +
       '<div class="qn-yt-bspacer"></div>' +
@@ -1176,12 +1171,13 @@
 
     refs.skipBackBtn.addEventListener("click", function () {
       if (!current || !playerReady) return;
-      seekTo(currentPos() - 10);
+      seekTo(currentPos() - skipSec);
     });
     refs.skipFwdBtn.addEventListener("click", function () {
       if (!current || !playerReady) return;
-      seekTo(currentPos() + 10);
+      seekTo(currentPos() + skipSec);
     });
+    applySkipLabels();
 
     function setFromBar(kind) {
       if (!current || !playerReady) { showMessage("先に動画を読み込んでください"); return; }
@@ -1189,9 +1185,6 @@
     }
     refs.setABtn.addEventListener("click", function () { setFromBar("A"); });
     refs.setBBtn.addEventListener("click", function () { setFromBar("B"); });
-    refs.preDown.addEventListener("click", function () { setPreRoll(preRoll - PREROLL_STEP); });
-    refs.preUp.addEventListener("click", function () { setPreRoll(preRoll + PREROLL_STEP); });
-    renderPreRoll();
 
     refs.loopToggleBtn.addEventListener("click", function () {
       if (!current || !duration) return;
@@ -2065,11 +2058,34 @@
   function setPreRoll(v) {
     preRoll = Math.max(0, Math.min(PREROLL_MAX, v));
     try { localStorage.setItem(PREROLL_KEY, String(preRoll)); } catch (e) {}
-    renderPreRoll();
     updateLoopUI();
   }
-  function renderPreRoll() {
-    if (refs.preVal) refs.preVal.textContent = String(preRoll);
+
+  // ---------- 送り戻しボタンの秒数(PLAYERと同じ5/10/15/30/60。設定から変更) ----------
+  var SKIP_KEY = "qn_yt_skip_sec", SKIP_OPTIONS = [5, 10, 15, 30, 60];
+  var skipSec = (function () {
+    try { var v = parseInt(localStorage.getItem(SKIP_KEY), 10); return SKIP_OPTIONS.indexOf(v) >= 0 ? v : 10; } catch (e) { return 10; }
+  })();
+  function setSkipSec(v) {
+    if (SKIP_OPTIONS.indexOf(v) < 0) return;
+    skipSec = v;
+    try { localStorage.setItem(SKIP_KEY, String(v)); } catch (e) {}
+    applySkipLabels();
+  }
+  function applySkipLabels() {
+    if (!refs.skipBackBtn || !refs.skipFwdBtn) return;
+    setBtnLabel(refs.skipBackBtn, "-" + skipSec + "s");
+    setBtnLabel(refs.skipFwdBtn, "+" + skipSec + "s");
+    refs.skipBackBtn.title = skipSec + "秒戻る (J)";
+    refs.skipFwdBtn.title = skipSec + "秒進む (L)";
+  }
+
+  // ---------- Settings(アプリ共通のSettingsパネルに出る行。部品はQNSettingsUI) ----------
+  function settingsSections() {
+    return [{ title: "Playback", rows: [
+      { label: "Skip buttons", hint: "Seconds for back / forward", type: "stepper", values: function () { return SKIP_OPTIONS; }, get: function () { return skipSec; }, set: setSkipSec, fmt: function (v) { return v + "s"; } },
+      { label: "Loop pre/post-roll", hint: "Seconds added around loop", type: "stepper", values: function () { var a = []; for (var i = 0; i <= PREROLL_MAX; i += PREROLL_STEP) a.push(i); return a; }, get: function () { return preRoll; }, set: setPreRoll, fmt: function (v) { return v + "s"; } }
+    ] }];
   }
 
   function setBtnLabel(btn, text) {
@@ -2608,7 +2624,7 @@
   // YouTube本家と同じキーボードショートカット(v3.1.0〜)。公式メソッド(playVideo/pauseVideo/seekTo/setVolume/mute/setPlaybackRate)を利用者のキー操作起点で呼ぶだけ(規約OK)。アプリ表示中のみ。文字入力中・Ctrl/Cmd/Alt併用・再生系のキーリピートは無視。iframeにフォーカス中はYouTube側が処理
   var SHORTCUTS = [
     { key: "Space / K", action: "Play / Pause" },
-    { key: "J / L", action: "Back / Forward 10s" },
+    { key: "J / L", action: "Back / Forward (Skip buttons)" },
     { key: "← / →", action: "Back / Forward 5s" },
     { key: "↑ / ↓", action: "Volume +5% / -5%" },
     { key: "M", action: "Mute / Unmute" },
@@ -2689,8 +2705,8 @@
       return;
     }
     if (lk === "k") { if (!e.repeat) togglePlay(); }
-    else if (lk === "j") seekTo(currentPos() - 10);
-    else if (lk === "l") seekTo(currentPos() + 10);
+    else if (lk === "j") seekTo(currentPos() - skipSec);
+    else if (lk === "l") seekTo(currentPos() + skipSec);
     else if (k === "ArrowLeft") seekTo(currentPos() - 5);
     else if (k === "ArrowRight") seekTo(currentPos() + 5);
     else if (k === "ArrowUp") changeVolume(5);
@@ -3033,6 +3049,7 @@
       order: 10,
       ready: true,
       sidebar: SIDEBAR,
+      settings: settingsSections,
       shortcuts: SHORTCUTS,
       shortcutsNote: "YouTube本家と同じキーです。文字入力中は動きません。",
       onSidebar: onSidebar,
