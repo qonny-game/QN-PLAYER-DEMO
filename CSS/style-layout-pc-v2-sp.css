@@ -110,11 +110,6 @@
     font-size: 13px;
   }
 
-  #pcV2BottomBar .pcv2-ctrl-divider-sp {
-    display: block;
-    flex-shrink: 0;
-  }
-
   /* #pcV2TimeRow: v3.37.0〜 時刻表示は波形ヘッダー(歯車の左)へ移動したため常に非表示(空コンテナ) */
   #pcV2TimeRow {
     display: none;
@@ -358,33 +353,8 @@ html {
   scrollbar-gutter: stable;
 }
 
-#pcV2BottomBar .pcv2-stepper { display: inline-flex; align-items: center; gap: 0; }
-#pcV2BottomBar .pcv2-step-btn { min-width: 26px; padding-left: 4px; padding-right: 4px; font-size: 18px; line-height: 1; }
-
-#pcV2BottomBar .pcv2-step-btn { font-size: 18px; min-height: 0; align-self: center; }
 #pcV2BottomBar #setABtn .top-controls-btn-label,
 #pcV2BottomBar #setBBtn .top-controls-btn-label { display: block; white-space: nowrap; }
-
-#pcV2BottomBar .pcv2-stepper { gap: 0; margin: 0 2px; }
-#pcV2BottomBar .pcv2-stepper > .pcv2-ctrl-btn:not(.pcv2-step-btn) { padding-left: 0; padding-right: 0; }
-#pcV2BottomBar .pcv2-stepper > .pcv2-ctrl-btn:not(.pcv2-step-btn) span {
-  display: flex; flex-direction: column; align-items: center;
-  min-width: 36px; line-height: 1.15; text-align: center; white-space: nowrap;
-}
-#pcV2BottomBar .pcv2-stepper > .pcv2-ctrl-btn:not(.pcv2-step-btn) span b { font-weight: 700; font-variant-numeric: tabular-nums; }
-#pcV2BottomBar .pcv2-stepper > .pcv2-ctrl-btn:not(.pcv2-step-btn) span i { font-style: normal; text-transform: uppercase; font-size: 8px; letter-spacing: 0.4px; opacity: 0.85; }
-#pcV2BottomBar .pcv2-step-btn { min-width: 20px; padding: 8px 2px; }
-
-#pcV2BottomBar .pcv2-ctrl-btn,
-#pcV2BottomBar .pcv2-stepper { align-self: flex-start; }
-#pcV2BottomBar .pcv2-stepper { align-items: flex-start; margin: 0; }
-#pcV2BottomBar .pcv2-stepper > .pcv2-ctrl-btn:not(.pcv2-step-btn) { padding-left: 0; padding-right: 0; min-height: 0; }
-#pcV2BottomBar .pcv2-stepper > .pcv2-ctrl-btn:not(.pcv2-step-btn) span { min-width: 26px; }
-#pcV2BottomBar .pcv2-step-btn {
-  min-width: 14px; width: 14px; height: 40px; margin-top: 4px; padding: 0;
-  display: flex; align-items: center; justify-content: center;
-  min-height: 0; align-self: flex-start;
-}
 
 #pcV2BottomBar .top-controls-btn-label {
   display: block;
@@ -400,9 +370,6 @@ html {
 }
 #pcV2BottomBar .tripleNavBtn-third { min-height: 57px; }
 
-#pcV2BottomBar .pcv2-stepper { margin: 0 12px; }
-#pcV2BottomBar #pcV2VolumeBtn,
-#pcV2BottomBar #pcV2BottomEqToggle { margin: 0 6px; }
 
 /* ---------- SPメインドック(v3.45.0) ----------
    前マーカー/Loop/再生/+Marker/次マーカー/Moreを1行に。再生は円(円角はそのまま)、他は角ボタン。タップ領域は全て48px以上。

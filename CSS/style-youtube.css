@@ -1125,7 +1125,6 @@
   #pcV2BottomBar .tripleNavBtn-third,
   #pcV2BottomBar .loopbtn,
   .qn-yt-bbtn { padding: 8px 4px; min-height: 59px; box-sizing: border-box; }
-  #pcV2BottomBar .pcv2-stepper > .pcv2-ctrl-btn:not(.pcv2-step-btn) { padding-left: 0; padding-right: 0; }
   #pcV2BottomBar .pcv2-ctrl-btn:not(.pcv2-step-btn) svg,
   #pcV2BottomBar .tripleNavBtn-third:not(.tripleNavBtn-center) svg,
   #pcV2BottomBar .loopbtn svg { width: 20px; height: 20px; margin: 6px auto; }
@@ -1156,15 +1155,6 @@
   white-space: nowrap;
 }
 
-/* Speed/Keyも1行(「1.00x Speed」)でバー高さをYouTubeと同じ80pxに。区切り周り(グループ4px+区切り余白6px)もYouTube準拠 */
-#pcV2BottomBar .pcv2-stepper > .pcv2-ctrl-btn:not(.pcv2-step-btn) span {
-  display: block;
-  min-width: 0;
-  line-height: normal;
-  text-align: center;
-  white-space: nowrap;
-}
-#pcV2BottomBar .pcv2-stepper > .pcv2-ctrl-btn:not(.pcv2-step-btn) { min-height: 59px; }
 #pcV2BottomBar #topControls.top-controls { gap: 4px; }
 
 .track-backup-group-label {

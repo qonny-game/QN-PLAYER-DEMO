@@ -8,7 +8,6 @@
   const PANEL_COLLAPSED_KEY = "qn_panel_collapsed";
   let panelCollapsed = false;
   try { panelCollapsed = localStorage.getItem(PANEL_COLLAPSED_KEY) === "1"; } catch (e) {}
-  const bottomBarEffectButtons = {};
 
   // アイコンバー項目。panelType: tab=既存.mobile-tab-panel表示 / eq=EQモーダル中身 / export=Exportモーダル中身 / action=即実行(現在該当なし、ロジックのみ残す) / close=開いていれば閉じる(現在該当なし)。並び: Library→Markers→Text→Control→Backup→Import(Exportは非表示。v3.48.0でSP専用のSeekbarタブは撤去)
   const ICON_ITEMS = [
@@ -267,82 +266,7 @@
 
     const timeRow = el('<div id="pcV2TimeRow"></div>');
 
-    const rightGroup = el('<div class="pcv2-ctrl-group" id="pcV2BottomBarGroupRight"></div>');
-    const volumeBtn = el(
-      '<button type="button" class="pcv2-ctrl-btn" id="pcV2VolumeBtn" style="position:relative;" title="Volume">' +
-        '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>' +
-        '<span>Volume</span>' +
-        '<div class="pcv2-volume-popup" id="pcV2VolumePopup">' +
-          '<div class="pcv2-volume-slider-track"><div class="pcv2-volume-slider-fill" id="pcV2VolumeFill"></div><div class="pcv2-volume-slider-thumb" id="pcV2VolumeThumb"></div></div>' +
-          '<div class="pcv2-volume-popup-icon"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg></div>' +
-        '</div>' +
-      '</button>'
-    );
-    rightGroup.appendChild(volumeBtn);
-
-    [
-      { id: "speed", label: "Speed", icon: '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 12L15.5 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/><circle cx="12" cy="12" r="1.4"/>' },
-      { id: "key", label: "Key", icon: '<path d="M12 5.83L15.17 9l1.41-1.41L12 3 7.41 7.59 8.83 9zm0 12.34L8.83 15l-1.41 1.41L12 21l4.59-4.59L15.17 15z"/>' },
-      { id: "eq", label: "EQ", icon: '<path d="M3 6h11M17 6h4M3 12h5M9 12h12M3 18h14M20 18h1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/><circle cx="14" cy="6" r="2.2"/><circle cx="7" cy="12" r="2.2"/><circle cx="17" cy="18" r="2.2"/>' }
-    ].forEach(entry => {
-      const btn = el(
-        '<button type="button" class="pcv2-ctrl-btn" id="pcV2Bottom' + entry.id.charAt(0).toUpperCase() + entry.id.slice(1) + 'Toggle" title="' + entry.label + ' ON/OFF (click to toggle, long-press or right-click to open Control panel)">' +
-          '<svg viewBox="0 0 24 24">' + entry.icon + '</svg>' +
-          '<span>' + entry.label + '</span>' +
-        '</button>'
-      );
-      btn.addEventListener("click", () => {
-        toggleBottomBarEffect(entry.id, btn);
-      });
-      btn.addEventListener("contextmenu", (e) => {
-        e.preventDefault();
-        switchPanel("control");
-      });
-      if (entry.id === "speed" || entry.id === "key") {
-        const cap = entry.id === "speed" ? "Speed" : "Key";
-        const mk = (sign, dir) => {
-          const b = el('<button type="button" class="pcv2-ctrl-btn pcv2-step-btn" title="' + cap + (dir < 0 ? " −" : " ＋") + '">' + sign + '</button>');
-          b.addEventListener("click", () => {
-            const t = document.getElementById("control" + cap + (dir < 0 ? "DownBtn" : "UpBtn"));
-            if (t) t.click();
-            updateBottomStepperValues();
-          });
-          return b;
-        };
-        const wrap = el('<div class="pcv2-stepper"></div>');
-        wrap.appendChild(mk("−", -1));
-        const lab = btn.querySelector("span");
-        if (lab) lab.innerHTML = '<b>' + (entry.id === "speed" ? "1.00x" : "0") + '</b> ' + cap;
-        wrap.appendChild(btn);
-        wrap.appendChild(mk("＋", 1));
-        rightGroup.appendChild(wrap);
-        btn.dataset.stepKind = entry.id;
-      } else {
-        rightGroup.appendChild(btn);
-      }
-      bottomBarEffectButtons[entry.id] = btn;
-      syncBottomBarEffectButton(entry.id, btn);
-    });
-
-    function updateBottomStepperValues() {
-      const sp = bottomBarEffectButtons.speed, ky = bottomBarEffectButtons.key;
-      if (sp && typeof currentSpeed === "number") {
-        const l = sp.querySelector("b"); const v = currentSpeed.toFixed(2) + "x";
-        if (l && l.textContent !== v) l.textContent = v;
-      }
-      if (ky && typeof currentKeySemitones === "number") {
-        const l = ky.querySelector("b"); const v = (currentKeySemitones > 0 ? "+" : "") + currentKeySemitones;
-        if (l && l.textContent !== v) l.textContent = v;
-      }
-    }
-    updateBottomStepperValues();
-    setInterval(updateBottomStepperValues, 250);
-
-    setupControlPanelEffectSync();
-
-    bottomBar.appendChild(el('<div class="pcv2-ctrl-spacer"></div>'));
-    bottomBar.appendChild(el('<div class="pcv2-ctrl-divider pcv2-ctrl-divider-sp"></div>'));
-    bottomBar.appendChild(rightGroup);
+    // 【v3.48.0】下部バー右端のVolume/Speed/Key/EQボタンは撤去(操作はControlパネルのみ)
 
     layout.appendChild(timeRow);
 
@@ -517,8 +441,6 @@
     const basicPanelBox = document.querySelector(".basic-panel-box");
     if (basicPanelBox) basicPanelBox.style.display = "none";
 
-    setupVolumeControl();
-
     initPanels();
 
     const isSpWidthInit = isSpWidthNow();
@@ -554,86 +476,6 @@
     panelCollapsed = !!on;
     try { localStorage.setItem(PANEL_COLLAPSED_KEY, panelCollapsed ? "1" : "0"); } catch (e) {}
     applyCollapse();
-  }
-
-  function setupVolumeControl() {
-    const btn = document.getElementById("pcV2VolumeBtn");
-    const popup = document.getElementById("pcV2VolumePopup");
-    const track = popup ? popup.querySelector(".pcv2-volume-slider-track") : null;
-    const fill = document.getElementById("pcV2VolumeFill");
-    const thumb = document.getElementById("pcV2VolumeThumb");
-    if (!btn || !popup || !track) return;
-
-    // 【v2.13.6】ポップアップはbody直下+position:fixed(SP幅の#pcV2BottomBarはoverflow-x:autoで内部のabsolute子が切り取られるため)
-    document.body.appendChild(popup);
-
-    function applyVisual(ratio) {
-      const pct = Math.max(0, Math.min(1, ratio)) * 100;
-      if (fill) fill.style.height = pct + "%";
-      if (thumb) thumb.style.bottom = pct + "%";
-    }
-
-    function positionPopup() {
-      const r = btn.getBoundingClientRect();
-      popup.style.left = (r.left + r.width / 2) + "px";
-      popup.style.top = (r.top - 10) + "px";
-    }
-
-    function closePopup() {
-      popup.classList.remove("open");
-      btn.classList.remove("is-open");
-    }
-
-    const controlVolumeEl = document.getElementById("controlVolume");
-    applyVisual(controlVolumeEl ? parseFloat(controlVolumeEl.value) : (typeof audio !== "undefined" ? audio.volume : 0.8));
-
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (popup.classList.contains("open")) {
-        closePopup();
-      } else {
-        applyVisual(typeof audio !== "undefined" ? audio.volume : 0.8);
-        positionPopup();
-        popup.classList.add("open");
-        btn.classList.add("is-open");
-      }
-    });
-    document.addEventListener("click", closePopup);
-    popup.addEventListener("click", (e) => e.stopPropagation());
-    window.addEventListener("resize", closePopup);
-    const bottomBarEl = document.getElementById("pcV2BottomBar");
-    if (bottomBarEl) bottomBarEl.addEventListener("scroll", closePopup, { passive: true });
-
-    function setFromClientY(clientY) {
-      const rect = track.getBoundingClientRect();
-      const ratio = 1 - Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
-      applyVisual(ratio);
-      if (typeof audio !== "undefined") audio.volume = ratio;
-      if (controlVolumeEl) {
-        controlVolumeEl.value = ratio;
-        controlVolumeEl.dispatchEvent(new Event("input", { bubbles: true }));
-      }
-    }
-
-    const dragArea = popup;
-    dragArea.style.touchAction = "none";
-    dragArea.addEventListener("pointerdown", (e) => {
-      if (e.target.closest(".pcv2-volume-popup-icon")) return;
-      e.stopPropagation();
-      e.preventDefault();
-      setFromClientY(e.clientY);
-      try { dragArea.setPointerCapture(e.pointerId); } catch (err) {}
-      function move(ev) { setFromClientY(ev.clientY); }
-      function up(ev) {
-        dragArea.removeEventListener("pointermove", move);
-        dragArea.removeEventListener("pointerup", up);
-        dragArea.removeEventListener("pointercancel", up);
-        try { dragArea.releasePointerCapture(ev.pointerId); } catch (err) {}
-      }
-      dragArea.addEventListener("pointermove", move);
-      dragArea.addEventListener("pointerup", up);
-      dragArea.addEventListener("pointercancel", up);
-    });
   }
 
   let settingsBody, controlBody, markersBody, playlistBody, textBody, eqBody, exportBody, exportFooter;
@@ -1040,7 +882,6 @@
     // 【v3.14.0】格納中に外部(右クリック・Backup完了等)から呼ばれたら必ず展開してから表示。初期表示のみkeepCollapsed:trueで格納維持
     if (panelCollapsed && !(opts && opts.keepCollapsed)) setCollapsed(false);
 
-    syncAllBottomBarEffectButtons();
 
     if (panelId !== "markers" && editModeState.markers) {
       editModeState.markers = false;
@@ -1413,58 +1254,6 @@
       }
     }
     container.appendChild(eqDividerEl);
-  }
-
-  function toggleBottomBarEffect(id, btn) {
-    hapticTap();
-    if (id === "speed") {
-      speedEffectEnabled = !speedEffectEnabled;
-      if (typeof updatePlaybackRate === "function") updatePlaybackRate();
-      const t = document.getElementById("controlSpeedEnableToggle");
-      if (t) t.setAttribute("aria-checked", String(speedEffectEnabled));
-    } else if (id === "key") {
-      keyEffectEnabled = !keyEffectEnabled;
-      if (typeof updatePlaybackRate === "function") updatePlaybackRate();
-      const t = document.getElementById("controlKeyEnableToggle");
-      if (t) t.setAttribute("aria-checked", String(keyEffectEnabled));
-    } else if (id === "eq") {
-      if (typeof setEqEffectEnabled === "function") setEqEffectEnabled(!eqEffectEnabled);
-      const t = document.getElementById("controlEqEnableToggle");
-      if (t) t.setAttribute("aria-checked", String(eqEffectEnabled));
-    }
-    syncBottomBarEffectButton(id, btn);
-  }
-
-  function syncBottomBarEffectButton(id, btn) {
-    let enabled = true;
-    if (id === "speed") enabled = typeof speedEffectEnabled === "undefined" || speedEffectEnabled;
-    else if (id === "key") enabled = typeof keyEffectEnabled === "undefined" || keyEffectEnabled;
-    else if (id === "eq") enabled = typeof eqEffectEnabled === "undefined" || eqEffectEnabled;
-    btn.classList.toggle("effect-off", !enabled);
-  }
-
-  function syncAllBottomBarEffectButtons() {
-    Object.keys(bottomBarEffectButtons).forEach(id => {
-      syncBottomBarEffectButton(id, bottomBarEffectButtons[id]);
-    });
-  }
-
-  let controlPanelEffectSyncSetup = false;
-  function setupControlPanelEffectSync() {
-    if (controlPanelEffectSyncSetup) return;
-    controlPanelEffectSyncSetup = true;
-    [
-      ["speed", "controlSpeedEnableToggle"],
-      ["key", "controlKeyEnableToggle"],
-      ["eq", "controlEqEnableToggle"]
-    ].forEach(([id, elId]) => {
-      const toggle = document.getElementById(elId);
-      if (!toggle) return;
-      toggle.addEventListener("click", () => {
-        const btn = bottomBarEffectButtons[id];
-        if (btn) syncBottomBarEffectButton(id, btn);
-      });
-    });
   }
 
   let textEditModeOn = false;

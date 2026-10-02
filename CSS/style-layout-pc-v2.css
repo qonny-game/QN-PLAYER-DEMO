@@ -420,24 +420,6 @@ body.pc-v2-active > .app-container {
   #pcV2BottomBar .pcv2-ctrl-group {
     flex-shrink: 0;
   }
-  #pcV2BottomBar .pcv2-ctrl-spacer {
-    min-width: 16px;
-  }
-}
-
-
-/* 【v3.15.0】PC幅が狭い時はVolume/Speed/Key/EQ(右グループ)を非表示(操作はControlパネル)。閾値: パネル展開時1340px以下、格納時960px以下(バー必要幅約883px。右カラム幅=画面幅−451px/−76px。) */
-@media screen and (min-width: 901px) and (max-width: 1340px) {
-  #pcV2Layout:not(.pcv2-collapsed) #pcV2BottomBarGroupRight,
-  #pcV2Layout:not(.pcv2-collapsed) #pcV2BottomBar > .pcv2-ctrl-spacer {
-    display: none;
-  }
-}
-@media screen and (min-width: 901px) and (max-width: 960px) {
-  #pcV2BottomBarGroupRight,
-  #pcV2BottomBar > .pcv2-ctrl-spacer {
-    display: none;
-  }
 }
 
 
@@ -494,16 +476,6 @@ body.pc-v2-active > .app-container {
 }
 
 
-#pcV2BottomBar .pcv2-ctrl-spacer {
-  flex: 1;
-}
-
-
-#pcV2BottomBar .pcv2-ctrl-divider-sp {
-  display: none;
-}
-
-
 #pcV2BottomBar .pcv2-ctrl-btn {
   display: flex;
   flex-direction: column;
@@ -532,10 +504,6 @@ body.pc-v2-active > .app-container {
 }
 
 
-#pcV2BottomBar #pcV2BottomSpeedToggle:not(.effect-off),
-#pcV2BottomBar #pcV2BottomKeyToggle:not(.effect-off),
-#pcV2BottomBar #pcV2BottomEqToggle:not(.effect-off),
-#pcV2BottomBar #pcV2VolumeBtn.is-open,
 #pcV2BottomBar .pcv2-ctrl-btn.primary,
 #pcV2BottomBar .pcv2-ctrl-btn.active {
   color: var(--accent-primary);
@@ -564,75 +532,6 @@ body.pc-v2-active > .app-container {
 }
 #pcV2BottomBar .pcv2-ctrl-btn:not(.pcv2-step-btn) svg { margin: 6px auto; box-sizing: content-box; }
 #pcV2BottomBar .pcv2-ctrl-btn:not(.pcv2-step-btn) { min-height: 57px; }
-
-
-#pcV2VolumePopup {
-  position: fixed;
-  bottom: auto;
-  left: 0;
-  top: 0;
-  transform: translate(-50%, -100%);
-  background: #101013;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-popup);
-  padding: 16px 12px 14px;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  width: 56px;
-  z-index: 1000;
-  touch-action: none;
-}
-
-
-#pcV2VolumePopup.open {
-  display: flex;
-}
-
-
-#pcV2VolumePopup .pcv2-volume-slider-track {
-  position: relative;
-  width: 4px;
-  height: 90px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
-}
-
-
-#pcV2VolumePopup .pcv2-volume-slider-fill {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background: var(--accent-primary);
-  border-radius: 2px;
-}
-
-
-#pcV2VolumePopup .pcv2-volume-slider-thumb {
-  position: absolute;
-  left: 50%;
-  transform: translate(-50%, 50%);
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--text-pure-white);
-  cursor: pointer;
-}
-
-
-#pcV2VolumePopup .pcv2-volume-popup-icon {
-  color: var(--icon-muted);
-  display: flex;
-}
-
-
-#pcV2VolumePopup .pcv2-volume-popup-icon svg {
-  width: 18px;
-  height: 18px;
-  fill: currentColor;
-}
 
 
 #pcV2BottomBar #topControls {

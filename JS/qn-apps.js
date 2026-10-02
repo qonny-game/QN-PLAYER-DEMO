@@ -107,6 +107,7 @@
   }
 
   // 【v3.48.0】SP: アプリ一覧の表示中はアプリ表示領域(#qnAppHost)をメニューの高さ分だけ下へずらし、YouTubeプレイヤーを覆わない(規約)。サイズは変えずtransformだけ、はみ出す下側はclip-pathで切る(アイコンバーに被らせない。プレイヤーは上側なので切れない)
+  var shiftCover = null, shiftCoverTimer = null;
   function shiftHostForFlyout(on) {
     if (!host) return;
     var h = 0;
@@ -117,6 +118,21 @@
     host.style.transition = "transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1)";
     host.style.transform = h ? "translateY(" + h + "px)" : "";
     host.style.clipPath = h ? "inset(0 0 " + h + "px 0)" : "";
+    // ずらして空いた隙間は背景色で塞ぐ(裏のPLAYERが映り込まないように)。ホストより奥(z149)なので、戻る時はホストが上から重なる
+    if (!shiftCover) {
+      shiftCover = document.createElement("div");
+      shiftCover.id = "qnAppShiftCover";
+      shiftCover.hidden = true;
+      document.body.appendChild(shiftCover);
+    }
+    if (shiftCoverTimer) { clearTimeout(shiftCoverTimer); shiftCoverTimer = null; }
+    if (h) {
+      shiftCover.style.top = (parseFloat(host.style.top) || 0) + "px";
+      shiftCover.style.height = h + "px";
+      shiftCover.hidden = false;
+    } else if (!shiftCover.hidden) {
+      shiftCoverTimer = setTimeout(function () { shiftCoverTimer = null; if (shiftCover) shiftCover.hidden = true; }, 240);
+    }
   }
 
   function ensureScrim() {

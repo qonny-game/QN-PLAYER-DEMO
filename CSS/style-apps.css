@@ -278,6 +278,17 @@ body.qn-app-open #pcV2TimeRow {
   display: none;
 }
 
+/* アプリ一覧表示中にホストを下げた隙間を塞ぐ(JS: shiftHostForFlyout)。ホスト(150)より奥、PLAYERの各要素(≤110)より手前 */
+#qnAppShiftCover {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 149;
+  background: #0a0a0c;
+  pointer-events: none;
+}
+#qnAppShiftCover[hidden] { display: none; }
+
 .qn-app-view {
   flex: 1;
   min-height: 0;
@@ -455,5 +466,6 @@ body.qn-mic-on #qnAppBadge::after {
   #pcV2IconBar > .pcv2-icon-item { flex: 1 1 0; min-width: 0; padding: 12px 2px; justify-content: center; }
   #pcV2IconBarBottom { flex: 1 1 0; min-width: 0; margin-left: 0; padding-left: 0; border-left: none; gap: 0; }
   #pcV2IconBarBottom > .pcv2-icon-item { flex: 1 1 0; min-width: 0; padding: 12px 2px; justify-content: center; }
-  #pcV2IconBar .pcv2-icon-item:not(.active):not(.qn-app-active) > span { display: none; }
+  /* v3.48.0: 非選択のラベルはdisplay:noneにせず見えなくするだけ(高さを常に確保。選択でバーの高さが変わるのを防ぐ) */
+  #pcV2IconBar .pcv2-icon-item:not(.active):not(.qn-app-active) > span { visibility: hidden; }
 }
