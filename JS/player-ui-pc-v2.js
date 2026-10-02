@@ -236,7 +236,7 @@
       }
       appendShortcutToTitle(document.getElementById("playToggle"), "Play / Pause");
       appendShortcutToTitle(document.getElementById("addPinBtn"), "Add Marker");
-      appendShortcutToTitle(loopToggleBtn, "Loop ON/OFF");
+      appendShortcutToTitle(loopToggleBtn, "Loop on/off");
       appendShortcutToTitle(allRepeatToggleBtn, "Repeat");
       appendShortcutToTitle(document.getElementById("nextMarkerBtn"), "Next Marker");
       appendShortcutToTitle(document.getElementById("prevMarkerBtn"), "Prev Marker");
@@ -276,8 +276,8 @@
 
     // SP幅専用: PLAY/MARKERアンカータブ(#pcV2BottomBar直上)。押すと下段バーの横スクロールをgroup1/group2先頭へジャンプ。PC幅はCSSで非表示
     const anchorTabs = el('<div id="pcV2BottomBarAnchorTabs"></div>');
-    const anchorTabPlay = el('<button type="button" class="pcv2-anchor-tab" data-anchor-target="pcV2BottomBarGroupPlay">PLAY</button>');
-    const anchorTabMarker = el('<button type="button" class="pcv2-anchor-tab" data-anchor-target="pcV2BottomBarGroupMarker">MARKER</button>');
+    const anchorTabPlay = el('<button type="button" class="pcv2-anchor-tab" data-anchor-target="pcV2BottomBarGroupPlay">Play</button>');
+    const anchorTabMarker = el('<button type="button" class="pcv2-anchor-tab" data-anchor-target="pcV2BottomBarGroupMarker">Marker</button>');
     function scrollBottomBarToAnchor(targetId) {
       const bar = document.getElementById("pcV2BottomBar");
       const target = document.getElementById(targetId);
@@ -402,7 +402,7 @@
     const waveAddAudioBtn = el(
       '<button type="button" class="panel-fab-btn panel-addfile-btn" id="pcV2WaveAddAudioBtn" title="Add Audio">' +
         '<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>' +
-        '<span>AUDIO</span>' +
+        '<span>Audio</span>' +
       '</button>'
     );
     waveAddAudioBtn.addEventListener("click", () => {
@@ -413,7 +413,7 @@
     const waveAddMarkerBtn = el(
       '<button type="button" class="panel-fab-btn panel-addfile-btn" id="pcV2WaveAddMarkerBtn" title="Add Marker">' +
         '<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>' +
-        '<span>MARKER</span>' +
+        '<span>Marker</span>' +
       '</button>'
     );
     waveAddMarkerBtn.addEventListener("click", () => {
@@ -740,7 +740,7 @@
       const addFileBtn = el(
         '<button type="button" class="panel-fab-btn panel-addfile-btn" id="pcV2LibraryAddFileBtn" title="Add Audio">' +
           '<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>' +
-          '<span>AUDIO</span>' +
+          '<span>Audio</span>' +
         '</button>'
       );
       addFileBtn.addEventListener("click", () => {
@@ -753,7 +753,7 @@
       const newFolderBtn = el(
         '<button type="button" class="panel-fab-btn panel-addfile-btn" id="pcV2NewFolderBtn" title="New Folder">' +
           '<svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-1 8h-3v3h-2v-3h-3v-2h3V9h2v3h3v2z"/></svg>' +
-          '<span>FOLDER</span>' +
+          '<span>Folder</span>' +
         '</button>'
       );
       newFolderBtn.addEventListener("click", () => {
@@ -770,23 +770,16 @@
 
     fab.appendChild(addGroup);
 
-    const deleteBtn = el(
-      '<button type="button" class="panel-fab-btn panel-fab-delete-btn" id="pcV2DeleteSelectedBtn" disabled>' +
-        '<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>' +
-        '<span>Delete</span>' +
-      '</button>'
-    );
-    deleteBtn.addEventListener("click", () => deleteSelectedItems(panelId));
-    // 【v3.52.0】Markers: 削除ボタンの位置はCancel(編集を抜ける)。選択が1件以上ある間は下のOKが「Delete」になり一括削除を実行する(syncMarkersEditBtn)
+    // 【v3.52.0】Markers/Library: 削除ボタンの位置はCancel(編集を抜ける)。選択が1件以上ある間は下のOKが「Delete」になり一括削除を実行する(syncEditBtn)
     let cancelBtn = null;
-    if (panelId === "markers") {
+    {
       cancelBtn = el(
-        '<button type="button" class="panel-fab-btn panel-fab-cancel-btn" id="pcV2MarkersCancelBtn">' +
+        '<button type="button" class="panel-fab-btn panel-fab-cancel-btn" id="pcV2' + (panelId === "markers" ? "Markers" : "Playlist") + 'CancelBtn">' +
           '<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
           '<span>Cancel</span>' +
         '</button>'
       );
-      cancelBtn.addEventListener("click", () => { if (editModeState.markers) toggleEditMode("markers"); });
+      cancelBtn.addEventListener("click", () => { if (editModeState[panelId]) toggleEditMode(panelId); });
     }
     if (panelId === "playlist") {
       // 【v3.24.0】選択した曲をフォルダへ移動(編集モードのみ表示。Deleteと同じ選択を使う)
@@ -799,16 +792,16 @@
       moveBtn.addEventListener("click", () => moveSelectedItems(moveBtn));
       fab.appendChild(moveBtn);
     }
-    fab.appendChild(cancelBtn || deleteBtn);
+    fab.appendChild(cancelBtn);
 
     const editBtn = el(
       '<button type="button" class="panel-fab-btn panel-edit-btn" id="pcV2' + (panelId === "markers" ? "Markers" : "Playlist") + 'EditBtn" title="Edit ' + panelId + '">' +
         '<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>' +
-        '<span>EDIT</span>' +
+        '<span>Edit</span>' +
       '</button>'
     );
     editBtn.addEventListener("click", () => {
-      if (panelId === "markers" && editModeState.markers && selectedIndices.markers.size > 0) { deleteSelectedItems("markers"); return; }
+      if (editModeState[panelId] && selectedIndices[panelId].size > 0) { deleteSelectedItems(panelId); return; }
       toggleEditMode(panelId);
     });
     fab.appendChild(editBtn);
@@ -1019,11 +1012,11 @@
     if (editBtn) {
       editBtn.classList.toggle("active", editModeState[panelId]);
       const editBtnLabel = editBtn.querySelector("span");
-      if (editBtnLabel) editBtnLabel.textContent = editModeState[panelId] ? "OK" : "EDIT";
+      if (editBtnLabel) editBtnLabel.textContent = editModeState[panelId] ? "OK" : "Edit";
     }
-    const cancelBtnEl = document.getElementById("pcV2MarkersCancelBtn");
-    if (cancelBtnEl) cancelBtnEl.style.display = (panelId === "markers" && editModeState.markers) ? "flex" : "none";
-    if (panelId === "markers") syncMarkersEditBtn();
+    const cancelBtnEl = document.getElementById(panelId === "markers" ? "pcV2MarkersCancelBtn" : "pcV2PlaylistCancelBtn");
+    if (cancelBtnEl) cancelBtnEl.style.display = editModeState[panelId] ? "flex" : "none";
+    syncEditBtn(panelId);
     if (addGroup) {
       addGroup.style.display = editModeState[panelId] ? "none" : "flex";
     }
@@ -1083,20 +1076,20 @@
   // 【v3.52.0】Markers編集中のFAB下ボタン: 選択0件=「OK」(編集を抜ける) / 1件以上=「Delete」(選択を一括削除)
   const ICON_OK_EDIT = '<path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>';
   const ICON_TRASH = '<path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>';
-  function syncMarkersEditBtn() {
-    const btn = document.getElementById("pcV2MarkersEditBtn");
+  function syncEditBtn(panelId) {
+    const btn = document.getElementById(panelId === "markers" ? "pcV2MarkersEditBtn" : "pcV2PlaylistEditBtn");
     if (!btn) return;
-    const del = editModeState.markers && selectedIndices.markers.size > 0;
+    const del = editModeState[panelId] && selectedIndices[panelId].size > 0;
     btn.classList.toggle("is-delete", del);
     const label = btn.querySelector("span");
-    if (label) label.textContent = editModeState.markers ? (del ? "Delete" : "OK") : "EDIT";
+    if (label) label.textContent = editModeState[panelId] ? (del ? "Delete" : "OK") : "Edit";
     const path = btn.querySelector("svg");
     if (path) path.innerHTML = del ? ICON_TRASH : ICON_OK_EDIT;
   }
 
   function syncSelectionButtons(panelId) {
     const n = selectedIndices[panelId].size;
-    if (panelId === "markers") syncMarkersEditBtn();
+    syncEditBtn(panelId);
     const deleteBtn = document.getElementById("pcV2DeleteSelectedBtn");
     if (deleteBtn) deleteBtn.disabled = n === 0;
     if (panelId === "playlist") {
@@ -1169,7 +1162,7 @@
       if (panelId === "playlist") {
         const hasSelection = selectedIndices.playlist.size > 0;
         items.forEach(item => {
-          const toggle = item.querySelector(".playlist-skip-toggle");
+          const toggle = item.querySelector(".playlist-skip-toggle, .playlist-act-btn");
           if (!toggle) return;
           toggle.disabled = hasSelection;
           toggle.title = hasSelection ? "削除の選択中は切り替えられません" : toggle.dataset.baseTitle || toggle.title;
@@ -1299,7 +1292,7 @@
     const editBtn = el(
       '<button type="button" class="panel-fab-btn panel-edit-btn" id="pcV2TextEditBtn" title="Edit text">' +
         '<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>' +
-        '<span>EDIT</span>' +
+        '<span>Edit</span>' +
       '</button>'
     );
     const editBtnLabel = editBtn.querySelector("span");
@@ -1309,7 +1302,7 @@
       textEditModeOn = !textEditModeOn;
       textarea.readOnly = !textEditModeOn;
       editBtn.classList.toggle("active", textEditModeOn);
-      if (editBtnLabel) editBtnLabel.textContent = textEditModeOn ? "OK" : "EDIT";
+      if (editBtnLabel) editBtnLabel.textContent = textEditModeOn ? "OK" : "Edit";
       if (fullscreenBtn) fullscreenBtn.style.display = textEditModeOn ? "none" : "flex";
       if (textEditModeOn) textarea.focus();
     });

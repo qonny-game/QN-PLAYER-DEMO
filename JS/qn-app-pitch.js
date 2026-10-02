@@ -187,12 +187,12 @@
           '<button type="button" class="panel-fab-btn panel-fab-delete-btn" data-pt="fabDel" disabled>' +
             '<svg viewBox="0 0 24 24">' + ICON.clear + '</svg><span>Delete</span></button>' +
           '<button type="button" class="panel-fab-btn panel-edit-btn" data-pt="fabEdit" title="Edit">' +
-            '<svg viewBox="0 0 24 24">' + ICON.pencil + '</svg><span data-pt="fabEditLabel">EDIT</span></button>' +
+            '<svg viewBox="0 0 24 24">' + ICON.pencil + '</svg><span data-pt="fabEditLabel">Edit</span></button>' +
         '</div>' +
       '</aside>' +
       '<section class="qn-pt-stage">' +
         '<div class="qn-pt-readout">' +
-          '<div class="qn-mic-pill" data-pt="micPill" hidden><i class="qn-mic-dot"></i><span>REC</span><span class="qn-mic-lv"><b></b><b></b><b></b><b></b><b></b></span></div>' +
+          '<div class="qn-mic-pill" data-pt="micPill" hidden><i class="qn-mic-dot"></i><span>Rec</span><span class="qn-mic-lv"><b></b><b></b><b></b><b></b><b></b></span></div>' +
           '<div class="qn-pt-note" data-pt="note">--</div>' +
           '<div class="qn-pt-cents" data-pt="cents">-- ¢</div>' +
           '<div class="qn-pt-hint" data-pt="hint"></div>' +
@@ -202,7 +202,7 @@
             '<div class="qn-pt-keys" data-pt="keys"></div><canvas class="qn-pt-canvas" data-pt="canvas"></canvas>' +
           '</div></div>' +
         '</div>' +
-        '<div class="qn-pt-vol"><div class="qn-pt-vol-label">VOL</div><canvas data-pt="volCanvas"></canvas></div>' +
+        '<div class="qn-pt-vol"><div class="qn-pt-vol-label">Vol</div><canvas data-pt="volCanvas"></canvas></div>' +
         '<div class="qn-pt-pb" data-pt="pb" hidden>' +
           '<div class="qn-pt-pb-top"><span class="qn-pt-pb-name" data-pt="pbName"></span>' +
             '<span class="qn-pt-pb-score" data-pt="pbScore"></span><span class="qn-pt-pb-time" data-pt="pbTime">0:00 / 0:00</span>' +
@@ -705,7 +705,7 @@
     var pt = root.firstChild;
     if (editMode) pt.setAttribute("data-edit", "recordings"); else pt.removeAttribute("data-edit");
     refs.fabEdit.classList.toggle("active", editMode);
-    setText(refs.fabEditLabel, editMode ? "OK" : "EDIT");
+    setText(refs.fabEditLabel, editMode ? "OK" : "Edit");
     refs.fabDel.disabled = selectedCount() === 0;
   }
   function setEditMode(on) {
@@ -842,7 +842,7 @@
     var v = F.settings[c.key];
     return '<div' + (sub ? ' class="qn-pt-sub"' : '') + '>' +
       '<label' + (sub ? ' class="qn-pt-sublabel"' : '') + '>' + c.label + ' <span class="qn-pt-white" data-fv="' + c.key + '">' + v.toFixed(c.dec) + '</span>' + c.unit +
-        (c.reset ? '<button type="button" class="mini-reset-btn" data-pt="filterReset" title="Reset all filters">RESET</button>' : '') + '</label>' +
+        (c.reset ? '<button type="button" class="mini-reset-btn" data-pt="filterReset" title="Reset all filters">Reset</button>' : '') + '</label>' +
       '<input type="range" data-f="' + c.key + '" min="' + c.min + '" max="' + c.max + '" step="' + c.step + '" value="' + v + '">' +
     '</div>';
   }

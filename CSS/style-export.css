@@ -106,7 +106,7 @@
   font-size: var(--fs-micro);
   font-weight: 700;
   letter-spacing: 1px;
-  text-transform: uppercase;
+  text-transform: none;
   color: #6b6b7b;
 }
 
@@ -220,7 +220,7 @@
   font-weight: 500;
   letter-spacing: 0.5px;
   color: var(--icon-muted);
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .export-filename-input {
@@ -283,7 +283,7 @@
   font-size: var(--fs-btn-primary);
   font-weight: 700;
   letter-spacing: 0.5px;
-  text-transform: uppercase;
+  text-transform: none;
   cursor: pointer;
   box-shadow: 0 6px 20px var(--accent-glow);
   transition: background var(--dur-hover) var(--ease-snap), box-shadow var(--dur-press) var(--ease-snap), transform var(--dur-press) var(--ease-snap);
@@ -316,7 +316,7 @@
   font-size: var(--fs-btn-primary);
   font-weight: 600;
   letter-spacing: 0.5px;
-  text-transform: uppercase;
+  text-transform: none;
   cursor: pointer;
   transition: background var(--dur-hover) var(--ease-snap), border-color var(--dur-hover) var(--ease-snap), color var(--dur-hover) var(--ease-snap);
 }

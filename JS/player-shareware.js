@@ -609,7 +609,7 @@ function swGetHeaderPlanBadgeLabel() {
     if (planType === "monthly") return "Monthly";
     return "Ad";
   }
-  return "FREE";
+  return "Free";
 }
 
 function swUpdateHeaderPlanBadge() {

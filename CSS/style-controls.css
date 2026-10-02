@@ -30,7 +30,7 @@
   font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.5px;
-  text-transform: uppercase;
+  text-transform: none;
   color: inherit;
   opacity: 0.7;
   line-height: 1;
@@ -216,7 +216,7 @@
   font-size: var(--fs-btn);
   font-weight: 600;
   letter-spacing: 0.3px;
-  text-transform: uppercase;
+  text-transform: none;
   cursor: pointer;
   transition: background var(--dur-hover) var(--ease-snap), color var(--dur-hover) var(--ease-snap);
 }

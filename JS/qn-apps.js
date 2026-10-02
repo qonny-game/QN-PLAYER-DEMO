@@ -708,7 +708,7 @@
             b._t = setTimeout(function () {
               b.classList.remove("confirm");
               b.querySelector("svg").innerHTML = SW_ICON.del;
-              b.querySelector("span").textContent = "DELETE";
+              b.querySelector("span").textContent = "Delete";
             }, 3000);
             return;
           }

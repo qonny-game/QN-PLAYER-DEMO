@@ -21,7 +21,6 @@
           if (!t) return [];
           return [
             { kind: "edit", run: function () { var b = row.querySelector(".playlist-hover-edit-btn"); if (b) b.click(); } },
-            { kind: "skip", on: !t.enabled, run: function () { t.enabled = !t.enabled; renderPlaylist(); persistPlaylistOrder(); } },
             { kind: "del", run: function () { removeTrackAt(idxOf(row)); } }
           ];
         }

@@ -120,3 +120,9 @@
 - SKIP/HIDEは背景なし+`border-left`の区切り線。ON(`.is-on`)はsvg/spanをopacity .35。編集/削除タイルだけ背景付き。
 - スワイプトレイ(player-swipe.jsのmarkers)は編集+削除のみ。`mskip`/`hide`のトレイ用スタイルは未使用(QN_ROW_ACT自体はボタン用に使用)。
 - FAB(Markers): `#pcV2DeleteSelectedBtn`は作らず、同じ位置に`#pcV2MarkersCancelBtn`。`#pcV2MarkersEditBtn`は編集中に選択0=OK/1以上=Delete(`syncMarkersEditBtn`、`syncSelectionButtons`から呼ぶ)。Playlist側のFABは従来通り。
+- v3.52.1: 行ボタンは50px正方形(行のmin-height 50px=ボタン高)。`.pinItem`のcolumn-gap 8pxは編集EDIT時に`.pin-act-cell{margin-right:-8px}`で打ち消し、タイル同士を密着。
+
+## 文言ルールとLibraryの行(v3.53.0)
+- UI文言は「先頭大文字・以後小文字」(例: Skip / Drop audio file here)。例外=ロゴ、略語・形式名(MP3/WAV/ZIP/EQ/OK/BPM等)、音名。CSSで`text-transform: uppercase`を新設しない(ロゴ以外)。ラベルは元の文字列を直接その表記で書く。
+- Libraryの行(`.playlistItem`)も`.playlist-act-cell`(Skip)+編集中の`.playlist-del-zone`(中に`.del-btn`+`.playlist-del-tile`)。通常/編集とも正方形57px・隙間0(編集中は`.playlist-act-cell{margin-right:-8px}`でgrid gapを打ち消し)。Skip中は行全体でなく子要素だけopacity .4。旧`.playlist-skip-toggle`はPLAYERでは使わない(YouTube側は従来)。
+- FAB(Markers/Library共通): `#pcV2MarkersCancelBtn`/`#pcV2PlaylistCancelBtn`がDeleteの位置、EditBtnは選択0=OK/1以上=Delete(`syncEditBtn`)。`#pcV2DeleteSelectedBtn`は廃止。

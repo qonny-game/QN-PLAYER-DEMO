@@ -449,12 +449,12 @@
         '<div class="qn-yt-fab" data-yt="fab">' +
           '<div class="qn-yt-fab-add">' +
             '<button type="button" class="panel-fab-btn panel-addfile-btn" data-yt="fabAdd" title="Add Marker">' +
-              '<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg><span>MARKER</span>' +
+              '<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg><span>Marker</span>' +
             '</button>' +
           '</div>' +
           '<div class="qn-yt-fab-folder">' +
             '<button type="button" class="panel-fab-btn panel-addfile-btn" data-yt="fabFolder" title="Add Folder">' +
-              '<svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-1 8h-3v3h-2v-3h-3v-2h3V9h2v3h3v2z"/></svg><span>FOLDER</span>' +
+              '<svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-1 8h-3v3h-2v-3h-3v-2h3V9h2v3h3v2z"/></svg><span>Folder</span>' +
             '</button>' +
           '</div>' +
           '<button type="button" class="panel-fab-btn panel-fab-move-btn" data-yt="fabMove" disabled>' +
@@ -464,7 +464,7 @@
             '<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg><span>Delete</span>' +
           '</button>' +
           '<button type="button" class="panel-fab-btn panel-edit-btn" data-yt="fabEdit" title="Edit">' +
-            '<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg><span data-yt="fabEditLabel">EDIT</span>' +
+            '<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg><span data-yt="fabEditLabel">Edit</span>' +
           '</button>' +
         '</div>' +
       '</aside>' +
@@ -478,7 +478,7 @@
         // PLの波形エリア右下(#pcV2WaveFabRow)と同位置のMARKERボタン。プレイヤーの外(下)・通常フロー(重ねない)
         '<div class="qn-yt-stage-fab">' +
           '<button type="button" class="panel-fab-btn panel-addfile-btn" data-yt="stageAddMarker" title="Add Marker">' +
-            '<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg><span>MARKER</span>' +
+            '<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg><span>Marker</span>' +
           '</button>' +
         '</div>' +
       '</section>' +
@@ -1386,7 +1386,7 @@
     var yt = root.querySelector(".qn-yt");
     if (editMode) yt.setAttribute("data-edit", editMode); else yt.removeAttribute("data-edit");
     refs.fabEdit.classList.toggle("active", !!editMode);
-    refs.fabEditLabel.textContent = editMode ? "OK" : "EDIT";
+    refs.fabEditLabel.textContent = editMode ? "OK" : "Edit";
     refs.fabDel.disabled = selectedCount() === 0;
     refs.fabMove.disabled = selectedCount() === 0;
   }
@@ -1541,7 +1541,7 @@
         skip.className = "playlist-skip-toggle" + (it.skip ? "" : " skip-off");
         skip.disabled = hasSel;
         skip.title = it.skip ? "Skipped during Auto Next (click to include)" : "Included in Auto Next (click to skip)";
-        skip.innerHTML = '<span class="playlist-skip-toggle-label">' + (it.skip ? "SKIP" : "PLAY") + '</span>';
+        skip.innerHTML = '<span class="playlist-skip-toggle-label">' + (it.skip ? "Skip" : "Play") + '</span>';
         skip.addEventListener("click", function (e) {
           e.stopPropagation();
           if (selectedCount() > 0) return;

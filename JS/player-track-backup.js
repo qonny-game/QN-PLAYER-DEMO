@@ -673,7 +673,7 @@ async function handleTrackImportFileSelected(file) {
 
     if (trackImportPtList && pt) {
       trackImportPtList.forEach(x => {
-        if (pt.exists(x.key)) duplicateEntries.push({ key: "pt:" + x.key, label: "[PITCH] " + (pt.titleOf(x.key) || x.name) });
+        if (pt.exists(x.key)) duplicateEntries.push({ key: "pt:" + x.key, label: "[Pitch] " + (pt.titleOf(x.key) || x.name) });
       });
     }
 

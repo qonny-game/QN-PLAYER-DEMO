@@ -149,7 +149,7 @@ function updateAutoSpeedStatus() {
 
   if (spStatusAutoSpeedValue) {
     if (!autoSpeedEnabled) {
-      spStatusAutoSpeedValue.textContent = "OFF";
+      spStatusAutoSpeedValue.textContent = "Off";
     } else {
       const stepPercent = getAutoSpeedStepPercent();
       const sign = autoSpeedDirection === "up" ? "+" : "-";

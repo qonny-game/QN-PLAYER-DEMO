@@ -33,7 +33,7 @@
   font-size: var(--fs-title);
   font-weight: 600;
   letter-spacing: 0.5px;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--icon-muted);
   flex-shrink: 0;
 }

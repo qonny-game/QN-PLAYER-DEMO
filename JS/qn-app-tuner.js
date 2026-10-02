@@ -127,7 +127,7 @@
           '<section class="qn-tn-sec qn-tn-sec-tone"><div class="control-list">' +
             '<div class="control-card" data-tn="toneNow" hidden>' +
               '<label>Now Playing <span class="qn-tn-white" data-tn="toneNowNote">—</span>' +
-                '<button type="button" class="mini-reset-btn" data-tn="toneNowStop">STOP</button></label>' +
+                '<button type="button" class="mini-reset-btn" data-tn="toneNowStop">Stop</button></label>' +
               '<div class="qn-tn-sub"><span data-tn="toneNowFreq">0.0</span> Hz</div>' +
             '</div>' +
             '<div class="control-card"><label>Preset</label>' +
@@ -149,7 +149,7 @@
         '</div>' +
       '</aside>' +
       '<section class="qn-tn-stage">' +
-        '<div class="qn-mic-pill" data-tn="micPill" hidden><i class="qn-mic-dot"></i><span>MIC ON</span><span class="qn-mic-lv"><b></b><b></b><b></b><b></b><b></b></span></div>' +
+        '<div class="qn-mic-pill" data-tn="micPill" hidden><i class="qn-mic-dot"></i><span>Mic on</span><span class="qn-mic-lv"><b></b><b></b><b></b><b></b><b></b></span></div>' +
         '<div class="qn-tn-prompt" data-tn="prompt">' +
           '<p>下のMicボタンを押すと、リアルタイムに音程を表示します</p>' +
           '<p class="qn-tn-error" data-tn="micError" role="status"></p>' +
@@ -193,7 +193,7 @@
                 gaugeTicksSvg() +
                 '<g class="qn-tn-needle" data-d="needle" style="transform: rotate(0deg)"><line x1="150" y1="150" x2="150" y2="35"/><circle cx="150" cy="150" r="8"/></g>' +
               '</svg>' +
-              '<div class="qn-tn-glabels"><span>♭</span><span>IN TUNE</span><span>♯</span></div>' +
+              '<div class="qn-tn-glabels"><span>♭</span><span>In tune</span><span>♯</span></div>' +
             '</div>' +
             '<div class="qn-tn-reading">' +
               '<div class="qn-tn-note" data-d="note">—</div>' +
@@ -228,7 +228,7 @@
           '<div class="qn-tn-gm" data-d="wrap">' +
             '<div class="qn-tn-gm-note" data-d="note">—</div>' +
             '<div class="qn-tn-gm-meter" data-d="meter">' + dots + '</div>' +
-            '<div class="qn-tn-glabels"><span>♭</span><span>IN TUNE</span><span>♯</span></div>' +
+            '<div class="qn-tn-glabels"><span>♭</span><span>In tune</span><span>♯</span></div>' +
             '<div class="qn-tn-gm-freq" data-d="freq">0.0 Hz</div>' +
           '</div>';
         var q = function (n) { return box.querySelector('[data-d="' + n + '"]'); };
@@ -538,7 +538,7 @@
 
   // ---------- ショートカット(表示中のみ。onShowで登録・onHideで解除) ----------
   var SHORTCUTS = [
-    { key: "Space / M", action: "Mic ON/OFF" },
+    { key: "Space / M", action: "Mic on/off" },
     { key: "D", action: "Switch Display" },
     { key: "1 - 9", action: "Play String Tone" },
     { key: "Esc", action: "Stop Tone" }

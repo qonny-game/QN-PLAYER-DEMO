@@ -79,7 +79,7 @@ body直下fixed。ヘッダーのロゴ(#qnAppLogoBtn)の真下・左揃え。�
   font-size: var(--fs-title);
   font-weight: 600;
   letter-spacing: 0.5px;
-  text-transform: uppercase;
+  text-transform: none;
   flex-shrink: 0;
 }
 #qnColorPop .qn-colorpanel-body {

@@ -314,7 +314,7 @@ body {
   margin: 0;
   color: var(--icon-muted);
   letter-spacing: 1px;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .mobile-tabs {
@@ -340,7 +340,7 @@ body {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.3px;
-  text-transform: uppercase;
+  text-transform: none;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
@@ -651,7 +651,7 @@ body {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.5px;
-  text-transform: uppercase;
+  text-transform: none;
   color: inherit;
   opacity: 0.65;
 }
@@ -680,7 +680,7 @@ body {
   color: var(--accent-primary);
   font-weight: 700;
   letter-spacing: 0.5px;
-  text-transform: uppercase;
+  text-transform: none;
   background: var(--accent-glow);
   padding: 3px 8px;
   border-radius: var(--radius-pill);
@@ -823,7 +823,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.5px;
   color: var(--icon-muted);
-  text-transform: uppercase;
+  text-transform: none;
   display: flex;
   align-items: center;
   justify-content: flex-start;

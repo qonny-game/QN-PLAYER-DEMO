@@ -14,11 +14,11 @@ window.QN_ROW_ACT = (function () {
     play: '<path d="M8 5v14l11-7z"/>'
   };
   function info(kind, on) {
-    if (kind === "edit") return { icon: icons.edit, label: "EDIT" };
-    if (kind === "del") return { icon: icons.del, label: "DELETE" };
-    if (kind === "hide") return { icon: on ? icons.eyeOn : icons.eyeOff, label: on ? "SHOW" : "HIDE" };
-    if (kind === "mskip") return { icon: on ? icons.play : icons.skipNext, label: on ? "PLAY" : "SKIP" };
-    return { icon: on ? icons.eyeOn : icons.eyeOff, label: on ? "PLAY" : "SKIP" };
+    if (kind === "edit") return { icon: icons.edit, label: "Edit" };
+    if (kind === "del") return { icon: icons.del, label: "Delete" };
+    if (kind === "hide") return { icon: on ? icons.eyeOn : icons.eyeOff, label: on ? "Show" : "Hide" };
+    if (kind === "mskip") return { icon: on ? icons.play : icons.skipNext, label: on ? "Play" : "Skip" };
+    return { icon: on ? icons.eyeOn : icons.eyeOff, label: on ? "Play" : "Skip" };
   }
   function html(kind, on) { const i = info(kind, on); return '<svg viewBox="0 0 24 24">' + i.icon + "</svg><span>" + i.label + "</span>"; }
   return { icons: icons, info: info, html: html };
@@ -206,7 +206,7 @@ function renderPins() {
   const activeCount = pins.filter(p => p.enabled).length;
   const loopInfo = document.getElementById("loopInfo");
   if (loopInfo) {
-    loopInfo.textContent = `ACTIVE ${activeCount}/${pins.length}`;
+    loopInfo.textContent = `Active ${activeCount}/${pins.length}`;
   }
 }
 

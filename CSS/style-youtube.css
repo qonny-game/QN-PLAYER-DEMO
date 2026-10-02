@@ -29,7 +29,7 @@
   font-size: var(--fs-title);
   font-weight: 600;
   letter-spacing: 0.5px;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--icon-muted);
   flex-shrink: 0;
 }
@@ -70,7 +70,7 @@
   font-size: var(--fs-heading);
   font-weight: 600;
   letter-spacing: 0.4px;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--text-bright);
 }
 
@@ -227,7 +227,7 @@
   font-size: var(--fs-heading);
   font-weight: 600;
   letter-spacing: 0.4px;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--text-bright);
   margin: 0;
 }
@@ -1162,7 +1162,7 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.8px;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--icon-muted);
 }
 .track-backup-group-label:not(:first-child) { margin-top: 6px; border-top: 1px solid var(--border-subtle); }

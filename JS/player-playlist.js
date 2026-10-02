@@ -254,26 +254,31 @@ function buildPlaylistRow(track, i, editMode, nowPlaying) {
     item.appendChild(favoriteBtn);
   }
 
-  if (editMode) {
-    // 編集モード: PLAY/SKIPトグル(自動送りに含めるか)。.del-btn選択が1件でもあれば押せない(renderPlaylist()がDOMを作り直すと選択表示が消えるため。window.playlistHasSelectedItemsはplayer-ui-pc-v2.js公開)
-    const hasSelection = typeof window.playlistHasSelectedItems === "function" && window.playlistHasSelectedItems();
-    const skipToggle = document.createElement("button");
-    skipToggle.className = "playlist-skip-toggle";
-    skipToggle.classList.toggle("skip-off", track.enabled);
-    skipToggle.disabled = hasSelection;
+  // 【v3.53.0】Markersと同じ行ボタン: SKIP(背景なし・ON中は薄暗く)。通常/編集どちらでも表示。再生中の曲(nowPlaying)には出さない
+  if (!nowPlaying) {
+    const hasSel = typeof window.playlistHasSelectedItems === "function" && window.playlistHasSelectedItems();
+    const actCell = document.createElement("div");
+    actCell.className = "playlist-act-cell";
+    const skipBtn = document.createElement("button");
+    skipBtn.type = "button";
+    skipBtn.className = "playlist-act-btn is-mskip" + (track.enabled ? "" : " is-on");
+    skipBtn.innerHTML = window.QN_ROW_ACT.html("mskip", !track.enabled);
+    skipBtn.disabled = hasSel;
     const baseTitle = track.enabled ? "Included in auto-advance (click to skip)" : "Skipped during auto-advance (click to include)";
-    skipToggle.dataset.baseTitle = baseTitle;
-    skipToggle.title = hasSelection ? "削除の選択中は切り替えられません" : baseTitle;
-    skipToggle.innerHTML = '<span class="playlist-skip-toggle-label">' + (track.enabled ? "PLAY" : "SKIP") + '</span>';
-    skipToggle.onclick = (e) => {
+    skipBtn.dataset.baseTitle = baseTitle;
+    skipBtn.title = hasSel ? "削除の選択中は切り替えられません" : baseTitle;
+    skipBtn.onclick = (e) => {
       e.stopPropagation();
-      if (hasSelection) return;
+      if (hasSel) return;
       track.enabled = !track.enabled;
       renderPlaylist();
       persistPlaylistOrder();
     };
-    item.appendChild(skipToggle);
+    actCell.appendChild(skipBtn);
+    item.appendChild(actCell);
+  }
 
+  if (editMode) {
     const delZone = document.createElement("div");
     delZone.className = "playlist-del-zone";
 
@@ -298,6 +303,11 @@ function buildPlaylistRow(track, i, editMode, nowPlaying) {
       }
     };
     delZone.appendChild(delBtn);
+    // 【v3.53.0】削除選択タイル(ゴミ箱+Delete)。選択状態は直前の.del-btn.pcv2-selectedに連動(CSS)
+    const delTile = document.createElement("span");
+    delTile.className = "playlist-del-tile";
+    delTile.innerHTML = window.QN_ROW_ACT.html("del");
+    delZone.appendChild(delTile);
     item.appendChild(delZone);
   }
 
