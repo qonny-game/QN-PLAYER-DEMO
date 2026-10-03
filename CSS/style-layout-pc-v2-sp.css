@@ -412,7 +412,7 @@ html {
   .pcv2-dock-btn span { font-size: 11px; line-height: 1; white-space: nowrap; }
   .pcv2-dock-btn:active { background: rgba(255, 255, 255, 0.06); }
   .pcv2-dock-loop.is-active, .pcv2-dock-more.is-open { color: var(--accent-primary); }
-  .pcv2-dock-add { color: var(--text-bright); }
+  .pcv2-dock-add { color: var(--accent-primary); }
   .pcv2-dock-add svg { width: 32px; height: 32px; }
   .pcv2-dock-play {
     justify-self: center;
@@ -426,7 +426,8 @@ html {
   }
   .pcv2-dock-play svg { width: 34px; height: 34px; }
   .pcv2-dock-play:active { background: var(--accent-primary); transform: scale(0.94); }
-  .pcv2-dock-play.is-playing { background: linear-gradient(135deg, #10b981, #059669); }
+  /* v3.54.0: 再生中も停止中と同じ色(緑にしない) */
+  .pcv2-dock-play.is-playing { background: var(--accent-primary); }
   .pcv2-dock-more svg { transition: transform 150ms ease; }
   .pcv2-dock-more.is-open svg { transform: rotate(180deg); }
   /* 波形の横スワイプ(シーク)を使うため、縦スクロール以外はブラウザに任せない */

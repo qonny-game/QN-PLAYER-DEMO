@@ -214,8 +214,9 @@ function updatePlayButtonState() {
 
   if (!audio.paused) {
     playBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
-    playBtn.style.background = "linear-gradient(135deg, #10b981, #059669)";
-    playBtn.style.boxShadow = "0 6px 20px rgba(16, 185, 129, 0.4)";
+    // v3.54.0: 再生中も停止中と同じ色(緑のグラデにしない)
+    playBtn.style.background = "";
+    playBtn.style.boxShadow = "";
   } else {
     playBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
     playBtn.style.background = "";

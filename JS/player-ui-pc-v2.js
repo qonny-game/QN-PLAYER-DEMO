@@ -538,6 +538,8 @@
     applySkipLabels();
   }
   requestAnimationFrame(applySkipLabels);
+  // 【v3.54.0】長押しクイックポップアップ(player-quickpop.js)から使う
+  window.QNSkip = { options: SKIP_OPTIONS, get: () => skipSec, set: setSkipSec };
 
   function pcv2SkipBy(sec) {
     if (typeof audio === "undefined" || !audio || !isFinite(audio.duration) || audio.duration <= 0) return;

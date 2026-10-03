@@ -1,0 +1,21 @@
+/* style-quickpop.css — 下部コントロール長押しのクイック設定ポップアップ(JS/player-quickpop.js)。中の行/ステッパーはstyle-settings.cssの共通部品 */
+.qn-quickpop {
+  position: fixed;
+  z-index: 600;
+  min-width: 260px;
+  max-width: calc(100vw - 16px);
+  padding: 4px 16px 6px;
+  background: #16161b;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-popup);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+.qn-quickpop .qn-set-body { padding-bottom: 0; }
+.qn-quickpop .qn-set-sec { border-bottom: none; padding: 12px 0 2px; }
+.qn-quickpop .qn-set-row { min-height: 40px; padding: 6px 0; }
+/* 長押し対象はOS標準の選択/メニューを出さない */
+#loopToggleBtn, #pcV2DockLoop, #pcV2SkipBackBtn, #pcV2SkipFwdBtn, #allRepeatToggleBtn, #timeDisplay {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}

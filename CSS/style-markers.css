@@ -417,7 +417,7 @@
   border-left: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 0;
   background: transparent;
-  color: var(--text-bright, #e8e8ee);
+  color: var(--icon-muted);
   font-family: var(--font-display, 'Instrument Sans'), sans-serif;
   font-size: 9px;
   font-weight: 600;
@@ -506,7 +506,7 @@
   border-left: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 0;
   background: transparent;
-  color: var(--text-bright, #e8e8ee);
+  color: var(--icon-muted);
   font-family: var(--font-display, 'Instrument Sans'), sans-serif;
   font-size: 9px;
   font-weight: 600;
@@ -555,3 +555,8 @@
 #pcV2PanelBody.playlist-edit-mode #playlistBox .playlist-del-tile svg { width: 20px; height: 20px; fill: currentColor; }
 #pcV2PanelBody.playlist-edit-mode #playlistBox .playlist-del-tile span { line-height: 1; }
 #pcV2PanelBody.playlist-edit-mode #playlistBox .del-btn.pcv2-selected + .playlist-del-tile { background: var(--danger, #ef4444); color: #fff; }
+
+/* v3.53.1: Libraryの選択タイル(輪→チェック)。SKIP/HIDEの標準色は下部ボタンと同じ--icon-muted */
+#playlistBox .playlist-del-tile .sel-on { display: none; }
+#pcV2PanelBody.playlist-edit-mode #playlistBox .del-btn.pcv2-selected + .playlist-del-tile .sel-on { display: block; }
+#pcV2PanelBody.playlist-edit-mode #playlistBox .del-btn.pcv2-selected + .playlist-del-tile .sel-off { display: none; }

@@ -215,6 +215,7 @@ function qnPlacePresetPopup(input, popup) {
   const vRight = vv ? vv.offsetLeft + vv.width : window.innerWidth;
   const r = input.getBoundingClientRect();
   popup.style.maxHeight = "";
+  popup.style.maxWidth = Math.max(120, vRight - vLeft - 16) + "px";
   popup.style.overflowY = "auto";
   const h = popup.scrollHeight + 2;
   const below = vBottom - r.bottom - 12;
@@ -225,7 +226,8 @@ function qnPlacePresetPopup(input, popup) {
   popup.style.maxHeight = Math.max(60, room) + "px";
   const w = popup.offsetWidth;
   let left = r.left;
-  if (left + w > vRight - 8) left = Math.max(vLeft + 8, vRight - w - 8);
+  if (left + w > vRight - 8) left = vRight - w - 8;
+  left = Math.max(vLeft + 8, left);
   popup.style.top = Math.max(vTop + 4, top) + "px";
   popup.style.left = left + "px";
 }
@@ -244,6 +246,9 @@ function startPinMemoEdit(itemDiv, infoSpan, pinObj, index) {
   infoSpan.parentNode.insertBefore(input, infoSpan);
   input.focus();
   input.select();
+  // 【v3.53.1】編集中は一覧を再描画しない(再描画で入力欄とプリセットが消えるのを防ぐ)。終了時(commit/cancel/applyPreset)に解除
+  window.qnPinMemoEditing = true;
+  const startedAt = Date.now();
 
   const presetPopup = document.createElement("div");
   presetPopup.className = "pin-memo-preset-popup";
@@ -254,6 +259,7 @@ function startPinMemoEdit(itemDiv, infoSpan, pinObj, index) {
   function commit() {
     if (finished) return;
     finished = true;
+    window.qnPinMemoEditing = false;
     closePinMemoPresetPopup();
     pinObj.memo = input.value.trim();
     savePins();
@@ -262,12 +268,14 @@ function startPinMemoEdit(itemDiv, infoSpan, pinObj, index) {
   function cancel() {
     if (finished) return;
     finished = true;
+    window.qnPinMemoEditing = false;
     closePinMemoPresetPopup();
     renderPinList();
   }
   function applyPreset(label) {
     if (finished) return;
     finished = true;
+    window.qnPinMemoEditing = false;
     closePinMemoPresetPopup();
     pinObj.memo = label;
     const colorName = presetColors[label];
@@ -327,6 +335,7 @@ function startPinMemoEdit(itemDiv, infoSpan, pinObj, index) {
   document.body.appendChild(presetPopup);
   activePinMemoPresetPopup = { popup: presetPopup, reposition };
   reposition();
+  requestAnimationFrame(reposition);
   window.addEventListener("scroll", reposition, true);
   window.addEventListener("resize", reposition);
   if (window.visualViewport) { window.visualViewport.addEventListener("resize", reposition); window.visualViewport.addEventListener("scroll", reposition); }
@@ -341,6 +350,8 @@ function startPinMemoEdit(itemDiv, infoSpan, pinObj, index) {
     }
   });
   input.addEventListener("blur", () => {
+    // 開いた直後(スワイプのトレイが閉じる/キーボードが出る間)の一瞬のblurは無視して入力欄に戻す
+    if (!finished && Date.now() - startedAt < 400) { setTimeout(() => { if (!finished && input.isConnected) input.focus(); }, 0); return; }
     // iOSでpointerdownのpreventDefaultが効かない場合の対策: チップ押下中のblurでは確定しない(確定はapplyPreset())
     setTimeout(() => {
       if (presetPointerActive) return;

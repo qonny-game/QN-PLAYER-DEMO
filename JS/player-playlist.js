@@ -306,7 +306,8 @@ function buildPlaylistRow(track, i, editMode, nowPlaying) {
     // 【v3.53.0】削除選択タイル(ゴミ箱+Delete)。選択状態は直前の.del-btn.pcv2-selectedに連動(CSS)
     const delTile = document.createElement("span");
     delTile.className = "playlist-del-tile";
-    delTile.innerHTML = window.QN_ROW_ACT.html("del");
+    // Libraryは移動(Move)にも使う選択なので、ゴミ箱でなく「選択」アイコン(未選択=輪、選択=チェック付き)
+    delTile.innerHTML = '<svg class="sel-off" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/></svg><svg class="sel-on" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg><span>Select</span>';
     delZone.appendChild(delTile);
     item.appendChild(delZone);
   }

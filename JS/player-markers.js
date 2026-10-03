@@ -453,6 +453,7 @@ function startDragPin(index) {
 }
 
 function renderPinList() {
+  if (window.qnPinMemoEditing && document.querySelector(".pin-memo-input")) return; // メモ編集中は再描画しない(終了時にcommit/cancelが描画する)
   if (typeof closePinMemoPresetPopup === "function") closePinMemoPresetPopup();
   const list = document.getElementById("pinList");
   if (list) list.innerHTML = "";

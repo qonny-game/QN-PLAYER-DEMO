@@ -53,3 +53,5 @@
 - 3.52.0 Markers行を調整。スワイプは編集/削除のみ。SKIP/HIDEは背景なし+区切り線(ON中はアイコンを薄暗く)。EDIT=SKIP/HIDE/編集/DELETE(ゴミ箱タイル。選択トグル、選択中は赤)。FABはDeleteの位置がCancel、選択1件以上でOKがDeleteに。色丸を20pxに拡大。
 - 3.52.1 Markers行のボタンを下部コントロールと同じサイズ感に(アイコン20px/ラベル9px/weight600)。50px正方形で、ボタン間の隙間0(編集とDELETEの間のgrid gapも打ち消し)。
 - 3.53.0 UI文言を「先頭大文字・以後小文字」に統一(ロゴ・MP3/WAV/ZIP/EQ/OK等の略語・音名は大文字維持。`text-transform: uppercase`は#appLogo/#splashLogo/P2Pコード入力のみ)。PLAYERのLibraryをMarkersと同じ行ルールに: Skipタイル(背景なし+区切り線、ON中は薄暗く)、編集モードのDeleteは選択タイル、FABはCancel+OK→Delete(Move併存)、スワイプは編集/削除のみ。
+- 3.53.1 マーカーのメモ入力: 開いた直後の一瞬のblur無視/編集中は一覧を再描画しない/プリセットが画面外にはみ出さないよう幅・左位置を補正。Library: 選択タイルをゴミ箱→「Select」(輪/チェック)に。編集モードの入力欄の文字サイズ・行高を表示時と揃えた。フォルダ見出しの高さ40→48px。Skip/Hideの標準色を下部ボタンと同じ`--icon-muted`に。
+- 3.54.0 下部コントロールの長押しクイック設定(`JS/player-quickpop.js`, `CSS/style-quickpop.css`): Loop/ドックLoop=プリロール秒、±skip=送り戻し秒、Repeat=Library範囲、時間表示=Bar length/Bars on screen/Follow playhead。部品は設定パネルと同じQNSettingsUI。長押し後のclickは握りつぶす。SPドックの+Markerをアクセント色に、再生中のドック/FAB/再生ボタンを緑でなく停止中と同じ色に統一。

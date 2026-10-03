@@ -126,3 +126,10 @@
 - UI文言は「先頭大文字・以後小文字」(例: Skip / Drop audio file here)。例外=ロゴ、略語・形式名(MP3/WAV/ZIP/EQ/OK/BPM等)、音名。CSSで`text-transform: uppercase`を新設しない(ロゴ以外)。ラベルは元の文字列を直接その表記で書く。
 - Libraryの行(`.playlistItem`)も`.playlist-act-cell`(Skip)+編集中の`.playlist-del-zone`(中に`.del-btn`+`.playlist-del-tile`)。通常/編集とも正方形57px・隙間0(編集中は`.playlist-act-cell{margin-right:-8px}`でgrid gapを打ち消し)。Skip中は行全体でなく子要素だけopacity .4。旧`.playlist-skip-toggle`はPLAYERでは使わない(YouTube側は従来)。
 - FAB(Markers/Library共通): `#pcV2MarkersCancelBtn`/`#pcV2PlaylistCancelBtn`がDeleteの位置、EditBtnは選択0=OK/1以上=Delete(`syncEditBtn`)。`#pcV2DeleteSelectedBtn`は廃止。
+- v3.53.1: メモ編集中は`window.qnPinMemoEditing`でrenderPinList()を止める(commit/cancel/applyPresetで解除)。`.playlist-editable-input`はfont-size/weight/line-height等をinheritする(入力欄の既定13.3pxで編集モードの見た目が変わるため)。Libraryの`.playlist-del-tile`は輪/チェックの2svg(`.sel-off`/`.sel-on`)をCSSで切替。
+
+## 長押しクイック設定(v3.54.0)
+- `player-quickpop.js`が`document`のpointerdown(capture)委譲で拾う。対象は`TARGETS`(セレクタ→定義名)に1行足すだけ。行の定義は設定パネルと同じ`{label,hint,type,values,get,set,fmt}`で、見た目は`QNSettingsUI.build`の流用(新しい独自UIを作らない)。
+- 長押し450ms/10px動いたら中止。成立後に指を離した時のclickは`swallow`で握りつぶす(ボタン本来の操作を発火させない)。対象には`user-select:none`と`contextmenu`抑止(iOSの選択/メニュー対策)。
+- 送り秒数は`window.QNSkip`(player-ui-pc-v2.jsのクロージャ内skipSecの公開口)。QNBarsはグローバルのconst(`window.QNBars`ではない)。
+- 再生中の見た目は停止中と同じ色(ドック/FAB/#playToggleとも緑のグラデ禁止)。
