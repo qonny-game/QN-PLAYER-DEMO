@@ -11,8 +11,11 @@ const QNBars = (function () {
   const GAP_RATIO = 28 / 44;
   const DEFAULT_SEC = 5;
   const BUFFER_ROWS = 2;
-  const BAR_STEP_CSS = 1.5;
+  const BAR_STEP_CSS = 0.5;
   const FOLLOW_KEY = "qn_bar_follow";
+  const WAVE_KEY = "qn_bar_wave";
+  let waveShape = "mirror";
+  try { if (localStorage.getItem(WAVE_KEY) === "bottom") waveShape = "bottom"; } catch (e) {}
   const PAUSE_KEY = "qn_bar_follow_pause";
   const PAUSE_DEFAULT = 6;
   const PAUSE_MIN = 1;
@@ -333,12 +336,25 @@ const QNBars = (function () {
     const step = W / g.nBars;
     const minH = Math.max(1, g.dpr);
     const path = new Path2D();
-    path.moveTo(0, H);
-    path.lineTo(0, H - Math.max(minH, vals[0] * H * 0.85));
-    for (let i = 0; i < n; i++) path.lineTo((i + 0.5) * step, H - Math.max(minH, vals[i] * H * 0.85));
-    path.lineTo(n * step, H - Math.max(minH, vals[n - 1] * H * 0.85));
-    path.lineTo(n * step, H);
-    path.closePath();
+    // 【v3.58.0】Mirror=中心線から上下対称(DAWの波形に近い)、Bottom=従来の下揃え。点は0.5CSSpx刻みなので直線でつないでも角は見えない
+    if (waveShape === "mirror") {
+      const mid = H / 2, amp = H * 0.46;
+      const dy = i => Math.max(minH / 2, vals[i] * amp);
+      path.moveTo(0, mid - dy(0));
+      for (let i = 0; i < n; i++) path.lineTo((i + 0.5) * step, mid - dy(i));
+      path.lineTo(n * step, mid - dy(n - 1));
+      path.lineTo(n * step, mid + dy(n - 1));
+      for (let i = n - 1; i >= 0; i--) path.lineTo((i + 0.5) * step, mid + dy(i));
+      path.lineTo(0, mid + dy(0));
+      path.closePath();
+    } else {
+      path.moveTo(0, H);
+      path.lineTo(0, H - Math.max(minH, vals[0] * H * 0.85));
+      for (let i = 0; i < n; i++) path.lineTo((i + 0.5) * step, H - Math.max(minH, vals[i] * H * 0.85));
+      path.lineTo(n * step, H - Math.max(minH, vals[n - 1] * H * 0.85));
+      path.lineTo(n * step, H);
+      path.closePath();
+    }
 
     const barDur = sec / g.nBars;
     const t0 = r * sec;
@@ -418,7 +434,7 @@ const QNBars = (function () {
       markersList = pins.filter(p => p.enabled).sort((a, b) => a.t - b.t);
     }
 
-    const sig = accent + "|" + ms + "|" + peaksVer + "|" + g.nBars + "|" + g.barW + "|" + g.barH + "|" + g.dpr + "|" + sec + "|" + (window.__qnWaveformDrawCount || 0);
+    const sig = accent + "|" + ms + "|" + peaksVer + "|" + g.nBars + "|" + g.barW + "|" + g.barH + "|" + g.dpr + "|" + sec + "|" + waveShape + "|" + (window.__qnWaveformDrawCount || 0);
     rows.forEach((el, r) => {
       const played = playedBars(r, ct);
       const rs = sig + "|" + played;
@@ -505,6 +521,12 @@ const QNBars = (function () {
     }
   }
 
+  function getWaveShape() { return waveShape; }
+  function setWaveShape(v) {
+    waveShape = v === "bottom" ? "bottom" : "mirror";
+    try { localStorage.setItem(WAVE_KEY, waveShape); } catch (e) {}
+    peakCache.clear(); geomDirty = true;
+  }
   function getFollow() { return followOn; }
 
   function setFollow(on) {
@@ -604,7 +626,7 @@ const QNBars = (function () {
     onTrackLoaded,
     createGearButton,
     setOpenSettings(fn) { openSettingsFn = fn; },
-    getFollow, setFollow, getPause, setPause,
+    getFollow, setFollow, getPause, setPause, getWaveShape, setWaveShape,
     PAUSE_MIN, PAUSE_MAX,
     rowOf,
     pctInRow,

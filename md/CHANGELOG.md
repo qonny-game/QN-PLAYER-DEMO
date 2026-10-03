@@ -62,3 +62,4 @@
 - 3.56.3 波形ヘッダー右上の歯車ボタンを廃止(設定は下部ナビのSettings。Barの設定は時刻ラベル長押しでも開く)。
 - 3.57.0 和英切替(第1段階): `JS/qn-i18n.js`新設(日本語キーの辞書+MutationObserverで英語時のみDOM差し替え。title/aria-label/alert/confirmも対応)、Settings>General>Language(Auto/日本語/English、`qn_lang`)。詳細はmd/I18N_HANDOFF.md。
 - 3.57.1 和英切替(第2段階): `JS/qn-i18n-apps.js`新設でYouTube/PITCH/TUNERの文言を英訳(`QNI18N.addDict/addRules`を追加)。
+- 3.58.0 波形をよりリアルに: ピーク密度を毎秒40→160(`player-ui-shared.js`)、バー刻みを1.5→0.5CSSpx(`BAR_STEP_CSS`)、Mirror(上下対称・既定)/Bottom(従来)切替を追加(Settings>Seek bar>Wave shape、`qn_bar_wave`)。

@@ -855,6 +855,7 @@
     const rowsBar = [
       { label: "Bar length", hint: "1 bar = seconds", type: "stepper", values: () => QNBars.OPTIONS, get: () => QNBars.getSec(), set: v => QNBars.setSec(v), fmt: v => v + "s" },
       { label: "Bars on screen", hint: "Rows shown at once", type: "stepper", values: () => QNBars.ROWS_OPTIONS, get: () => QNBars.getRows(), set: v => QNBars.setRows(v), fmt: v => v === 0 ? "Auto" : String(v) },
+      { label: "Wave shape", hint: "Mirror is symmetric around the center", type: "stepper", values: () => ["mirror", "bottom"], get: () => QNBars.getWaveShape(), set: v => QNBars.setWaveShape(v), fmt: v => v === "mirror" ? "Mirror" : "Bottom" },
       { label: "Follow playhead", hint: "Auto-scroll while playing", type: "switch", get: () => QNBars.getFollow(), set: on => QNBars.setFollow(on) },
       { label: "Pause after scrolling", hint: "Seconds before follow resumes", type: "stepper",
         values: () => { const a = []; for (let i = QNBars.PAUSE_MIN; i <= QNBars.PAUSE_MAX; i++) a.push(i); return a; },

@@ -35,8 +35,8 @@ async function decodeWaveform(file, token) {
 
     const channelCount = audioBuffer.numberOfChannels;
     const rawLength = audioBuffer.length;
-    // 5秒1本でも粗くならないよう毎秒40ピーク(下限4000・上限240000)。QNBarsが1本あたりの区間で最大値を取って間引く
-    const samples = Math.max(4000, Math.min(240000, Math.round(audioBuffer.duration * 40)));
+    // 【v3.58.0】5秒1本でも滑らかに見えるよう毎秒160ピーク(下限4000・上限480000=約50分)。QNBarsが1本あたりの区間で最大値を取って間引く
+    const samples = Math.max(4000, Math.min(480000, Math.round(audioBuffer.duration * 160)));
     const blockSize = Math.max(1, Math.floor(rawLength / samples));
     const peaks = new Float32Array(samples);
 

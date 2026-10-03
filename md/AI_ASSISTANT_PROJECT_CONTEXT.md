@@ -88,6 +88,7 @@ favicon/  md/  pricing*.html  QUICK_START.md
 | マーカーメモのプリセット色／カスタムプリセット | localStorage | `qn_marker_preset_colors_v1`（`{名前:色キー|null}`、初期値`MARKER_PRESET_COLOR_DEFAULTS`）／`qn_marker_custom_presets_v1`（`[{label,color}]`最大30）。PLAYERとYouTubeで共用（`getAllMarkerPresetLabels()`） |
 | シークバー1本の秒数 | localStorage | `qn_bar_sec`（5/10/15/30/60、既定5） |
 | シークバー追従ON/OFF | localStorage | `qn_bar_follow`（"0"でOFF、既定ON） |
+| 波形の形 | localStorage | `qn_bar_wave`（`mirror`既定\|`bottom`） |
 | 手動スクロール後の追従停止秒数 | localStorage | `qn_bar_follow_pause`（1〜30、既定6） |
 | シークバーの1画面の本数 | localStorage | `qn_bar_rows`（0=自動/3/4/5/6/8、既定0） |
 | 送り戻しボタンの秒数 | localStorage | `qn_skip_sec`（5/10/15/30/60、既定10） |
