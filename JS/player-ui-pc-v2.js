@@ -261,6 +261,46 @@
       topControls.appendChild(divider);
       topControls.appendChild(group2);
 
+      // 【v3.59.0】PC幅のみ: コントロール右に Volume / Speed / Key(スライダー+±)。操作は既存の applyVolumeChange / handleSpeedRangeInput / setKeySemitones に委譲、表示はpcv2WaveLoopから同期。SP幅はCSSで非表示
+      const mixer = el('<div class="pcv2-ctrl-group pcv2-mixer" id="pcV2BarMixer">' +
+        '<div class="pcv2-mix-item" data-mix="vol"><div class="pcv2-mix-head"><span class="pcv2-mix-label">Volume</span><span class="pcv2-mix-val" data-mixval="vol">80%</span></div><input type="range" class="pcv2-mix-range" id="pcV2BarVol" min="0" max="1" step="0.01" aria-label="Volume"></div>' +
+        '<div class="pcv2-mix-item" data-mix="speed"><div class="pcv2-mix-head"><span class="pcv2-mix-label" title="Click to reset to 1.00x">Speed</span><span class="pcv2-mix-val" data-mixval="speed">1.00x</span></div><input type="range" class="pcv2-mix-range" id="pcV2BarSpeed" min="0.5" max="1.5" step="0.01" aria-label="Speed"></div>' +
+        '<div class="pcv2-mix-item pcv2-mix-key" data-mix="key"><div class="pcv2-mix-head"><span class="pcv2-mix-label" title="Click to reset to 0">Key</span></div><div class="pcv2-mix-keyrow"><button type="button" class="pcv2-mix-btn" id="pcV2BarKeyDown" aria-label="Key down" title="Key −1">−</button><span class="pcv2-mix-val pcv2-mix-keyval" data-mixval="key" title="Click to reset to 0">0</span><button type="button" class="pcv2-mix-btn" id="pcV2BarKeyUp" aria-label="Key up" title="Key +1">＋</button></div></div>' +
+        '</div>');
+      topControls.appendChild(el('<div class="pcv2-ctrl-divider pcv2-mixer-divider"></div>'));
+      topControls.appendChild(mixer);
+      const barVol = mixer.querySelector("#pcV2BarVol"), barSpeed = mixer.querySelector("#pcV2BarSpeed");
+      barVol.addEventListener("input", () => {
+        const v = parseFloat(barVol.value);
+        [document.getElementById("volume"), document.getElementById("controlVolume")].forEach(i => { if (i) i.value = v; });
+        applyVolumeChange(v);
+      });
+      barSpeed.addEventListener("input", () => {
+        const sp = document.getElementById("controlSpeedRange");
+        if (!sp) return;
+        sp.value = barSpeed.value;
+        handleSpeedRangeInput({ target: sp });
+        barSpeed.value = sp.value;
+      });
+      mixer.querySelector('[data-mix="speed"] .pcv2-mix-label').addEventListener("click", () => setSpeed(1));
+      mixer.querySelector('[data-mixval="speed"]').addEventListener("click", () => setSpeed(1));
+      mixer.querySelector("#pcV2BarKeyDown").addEventListener("click", () => setKeySemitones(currentKeySemitones - 1));
+      mixer.querySelector("#pcV2BarKeyUp").addEventListener("click", () => setKeySemitones(currentKeySemitones + 1));
+      mixer.querySelector('[data-mix="key"] .pcv2-mix-label').addEventListener("click", () => setKeySemitones(0));
+      mixer.querySelector('[data-mixval="key"]').addEventListener("click", () => setKeySemitones(0));
+      let mixLast = "";
+      window.pcv2SyncBarMixer = function () {
+        const sig = audio.volume + "|" + currentSpeed + "|" + currentKeySemitones;
+        if (sig === mixLast) return;
+        mixLast = sig;
+        if (document.activeElement !== barVol) barVol.value = audio.volume;
+        if (document.activeElement !== barSpeed) barSpeed.value = currentSpeed;
+        mixer.querySelector('[data-mixval="vol"]').textContent = Math.round(audio.volume * 100) + "%";
+        mixer.querySelector('[data-mixval="speed"]').textContent = currentSpeed.toFixed(2) + "x";
+        mixer.querySelector('[data-mixval="key"]').textContent = (currentKeySemitones > 0 ? "+" : "") + currentKeySemitones;
+      };
+      window.pcv2SyncBarMixer();
+
       // 【v3.55.0】SP: 再生系/マーカー系の2ページ。左右端の矢印でスライド、スクロール位置でis-page-1を切替(PC幅はCSSで矢印非表示・通常配置)
       const chevR = '<svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>';
       const chevL = '<svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>';
@@ -1399,6 +1439,7 @@
     if (now - pcv2LastDrawAt < PCV2_WAVE_INTERVAL_MS) return;
     pcv2LastDrawAt = now;
     pcv2DrawWaveform(false);
+    if (window.pcv2SyncBarMixer) window.pcv2SyncBarMixer();
   }
   pcv2WaveRafId = requestAnimationFrame(pcv2WaveLoop);
 

@@ -838,3 +838,60 @@ body.pc-v2-active #qnMenuMount {
 }
 
 
+
+
+/* ---------- 【v3.59.0】PC幅: 下部コントロールをゆったり(ボタン幅・クリック領域を拡大)、波形エリアの中央揃え、再生系とマーカー系の間を広げ、右にVolume/Speed/Key ---------- */
+@media screen and (min-width: 901px) {
+  #pcV2BottomBar { padding: 12px 24px; }
+  /* auto marginなら、幅が足りない時は左端から横スクロール(左が切れない) */
+  #pcV2BottomBar #topControls { margin: 0 auto; flex-shrink: 0; }
+  #pcV2BottomBar .tripleNavBtn-third,
+  #pcV2BottomBar .loopbtn,
+  #pcV2BottomBar .pcv2-ctrl-btn:not(.pcv2-step-btn) {
+    padding: 10px 16px;
+    min-width: 68px;
+    min-height: 64px;
+    border-radius: 10px;
+  }
+  #pcV2BottomBar .tripleNavBtn-third:hover,
+  #pcV2BottomBar .loopbtn:hover { background: rgba(255, 255, 255, 0.05); }
+  #pcV2BottomBar .tripleNavBtn-center { min-width: 76px; }
+  #pcV2BottomBar .tripleNavBtn-third:not(.tripleNavBtn-center) svg, #pcV2BottomBar .loopbtn svg { width: 22px; height: 22px; }
+  #pcV2BottomBar .pcv2-ctrl-divider { margin: 0 28px; height: 32px; }
+
+  /* Volume / Speed / Key */
+  #pcV2BottomBar #pcV2BarMixer { gap: 20px; align-items: center; }
+  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-item { display: flex; flex-direction: column; gap: 6px; width: 112px; }
+  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-label { font-size: 11px; color: var(--icon-muted); user-select: none; }
+  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-item[data-mix="speed"] .pcv2-mix-label,
+  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-key .pcv2-mix-label,
+  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-item[data-mix="speed"] .pcv2-mix-val,
+  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-keyval { cursor: pointer; }
+  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-val { font-size: 12px; color: var(--text-bright, #fff); font-variant-numeric: tabular-nums; }
+  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-range { width: 100%; height: 28px; margin: 0; cursor: pointer; accent-color: var(--accent-primary, #3b82f6); }
+  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-key { width: 104px; }
+  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-keyrow { display: flex; align-items: center; justify-content: space-between; height: 28px; }
+  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-keyval { min-width: 32px; text-align: center; font-size: 14px; }
+  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-btn {
+    width: 32px; height: 28px; padding: 0;
+    border: 1px solid var(--border-subtle); border-radius: 8px;
+    background: none; color: var(--icon-muted); font-size: 16px; line-height: 1; cursor: pointer;
+  }
+  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-btn:hover { color: var(--text-bright, #fff); background: rgba(255, 255, 255, 0.06); }
+  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-btn:active { transform: scale(0.94); }
+}
+
+/* 狭いPC幅(サイドパネル表示中の1280px等): 余白を詰めて全部が収まるように。それでも足りない時は横スクロール */
+@media screen and (min-width: 901px) and (max-width: 1600px) {
+  #pcV2BottomBar { padding: 10px 12px; }
+  #pcV2BottomBar .tripleNavBtn-third,
+  #pcV2BottomBar .loopbtn,
+  #pcV2BottomBar .pcv2-ctrl-btn:not(.pcv2-step-btn) { padding: 8px 6px; min-width: 48px; }
+  #pcV2BottomBar .tripleNavBtn-center { min-width: 60px; }
+  #pcV2BottomBar .pcv2-ctrl-divider { margin: 0 12px; }
+  #pcV2BottomBar #pcV2BarMixer { gap: 10px; }
+  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-item { width: 76px; }
+  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-key { width: 92px; }
+  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-btn { width: 28px; }
+}

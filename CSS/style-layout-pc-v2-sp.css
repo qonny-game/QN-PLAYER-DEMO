@@ -500,3 +500,8 @@ html {
 @media (min-width: 901px) {
   #pcV2BottomBar .pcv2-bar-page { display: none; }
 }
+
+/* 【v3.59.0】Volume/Speed/KeyのミキサーはPC幅専用(SPの2ページバーには出さない) */
+@media (max-width: 900px) {
+  #pcV2BarMixer, .pcv2-mixer-divider { display: none !important; }
+}
