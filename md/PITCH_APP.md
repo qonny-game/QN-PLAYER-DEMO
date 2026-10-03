@@ -18,7 +18,7 @@
 
 ## Backup / Import（本体共通画面。`player-track-backup.js` ⇔ `window.QNPitchBackup`）
 - 共通画面の一覧に「PITCH」グループが出る（PLAYER/YouTubeアプリのBackupからも見える）。ZIPは`pitch.json`＋`pitch/<createdAt>.<webm|m4a|ogg>`。PLAYER/YouTubeと同時選択なら1つのZIP(`qnplayer_backup_*.zip`)、PITCHだけなら`qn-pitch_backup_*.zip`（音声オフなら`qn-pitch_backup_*.json`）。
-- `pitch.json`: `{format:"qn-pitch-recordings",version:1,items:[{name,createdAt,duration,score,file?,track:[[t,midi,cents,rms,voiced(0/1)],...]}]}`。点列は常に入る。共通画面の「音声データ」チェックが音声ファイルの有無を決める（「設定データ」はPITCHには効かない）。
+- `pitch.json`: `{format:"qn-pitch-recordings",version:1,items:[{name,createdAt,duration,score,file?,track:[[t,midi,cents,rms,voiced(0/1)],...]}]}`。点列は常に入る。共通画面の「PLAYER音声データ」チェックが音声ファイルの有無を決める（「ユーザー設定データ」はPITCHには効かない）。
 - 同一性は`createdAt`。Importの重複は上書き/スキップ（共通の切替）。上書き＝古いレコードを消して新規add（再putしない）。音声なしJSONは「既存録音の名前の上書き」だけ可能、新規は「音声なしのためスキップ」。
 - `QNPitchBackup`: `list()`(同期・キャッシュ) / `refresh()`(IndexedDBから読み直し) / `buildExport(ids,withAudio)`(async) / `parseImport(raw)` / `exists(key)` / `titleOf(key)` / `applyImport(list,audioMap,choices)`(async)。アプリを一度も開いていなくても、共通画面を開く時に`refresh()`される。
 
