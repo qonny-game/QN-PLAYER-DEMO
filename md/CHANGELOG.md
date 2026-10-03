@@ -57,3 +57,5 @@
 - 3.54.0 下部コントロールの長押しクイック設定(`JS/player-quickpop.js`, `CSS/style-quickpop.css`): Loop/ドックLoop=プリロール秒、±skip=送り戻し秒、Repeat=Library範囲、時間表示=Bar length/Bars on screen/Follow playhead。部品は設定パネルと同じQNSettingsUI。長押し後のclickは握りつぶす。SPドックの+Markerをアクセント色に、再生中のドック/FAB/再生ボタンを緑でなく停止中と同じ色に統一。
 - 3.55.0 長押し対象に右下の目印(◢)を追加し、波形行の時刻ラベル(.vbar-time)にもBar設定ポップアップ。SPのMoreは「再生系/マーカー系」の2ページ(各ページ均等配置、横スナップ、左右端の矢印で移動)。Backupの一覧をAudio/YouTube/Pitchの別枠に分離。Marker Memo Colorsはデフォルト8項目の名前も編集でき、「Reset to default」で名前と色を初期値へ(カスタム行は残す)。
 - 3.56.0 長押しクイック設定を拡張(`JS/player-quickpop.js`): Play=Speed/Key、前後マーカー=マーカー一覧ジャンプ、A/B=±0.1s微調整+±1s+Clear、+Marker=プリセット選択でラベル付き追加、前後トラック=フォルダ/曲一覧、Libraryの行=クイックメニュー(Pin/Skip/Move/Rename/Delete確認付き)。波形のマーカー/A/Bポップアップに◂▸の±0.1s微調整。新対象にも◢目印。
+- 3.56.1 SPのMore下段バー: 各ページのボタンを横幅いっぱいに等分(flex:1 1 0)。左右余白を16pxに縮め、ページ矢印も細く(16px)。
+- 3.56.2 SP波形ヘッダー: 時刻をファイル名の下へ移動(grid、歯車は右端2行ぶち抜き)。長いファイル名はマーキーを止めて末尾を…で省略し、横幅を超えない。

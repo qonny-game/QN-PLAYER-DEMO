@@ -115,9 +115,23 @@
     display: none;
   }
 
+  /* 【v3.56.2】SP: ファイル名の下に時刻。歯車は右端で2行ぶち抜き。長いファイル名は省略(…) */
   #pcV2WaveHead {
-    gap: 8px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    column-gap: 8px;
+    row-gap: 2px;
+    align-items: center;
+    max-width: 100%;
+    overflow: hidden;
   }
+  #pcV2WaveHead #appTitle { grid-column: 1; grid-row: 1; min-width: 0; max-width: 100%; }
+  #pcV2WaveHead #appTitle #appTitleInner { display: block; overflow: hidden; text-overflow: ellipsis; animation: none !important; transform: none !important; }
+  #pcV2WaveHead #appTitle #appTitleText { display: inline; }
+  #pcV2WaveHead #appTitle #appTitleText.marquee-clone { display: none; }
+  #pcV2WaveHead .time-controls-row { grid-column: 1; grid-row: 2; min-width: 0; }
+  #pcV2WaveHead .qn-bar-gear { grid-column: 2; grid-row: 1 / span 2; margin-left: 0; }
 
   #pcV2BottomBar .pcv2-ctrl-btn {
     padding: 14px 12px;
@@ -453,11 +467,13 @@ html {
     flex: 0 0 50%;
     width: 50%;
     box-sizing: border-box;
-    padding: 0 30px;
-    justify-content: space-evenly;
+    padding: 0 16px;
+    justify-content: stretch;
     scroll-snap-align: start;
   }
-  #pcV2BottomBar .pcv2-ctrl-group > * { flex-shrink: 1; }
+  /* 各ボタンは幅いっぱいを等分(flex:1 1 0) */
+  #pcV2BottomBar .pcv2-ctrl-group > * { flex: 1 1 0; min-width: 0; }
+  #pcV2BottomBar .pcv2-ctrl-group > * > button { flex: 1 1 0; min-width: 0; }
   #pcV2BottomBar .pcv2-ctrl-divider { display: none; }
   /* ページ移動の矢印(sticky: バーの左右端に固定) */
   #pcV2BottomBar .pcv2-bar-page {
@@ -466,7 +482,7 @@ html {
     justify-content: center;
     position: sticky;
     top: 0;
-    width: 28px;
+    width: 16px;
     align-self: stretch;
     padding: 0;
     background: none;
@@ -476,9 +492,9 @@ html {
     z-index: 3;
     -webkit-tap-highlight-color: transparent;
   }
-  #pcV2BottomBar .pcv2-bar-page svg { width: 22px; height: 22px; fill: currentColor; }
-  #pcV2BottomBar .pcv2-bar-page.is-next { right: 0; margin-left: -28px; order: 99; }
-  #pcV2BottomBar .pcv2-bar-page.is-prev { left: 0; margin-right: -28px; order: -1; }
+  #pcV2BottomBar .pcv2-bar-page svg { width: 20px; height: 20px; margin: 0 -2px; fill: currentColor; }
+  #pcV2BottomBar .pcv2-bar-page.is-next { right: 0; margin-left: -16px; order: 99; }
+  #pcV2BottomBar .pcv2-bar-page.is-prev { left: 0; margin-right: -16px; order: -1; }
   #pcV2BottomBar.is-page-1 .pcv2-bar-page.is-prev { visibility: hidden; pointer-events: none; }
   #pcV2BottomBar:not(.is-page-1) .pcv2-bar-page.is-next { visibility: hidden; pointer-events: none; }
 }
