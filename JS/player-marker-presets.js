@@ -12,6 +12,20 @@ const MARKER_PRESET_COLOR_DEFAULTS = {
   "Outro": "indigo"
 };
 
+// 【v3.55.0】デフォルト8項目も名前を編集できる(上書きはid=元の名前をキーに保存)。「Reset to default」で名前・色とも初期値に戻す(カスタム行は消さない)
+const MARKER_PRESET_LABELS_KEY = "qn_marker_preset_labels_v1";
+function loadMarkerPresetLabelOverrides() {
+  try { const o = JSON.parse(localStorage.getItem(MARKER_PRESET_LABELS_KEY) || "{}"); return (o && typeof o === "object") ? o : {}; } catch (e) { return {}; }
+}
+function markerPresetDisplay(id) {
+  const o = loadMarkerPresetLabelOverrides();
+  return (typeof o[id] === "string" && o[id].trim()) ? o[id].trim() : id;
+}
+function getMarkerPresetLabelList() { return MARKER_LABEL_PRESETS.map(markerPresetDisplay); }
+function resetMarkerPresetDefaults() {
+  try { localStorage.removeItem(MARKER_PRESET_LABELS_KEY); localStorage.removeItem(MARKER_PRESET_COLORS_KEY); } catch (e) {}
+}
+
 const MARKER_CUSTOM_PRESETS_KEY = "qn_marker_custom_presets_v1";
 const MARKER_CUSTOM_PRESET_MAX = 30;
 const MARKER_CUSTOM_LABEL_MAXLEN = 30;
@@ -37,7 +51,7 @@ function saveMarkerCustomPresets(list) {
 }
 
 function getValidMarkerCustomPresets() {
-  const seen = new Set(MARKER_LABEL_PRESETS.map(l => l.toLowerCase()));
+  const seen = new Set(getMarkerPresetLabelList().map(l => l.toLowerCase()));
   const out = [];
   loadMarkerCustomPresets().forEach(x => {
     const k = x.label.toLowerCase();
@@ -49,7 +63,7 @@ function getValidMarkerCustomPresets() {
 }
 
 function getAllMarkerPresetLabels() {
-  return MARKER_LABEL_PRESETS.concat(getValidMarkerCustomPresets().map(x => x.label));
+  return getMarkerPresetLabelList().concat(getValidMarkerCustomPresets().map(x => x.label));
 }
 
 function getMarkerPresetColors() {
@@ -59,36 +73,66 @@ function getMarkerPresetColors() {
     if (raw) saved = JSON.parse(raw) || {};
   } catch (e) { saved = {}; }
   const result = {};
-  MARKER_LABEL_PRESETS.forEach(label => {
-    result[label] = Object.prototype.hasOwnProperty.call(saved, label)
-      ? saved[label]
-      : (MARKER_PRESET_COLOR_DEFAULTS[label] || null);
+  MARKER_LABEL_PRESETS.forEach(id => {
+    result[markerPresetDisplay(id)] = Object.prototype.hasOwnProperty.call(saved, id)
+      ? saved[id]
+      : (MARKER_PRESET_COLOR_DEFAULTS[id] || null);
   });
   getValidMarkerCustomPresets().forEach(x => { result[x.label] = x.color || null; });
   return result;
 }
 
 function setMarkerPresetColor(label, colorName) {
-  const current = getMarkerPresetColors();
-  current[label] = colorName || null;
-  try { localStorage.setItem(MARKER_PRESET_COLORS_KEY, JSON.stringify(current)); } catch (e) {}
+  // デフォルト項目はid(元の名前)キーで保存。カスタム行の色はsaveMarkerCustomPresets側
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(MARKER_PRESET_COLORS_KEY) || "{}") || {}; } catch (e) { saved = {}; }
+  const id = MARKER_LABEL_PRESETS.find(i => markerPresetDisplay(i) === label);
+  if (!id) return;
+  saved[id] = colorName || null;
+  try { localStorage.setItem(MARKER_PRESET_COLORS_KEY, JSON.stringify(saved)); } catch (e) {}
 }
 
 function renderMarkerPresetColorSettings() {
   const rowsEl = document.getElementById("qnMarkerPresetColorRows");
   if (!rowsEl) return;
   rowsEl.innerHTML = "";
+  const titleEl = rowsEl.parentNode && rowsEl.parentNode.querySelector(".qn-marker-preset-colors-title");
+  if (titleEl && !titleEl.querySelector(".qn-marker-reset-btn")) {
+    titleEl.classList.add("has-reset");
+    const rb = document.createElement("button");
+    rb.type = "button";
+    rb.className = "qn-marker-reset-btn";
+    rb.textContent = "Reset to default";
+    rb.title = "Restore the default names and colors";
+    rb.onclick = (e) => { e.stopPropagation(); if (typeof hapticTap === "function") hapticTap(); resetMarkerPresetDefaults(); renderMarkerPresetColorSettings(); };
+    titleEl.appendChild(rb);
+  }
   const colors = getMarkerPresetColors();
-  MARKER_LABEL_PRESETS.forEach(label => {
+  MARKER_LABEL_PRESETS.forEach(id => {
+    const label = markerPresetDisplay(id);
     const colorName = colors[label];
     const hex = colorName && MARKER_COLOR_PALETTE[colorName] ? MARKER_COLOR_PALETTE[colorName] : null;
 
     const row = document.createElement("div");
     row.className = "qn-marker-preset-color-row";
 
-    const name = document.createElement("span");
-    name.className = "qn-marker-preset-color-name";
-    name.textContent = label;
+    const name = document.createElement("input");
+    name.type = "text";
+    name.className = "qn-marker-custom-input";
+    name.maxLength = MARKER_CUSTOM_LABEL_MAXLEN;
+    name.value = label;
+    name.setAttribute("aria-label", "Preset name");
+    name.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); name.blur(); } e.stopPropagation(); });
+    name.addEventListener("change", () => {
+      const v = name.value.trim().slice(0, MARKER_CUSTOM_LABEL_MAXLEN);
+      const taken = getAllMarkerPresetLabels().some(l => l.toLowerCase() === v.toLowerCase() && l !== label);
+      if (v && !taken) {
+        const o = loadMarkerPresetLabelOverrides();
+        if (v === id) delete o[id]; else o[id] = v;
+        try { localStorage.setItem(MARKER_PRESET_LABELS_KEY, JSON.stringify(o)); } catch (e) {}
+      }
+      renderMarkerPresetColorSettings();
+    });
 
     const swatchBtn = document.createElement("button");
     swatchBtn.type = "button";

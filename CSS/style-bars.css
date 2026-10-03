@@ -83,8 +83,10 @@
   color: var(--icon-muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  pointer-events: none;
+  pointer-events: auto; /* v3.55.0: 長押しでBar設定ポップアップ(player-quickpop.js) */
   user-select: none;
+  -webkit-touch-callout: none;
+  cursor: pointer;
 }
 
 #vbarRows .vbar.is-current .vbar-time {

@@ -14,8 +14,50 @@
 .qn-quickpop .qn-set-sec { border-bottom: none; padding: 12px 0 2px; }
 .qn-quickpop .qn-set-row { min-height: 40px; padding: 6px 0; }
 /* 長押し対象はOS標準の選択/メニューを出さない */
-#loopToggleBtn, #pcV2DockLoop, #pcV2SkipBackBtn, #pcV2SkipFwdBtn, #allRepeatToggleBtn, #timeDisplay {
+#loopToggleBtn, #pcV2DockLoop, #pcV2SkipBackBtn, #pcV2SkipFwdBtn, #allRepeatToggleBtn, #timeDisplay, #playToggle, #pcV2DockPlay, #prevMarkerBtn, #nextMarkerBtn, #pcV2DockPrevMarker, #pcV2DockNextMarker, #setABtn, #setBBtn, #addPinBtn, #pcV2DockAdd, #prevTrackBtn, #nextTrackBtn, #playlistBox .playlistItem {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
 }
+
+/* 長押しで設定が出る対象の目印: 右下の小さな直角三角(◢)。対象を増やす時はplayer-quickpop.jsのTARGETSとここのセレクタを揃える */
+#playToggle, #pcV2DockPlay, #prevMarkerBtn, #nextMarkerBtn, #pcV2DockPrevMarker, #pcV2DockNextMarker, #setABtn, #setBBtn, #addPinBtn, #pcV2DockAdd, #prevTrackBtn, #nextTrackBtn, #loopToggleBtn, #pcV2DockLoop, #pcV2SkipBackBtn, #pcV2SkipFwdBtn, #allRepeatToggleBtn, #timeDisplay { position: relative; }
+#vbarRows .vbar-time { position: absolute; }
+#playToggle::after, #pcV2DockPlay::after, #prevMarkerBtn::after, #nextMarkerBtn::after, #pcV2DockPrevMarker::after, #pcV2DockNextMarker::after, #setABtn::after, #setBBtn::after, #addPinBtn::after, #pcV2DockAdd::after, #prevTrackBtn::after, #nextTrackBtn::after, #loopToggleBtn::after, #pcV2DockLoop::after, #pcV2SkipBackBtn::after, #pcV2SkipFwdBtn::after, #allRepeatToggleBtn::after, #timeDisplay::after, #vbarRows .vbar-time::after {
+  content: "";
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0 6px 6px;
+  border-color: transparent transparent var(--icon-muted) transparent;
+  opacity: 0.7;
+  pointer-events: none;
+}
+#timeDisplay::after, #vbarRows .vbar-time::after { right: -9px; bottom: 1px; }
+
+/* ---------- v3.56.0 リスト/チップ/±調整 ---------- */
+.qn-qp-list { display: flex; flex-direction: column; max-height: min(50vh, 320px); overflow-y: auto; margin: 0 -8px; }
+.qn-qp-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 11px 8px; background: none; border: none; border-bottom: 1px solid var(--border-subtle); border-radius: 0;
+  color: var(--text-bright); font-family: inherit; font-size: var(--fs-body); text-align: left; cursor: pointer;
+}
+.qn-qp-item:last-child { border-bottom: none; }
+.qn-qp-item:hover { background: var(--bg-hover-subtle); }
+.qn-qp-item.is-on .qn-qp-item-label { color: var(--accent-primary); font-weight: 700; }
+.qn-qp-item.is-dim { opacity: 0.45; }
+.qn-qp-item.is-danger { color: var(--danger, #ef4444); }
+.qn-qp-item-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qn-qp-item-sub { flex-shrink: 0; font-size: var(--fs-small); color: var(--icon-muted); font-variant-numeric: tabular-nums; }
+.qn-qp-dot { flex-shrink: 0; width: 12px; height: 12px; border-radius: 50%; }
+.qn-qp-empty { padding: 14px 0; font-size: var(--fs-small); color: var(--icon-muted); }
+.qn-qp-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 0 8px; max-width: 320px; }
+
+/* 波形のマーカー/A/Bポップアップ: 時刻の左右に±0.1s微調整 */
+.qn-pp-timerow { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.qn-pp-timerow.is-static .qn-pp-nudge { display: none; }
+.qn-pp-nudge { width: 28px; height: 28px; padding: 0; border: 0; border-radius: 6px; background: rgba(255,255,255,0.08); color: var(--icon-muted, #aaa); font-size: 14px; line-height: 1; cursor: pointer; }
+.qn-pp-nudge:hover { background: rgba(255,255,255,0.16); color: #fff; }

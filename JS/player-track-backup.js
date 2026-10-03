@@ -118,10 +118,19 @@ function renderTrackBackupTrackList() {
   const ytList = yt ? yt.list() : [];
   const ptApi = ptBackupApi();
   const ptList = ptApi ? ptApi.list() : [];
-  // YouTube動画/PITCH録音がある時だけ見出しで分ける
-  const grouped = ytList.length > 0 || ptList.length > 0;
-
-  if (grouped && tracks.length > 0) trackBackupTrackListEl.appendChild(makeTrackBackupGroupLabel("PLAYER"));
+  // 【v3.55.0】Audio / YouTube / Pitch はそれぞれ独立した枠(見出し+一覧)にする
+  let host = trackBackupTrackListEl;
+  function startGroup(text) {
+    host = document.createElement("div");
+    host.className = "track-backup-group";
+    host.appendChild(makeTrackBackupGroupLabel(text));
+    const rows = document.createElement("div");
+    rows.className = "track-backup-group-rows";
+    host.appendChild(rows);
+    trackBackupTrackListEl.appendChild(host);
+    host = rows;
+  }
+  if (tracks.length > 0) startGroup("Audio");
 
   tracks.forEach(track => {
     const row = document.createElement("label");
@@ -151,11 +160,11 @@ function renderTrackBackupTrackList() {
     sizeSpan.textContent = formatFileSize(track.file && track.file.size);
     row.appendChild(sizeSpan);
 
-    trackBackupTrackListEl.appendChild(row);
+    host.appendChild(row);
   });
 
   if (ytList.length > 0) {
-    trackBackupTrackListEl.appendChild(makeTrackBackupGroupLabel("YouTube"));
+    startGroup("YouTube");
     ytList.forEach(it => {
       const row = document.createElement("label");
       row.className = "track-backup-track-row";
@@ -181,12 +190,12 @@ function renderTrackBackupTrackList() {
       sizeSpan.textContent = it.markerCount + " markers";
       row.appendChild(sizeSpan);
 
-      trackBackupTrackListEl.appendChild(row);
+      host.appendChild(row);
     });
   }
 
   if (ptList.length > 0) {
-    trackBackupTrackListEl.appendChild(makeTrackBackupGroupLabel("PITCH"));
+    startGroup("Pitch");
     ptList.forEach(it => {
       const row = document.createElement("label");
       row.className = "track-backup-track-row";
@@ -212,7 +221,7 @@ function renderTrackBackupTrackList() {
       sizeSpan.textContent = formatFileSize(it.size);
       row.appendChild(sizeSpan);
 
-      trackBackupTrackListEl.appendChild(row);
+      host.appendChild(row);
     });
   }
 }

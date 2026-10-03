@@ -635,7 +635,7 @@ function ensurePinPopup() {
   pinPopEl.hidden = true;
   pinPopEl.setAttribute("role", "menu");
   pinPopEl.innerHTML =
-    '<div class="qn-yt-seekpop-time" data-pop="time">00:00.0</div>' +
+    '<div class="qn-pp-timerow"><button type="button" class="qn-pp-nudge" data-pop="NL" title="0.1s earlier" aria-label="0.1s earlier">&#9666;</button><div class="qn-yt-seekpop-time" data-pop="time">00:00.0</div><button type="button" class="qn-pp-nudge" data-pop="NR" title="0.1s later" aria-label="0.1s later">&#9656;</button></div>' +
     '<div class="qn-yt-seekpop-row">' +
       '<button type="button" class="qn-yt-seekpop-btn" data-pop="A" title="この位置をA点(ループ開始)に（もう一度押すと解除）"><b>A</b><span>Start</span></button>' +
       '<button type="button" class="qn-yt-seekpop-btn" data-pop="B" title="この位置をB点(ループ終了)に（もう一度押すと解除）"><b>B</b><span>End</span></button>' +
@@ -662,6 +662,8 @@ function ensurePinPopup() {
     else if (k === "C") pinPopColor();
     else if (k === "H") pinPopToggle();
     else if (k === "K") pinPopSkip();
+    else if (k === "NL") pinPopNudge(-0.1);
+    else if (k === "NR") pinPopNudge(0.1);
   });
   document.addEventListener("pointerdown", e => {
     if (pinPopEl.hidden) return;
@@ -671,6 +673,24 @@ function ensurePinPopup() {
   window.addEventListener("keydown", e => { if (e.key === "Escape") hidePinPopup(); }, true);
   window.addEventListener("resize", hidePinPopup);
   return pinPopEl;
+}
+
+// 微調整: マーカー/A点/B点の位置を±0.1sずらす
+function pinPopNudge(d) {
+  if (!audio.duration) return;
+  const nt = Math.round(Math.max(0, Math.min(audio.duration, pinPopTime + d)) * 10) / 10;
+  if (pinPopPin) {
+    pinPopPin.t = nt;
+    if (Array.isArray(pins)) pins.sort((a, b) => a.t - b.t);
+    refreshAfterPinChange();
+  } else if (pinPopAbKind) {
+    if (pinPopAbKind === "A") abA = nt; else abB = nt;
+    if (typeof afterABChange === "function") afterABChange();
+  } else return;
+  pinPopTime = nt;
+  pinPopEl.querySelector('[data-pop="time"]').textContent = formatTime(nt);
+  if (typeof hapticTap === "function") hapticTap();
+  resetPinPopTimer();
 }
 
 function resetPinPopTimer() {
@@ -702,6 +722,7 @@ function showPinPopup(t, barEl, clientX, pinObj, abKind) {
   pinPopTime = Math.max(0, Math.min(audio.duration, t));
   armPinPopDel(false);
   pop.querySelector('[data-pop="time"]').textContent = formatTime(pinPopTime);
+  pop.querySelector(".qn-pp-timerow").classList.toggle("is-static", !pinObj && !abKind);
   pop.querySelector('[data-pop="X"]').hidden = !abKind;
   pop.querySelector('[data-pop="A"]').hidden = !!abKind;
   pop.querySelector('[data-pop="B"]').hidden = !!abKind;

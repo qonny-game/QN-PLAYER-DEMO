@@ -433,3 +433,55 @@ html {
   /* 波形の横スワイプ(シーク)を使うため、縦スクロール以外はブラウザに任せない */
   #vbarRows { touch-action: pan-y; }
 }
+
+
+/* ---------- 【v3.55.0】SP: Moreの下段バーは「再生系=1画面」「マーカー系=1画面」の2ページ。各画面はボタンを均等配置(バランス)、横スナップ+右端/左端の矢印で移動 ---------- */
+@media (max-width: 900px) {
+  #pcV2BottomBar {
+    padding: 0;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    overscroll-behavior-x: contain;
+  }
+  #pcV2BottomBar #topControls {
+    width: 200%;
+    flex: 0 0 200%;
+    min-width: 200%;
+    position: relative !important;
+  }
+  #pcV2BottomBar .pcv2-ctrl-group {
+    flex: 0 0 50%;
+    width: 50%;
+    box-sizing: border-box;
+    padding: 0 30px;
+    justify-content: space-evenly;
+    scroll-snap-align: start;
+  }
+  #pcV2BottomBar .pcv2-ctrl-group > * { flex-shrink: 1; }
+  #pcV2BottomBar .pcv2-ctrl-divider { display: none; }
+  /* ページ移動の矢印(sticky: バーの左右端に固定) */
+  #pcV2BottomBar .pcv2-bar-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: sticky;
+    top: 0;
+    width: 28px;
+    align-self: stretch;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--icon-muted);
+    cursor: pointer;
+    z-index: 3;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #pcV2BottomBar .pcv2-bar-page svg { width: 22px; height: 22px; fill: currentColor; }
+  #pcV2BottomBar .pcv2-bar-page.is-next { right: 0; margin-left: -28px; order: 99; }
+  #pcV2BottomBar .pcv2-bar-page.is-prev { left: 0; margin-right: -28px; order: -1; }
+  #pcV2BottomBar.is-page-1 .pcv2-bar-page.is-prev { visibility: hidden; pointer-events: none; }
+  #pcV2BottomBar:not(.is-page-1) .pcv2-bar-page.is-next { visibility: hidden; pointer-events: none; }
+}
+@media (min-width: 901px) {
+  #pcV2BottomBar .pcv2-bar-page { display: none; }
+}

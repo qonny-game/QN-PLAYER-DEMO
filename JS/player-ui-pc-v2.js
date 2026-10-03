@@ -261,6 +261,18 @@
       topControls.appendChild(divider);
       topControls.appendChild(group2);
 
+      // 【v3.55.0】SP: 再生系/マーカー系の2ページ。左右端の矢印でスライド、スクロール位置でis-page-1を切替(PC幅はCSSで矢印非表示・通常配置)
+      const chevR = '<svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>';
+      const chevL = '<svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>';
+      const pageNext = el('<button type="button" class="pcv2-bar-page is-next" title="Marker controls" aria-label="Marker controls">' + chevR + '</button>');
+      const pagePrev = el('<button type="button" class="pcv2-bar-page is-prev" title="Playback controls" aria-label="Playback controls">' + chevL + '</button>');
+      topControls.appendChild(pagePrev);
+      topControls.appendChild(pageNext);
+      bottomBar.classList.add("is-page-1");
+      pageNext.addEventListener("click", () => { if (typeof hapticTap === "function") hapticTap(); bottomBar.scrollTo({ left: bottomBar.clientWidth, behavior: "smooth" }); });
+      pagePrev.addEventListener("click", () => { if (typeof hapticTap === "function") hapticTap(); bottomBar.scrollTo({ left: 0, behavior: "smooth" }); });
+      bottomBar.addEventListener("scroll", () => { bottomBar.classList.toggle("is-page-1", bottomBar.scrollLeft < bottomBar.clientWidth / 2); }, { passive: true });
+
       bottomBar.appendChild(topControls);
     }
 

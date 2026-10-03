@@ -133,3 +133,14 @@
 - 長押し450ms/10px動いたら中止。成立後に指を離した時のclickは`swallow`で握りつぶす(ボタン本来の操作を発火させない)。対象には`user-select:none`と`contextmenu`抑止(iOSの選択/メニュー対策)。
 - 送り秒数は`window.QNSkip`(player-ui-pc-v2.jsのクロージャ内skipSecの公開口)。QNBarsはグローバルのconst(`window.QNBars`ではない)。
 - 再生中の見た目は停止中と同じ色(ドック/FAB/#playToggleとも緑のグラデ禁止)。
+
+## v3.55.0
+- 長押し対象には右下◢(style-quickpop.cssの::after)。`player-quickpop.js`のTARGETSとCSSセレクタを必ず揃える。`.vbar-time`は行(シーク)の子なので、quickpopがpointerdown/clickをcaptureで止めて行のシークを走らせない。
+- SPの下段バーは`#topControls`幅200%・各`.pcv2-ctrl-group`が50%(=1画面)のスナップ2ページ。矢印は`#topControls`直下のsticky(`.pcv2-bar-page`)。`is-page-1`クラスはscrollで付け替え。PC幅は矢印非表示・従来配置。
+- Marker Memoのデフォルト項目は`MARKER_LABEL_PRESETS`(id=元の名前)+上書き`qn_marker_preset_labels_v1`。色(`qn_marker_preset_colors_v1`)もidキー。表示名は`markerPresetDisplay(id)`を通す(直接MARKER_LABEL_PRESETSを表示に使わない)。
+- Backupの一覧は`.track-backup-group`(枠)ごと。枠を足す時は`startGroup(text)`。
+
+## quickpop(3.56.0)
+- `DEFS[kind](el)` は `{title, rows}` か `{title, build(ctx)}`(独自本文)を返す。対象を増やす時は TARGETS / `style-quickpop.css` の ◢ セレクタ(position:relative込み)/ no-select セレクタの3か所を揃える。
+- libitem は Libraryの編集モード、ドラッグハンドル・button・input上では起動しない。
+- 波形ポップアップの微調整は `pinPopNudge`(pin→pins再ソート+refreshAfterPinChange、A/B→afterABChange)。
