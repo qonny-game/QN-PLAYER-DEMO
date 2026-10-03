@@ -188,6 +188,7 @@
     [/☁ 同期中…/g, "Syncing…"],
     [/☁ 同期できませんでした\(タップで再試行\)/g, "Sync failed (tap to retry)"],
     [/☁ 同期済み /g, "Synced "],
+    [/未インポート\((\d+)\)/g, "Not imported ($1)"],
     [/未インポート/g, "Not imported"],
     [/(\d+)秒戻る/g, "Back $1s"],
     [/(\d+)秒進む/g, "Forward $1s"],
@@ -349,6 +350,9 @@
     getPref: getPref,
     setPref: setPref,
     apply: applyAll,
+    // 追加辞書(JS/qn-i18n-apps.js等から)。rulesは[RegExp(g付き), 置換]の配列で、既存RULESより前に適用される
+    addDict: function (obj) { for (var k in obj) DICT[k] = obj[k]; cache = Object.create(null); },
+    addRules: function (arr) { RULES = arr.concat(RULES); cache = Object.create(null); },
     OPTIONS: ["auto", "ja", "en"]
   };
 

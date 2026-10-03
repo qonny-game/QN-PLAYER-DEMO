@@ -61,3 +61,4 @@
 - 3.56.2 SP波形ヘッダー: 時刻をファイル名の下へ移動(grid、歯車は右端2行ぶち抜き)。長いファイル名はマーキーを止めて末尾を…で省略し、横幅を超えない。
 - 3.56.3 波形ヘッダー右上の歯車ボタンを廃止(設定は下部ナビのSettings。Barの設定は時刻ラベル長押しでも開く)。
 - 3.57.0 和英切替(第1段階): `JS/qn-i18n.js`新設(日本語キーの辞書+MutationObserverで英語時のみDOM差し替え。title/aria-label/alert/confirmも対応)、Settings>General>Language(Auto/日本語/English、`qn_lang`)。詳細はmd/I18N_HANDOFF.md。
+- 3.57.1 和英切替(第2段階): `JS/qn-i18n-apps.js`新設でYouTube/PITCH/TUNERの文言を英訳(`QNI18N.addDict/addRules`を追加)。
