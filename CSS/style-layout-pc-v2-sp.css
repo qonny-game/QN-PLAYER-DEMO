@@ -118,7 +118,7 @@
   /* 【v3.56.2】SP: ファイル名の下に時刻。歯車は右端で2行ぶち抜き。長いファイル名は省略(…) */
   #pcV2WaveHead {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto;
     column-gap: 8px;
     row-gap: 2px;
@@ -131,7 +131,6 @@
   #pcV2WaveHead #appTitle #appTitleText { display: inline; }
   #pcV2WaveHead #appTitle #appTitleText.marquee-clone { display: none; }
   #pcV2WaveHead .time-controls-row { grid-column: 1; grid-row: 2; min-width: 0; }
-  #pcV2WaveHead .qn-bar-gear { grid-column: 2; grid-row: 1 / span 2; margin-left: 0; }
 
   #pcV2BottomBar .pcv2-ctrl-btn {
     padding: 14px 12px;

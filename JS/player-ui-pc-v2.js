@@ -405,7 +405,7 @@
     // waveHead確定後に時刻行の置き場所を確定(先のsyncTimeRowPosition()初回はwaveHead未生成で空振り)
     syncTimeRowPosition();
     // シークバー1本の秒数設定(歯車)。位置は常に右端(CSS order)。時刻行がSP⇔PCで出入りしても順序が崩れない
-    waveHead.appendChild(QNBars.createGearButton());
+    // 【v3.56.3】上部の歯車ボタンは廃止(設定は下部ナビのSettings)。createGearButton APIは互換のため残す
     QNBars.setOpenSettings(() => openSettingsPanel());
     // 設定パネルの中身を先に作ってstashへ(プリロード操作要素を下部バーから外すため。let宣言より後に実行するrAF)
     requestAnimationFrame(() => { const sb = ensureSettingsBody(); if (!sb.parentNode) getPanelStash().appendChild(sb); });
