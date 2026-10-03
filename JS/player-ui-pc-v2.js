@@ -263,14 +263,17 @@
 
       // 【v3.59.0】PC幅のみ: コントロール右に Volume / Speed / Key(スライダー+±)。操作は既存の applyVolumeChange / handleSpeedRangeInput / setKeySemitones に委譲、表示はpcv2WaveLoopから同期。SP幅はCSSで非表示
       const mixer = el('<div class="pcv2-ctrl-group pcv2-mixer" id="pcV2BarMixer">' +
-        '<div class="pcv2-mix-item" data-mix="vol"><div class="pcv2-mix-head"><span class="pcv2-mix-label">Volume</span><span class="pcv2-mix-val" data-mixval="vol">80%</span></div><input type="range" class="pcv2-mix-range" id="pcV2BarVol" min="0" max="1" step="0.01" aria-label="Volume"></div>' +
+        '<div class="pcv2-mix-item" data-mix="vol"><div class="pcv2-mix-head"><span class="pcv2-mix-label">Volume</span><span class="pcv2-mix-val" data-mixval="vol">80%</span></div><div class="pcv2-mix-volrow"><button type="button" class="pcv2-mix-mute" id="pcV2BarMute" aria-label="Mute" title="Mute"><svg viewBox="0 0 24 24" class="pcv2-mix-ico-on"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg><svg viewBox="0 0 24 24" class="pcv2-mix-ico-off"><path d="M16.5 12A4.5 4.5 0 0 0 14 7.97v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51A8.8 8.8 0 0 0 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06a8.99 8.99 0 0 0 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button><input type="range" class="pcv2-mix-range" id="pcV2BarVol" min="0" max="1" step="0.01" aria-label="Volume"></div></div>' +
         '<div class="pcv2-mix-item" data-mix="speed"><div class="pcv2-mix-head"><span class="pcv2-mix-label" title="Click to reset to 1.00x">Speed</span><span class="pcv2-mix-val" data-mixval="speed">1.00x</span></div><input type="range" class="pcv2-mix-range" id="pcV2BarSpeed" min="0.5" max="1.5" step="0.01" aria-label="Speed"></div>' +
         '<div class="pcv2-mix-item pcv2-mix-key" data-mix="key"><div class="pcv2-mix-head"><span class="pcv2-mix-label" title="Click to reset to 0">Key</span></div><div class="pcv2-mix-keyrow"><button type="button" class="pcv2-mix-btn" id="pcV2BarKeyDown" aria-label="Key down" title="Key −1">−</button><span class="pcv2-mix-val pcv2-mix-keyval" data-mixval="key" title="Click to reset to 0">0</span><button type="button" class="pcv2-mix-btn" id="pcV2BarKeyUp" aria-label="Key up" title="Key +1">＋</button></div></div>' +
         '</div>');
       topControls.appendChild(el('<div class="pcv2-ctrl-divider pcv2-mixer-divider"></div>'));
       topControls.appendChild(mixer);
       const barVol = mixer.querySelector("#pcV2BarVol"), barSpeed = mixer.querySelector("#pcV2BarSpeed");
+      const barMute = mixer.querySelector("#pcV2BarMute");
+      barMute.addEventListener("click", () => { audio.muted = !audio.muted; if (typeof hapticTap === "function") hapticTap(); window.pcv2SyncBarMixer(true); });
       barVol.addEventListener("input", () => {
+        if (audio.muted) { audio.muted = false; window.pcv2SyncBarMixer(true); }
         const v = parseFloat(barVol.value);
         [document.getElementById("volume"), document.getElementById("controlVolume")].forEach(i => { if (i) i.value = v; });
         applyVolumeChange(v);
@@ -289,13 +292,15 @@
       mixer.querySelector('[data-mix="key"] .pcv2-mix-label').addEventListener("click", () => setKeySemitones(0));
       mixer.querySelector('[data-mixval="key"]').addEventListener("click", () => setKeySemitones(0));
       let mixLast = "";
-      window.pcv2SyncBarMixer = function () {
-        const sig = audio.volume + "|" + currentSpeed + "|" + currentKeySemitones;
-        if (sig === mixLast) return;
+      window.pcv2SyncBarMixer = function (force) {
+        const sig = audio.volume + "|" + currentSpeed + "|" + currentKeySemitones + "|" + audio.muted;
+        if (sig === mixLast && !force) return;
         mixLast = sig;
         if (document.activeElement !== barVol) barVol.value = audio.volume;
         if (document.activeElement !== barSpeed) barSpeed.value = currentSpeed;
-        mixer.querySelector('[data-mixval="vol"]').textContent = Math.round(audio.volume * 100) + "%";
+        mixer.querySelector('[data-mixval="vol"]').textContent = audio.muted ? "Mute" : Math.round(audio.volume * 100) + "%";
+        barMute.classList.toggle("is-muted", audio.muted);
+        barMute.title = audio.muted ? "Unmute" : "Mute";
         mixer.querySelector('[data-mixval="speed"]').textContent = currentSpeed.toFixed(2) + "x";
         mixer.querySelector('[data-mixval="key"]').textContent = (currentKeySemitones > 0 ? "+" : "") + currentKeySemitones;
       };

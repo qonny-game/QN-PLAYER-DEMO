@@ -217,8 +217,10 @@
   ];
 
   var cache = Object.create(null);
+  var cacheJa = Object.create(null);
 
-  function tr(ja) {
+  // 日本語→英語(英語表示用)
+  function trEn(ja) {
     if (!ja || !JP_STRICT.test(ja)) return ja;
     var lead = ja.match(/^\s*/)[0], trail = ja.match(/\s*$/)[0];
     var core = ja.trim();
@@ -231,6 +233,41 @@
     }
     cache[core] = out;
     return lead + out + trail;
+  }
+
+  // 英語→日本語(日本語表示用)。辞書はJS/qn-i18n-ja.js。辞書に無い英語はそのまま
+  var DICT_JA = {};
+  var RULES_JA = [];
+  var EN_TEST = /[A-Za-z]{2}/;
+  function trJa(en) {
+    if (!en || !EN_TEST.test(en)) return en;
+    var lead = en.match(/^\s*/)[0], trail = en.match(/\s*$/)[0];
+    var core = en.trim();
+    if (cacheJa[core] !== undefined) return lead + cacheJa[core] + trail;
+    var out = DICT_JA[core];
+    if (out === undefined) {
+      var s = core;
+      for (var i = 0; i < RULES_JA.length; i++) s = s.replace(RULES_JA[i][0], RULES_JA[i][1]);
+      out = s;
+    }
+    cacheJa[core] = out;
+    return lead + out + trail;
+  }
+
+  // 日本語表示でも英語のまま残す要素(アイコンボタンのラベル・パネル見出し)と、ユーザーデータ(曲名・マーカーメモ等)
+  var KEEP_SEL = ".top-controls-btn-label, .pcv2-icon-item, #pcV2SpDock, .pcv2-panel-header-title, #pcV2PanelFab, .pcv2-fab-addgroup, .pcv2-fab, " +
+    ".playlist-act-btn, .pin-act-btn, .playlist-del-tile, .pin-del-tile, .qn-yt-bbtn, .qn-pt-bbtn, .qn-tn-bbtn, .qn-tn-bstep-mid, .qn-yt-seekpop-btn, " +
+    ".pcv2-anchor-tab, .mobile-tab-btn, .qn-flyout-item, .qn-yt-fab-folder, .panel-fab-btn, .qn-mic-pill, #splashLogo, .av-toggle-btn-label, " +
+    "#noteTextFullscreenBtn, .pcv2-bar-page, .qn-yt-panel-header, .qn-tn-panel-header, .qn-pt-panel-header";
+  var DATA_SEL = ".pin-memo-preset-chip:not(.qn-qp-act), .pin-memo, .pin-memo-text, .playlist-editable-display, .playlist-editable-field, " +
+    ".qn-yt-item-title, .qn-pt-rec-title, .qn-marker-preset-colors-list";
+
+  var cur = "ja";
+  function tr(s) { return cur === "en" ? trEn(s) : trJa(s); }
+  function skipEl(el, isAttr) {
+    if (cur !== "ja" || !el || !el.closest) return false;
+    if (isAttr) return false;
+    return !!el.closest(KEEP_SEL + ", " + DATA_SEL);
   }
 
   // ---------- 言語状態 ----------
@@ -246,28 +283,26 @@
   function getPref() { return pref; }
 
   // ---------- DOM差し替え ----------
+  // 差し替えたノードには元の文(__qnOrig)と訳した文(__qnTr)を持たせる。observerは「現在値が__qnTrと同じ=自分の書き込み」を無視し、コード側が書き直した時だけ訳し直す
   var observer = null;
-  var busy = false;
 
   function trText(node) {
     var v = node.nodeValue;
-    if (!v || !JP_STRICT.test(v)) return;
+    if (!v) return;
     var t = tr(v);
-    if (t !== v) {
-      if (node.__qnJa === undefined) node.__qnJa = v;
-      node.nodeValue = t;
-    }
+    if (t === v || skipEl(node.parentNode, false)) return;
+    node.__qnOrig = v; node.__qnTr = t;
+    node.nodeValue = t;
   }
   function trAttrs(el) {
     for (var i = 0; i < ATTRS.length; i++) {
       var a = ATTRS[i], v = el.getAttribute(a);
-      if (!v || !JP_STRICT.test(v)) continue;
+      if (!v) continue;
       var t = tr(v);
-      if (t !== v) {
-        if (!el.__qnJaAttrs) el.__qnJaAttrs = {};
-        if (el.__qnJaAttrs[a] === undefined) el.__qnJaAttrs[a] = v;
-        el.setAttribute(a, t);
-      }
+      if (t === v || skipEl(el, true)) continue;
+      if (!el.__qnA) el.__qnA = {};
+      el.__qnA[a] = { o: v, t: t };
+      el.setAttribute(a, t);
     }
   }
   function walk(root) {
@@ -291,10 +326,10 @@
     var n = root;
     do {
       if (n.nodeType === 3) {
-        if (n.__qnJa !== undefined) { n.nodeValue = n.__qnJa; n.__qnJa = undefined; }
-      } else if (n.__qnJaAttrs) {
-        for (var a in n.__qnJaAttrs) if (n.__qnJaAttrs[a] !== undefined) n.setAttribute(a, n.__qnJaAttrs[a]);
-        n.__qnJaAttrs = null;
+        if (n.__qnOrig !== undefined) { if (n.nodeValue === n.__qnTr) n.nodeValue = n.__qnOrig; n.__qnOrig = undefined; n.__qnTr = undefined; }
+      } else if (n.__qnA) {
+        for (var a in n.__qnA) { var r = n.__qnA[a]; if (r && n.getAttribute(a) === r.t) n.setAttribute(a, r.o); }
+        n.__qnA = null;
       }
     } while ((n = w.nextNode()));
   }
@@ -302,38 +337,37 @@
   function startObserver() {
     if (observer || !document.body) return;
     observer = new MutationObserver(function (list) {
-      if (busy) return;
-      busy = true;
-      try {
-        for (var i = 0; i < list.length; i++) {
-          var m = list[i];
-          if (m.type === "characterData") {
-            // コード側が日本語で書き直したら、保持している元文も更新して訳し直す
-            if (m.target.__qnJa !== undefined && JP_STRICT.test(m.target.nodeValue)) m.target.__qnJa = undefined;
-            trText(m.target);
-          } else if (m.type === "attributes") {
-            var el = m.target, a = m.attributeName;
-            if (el.__qnJaAttrs && el.__qnJaAttrs[a] !== undefined && JP_STRICT.test(el.getAttribute(a) || "")) el.__qnJaAttrs[a] = undefined;
-            trAttrs(el);
-          } else {
-            for (var j = 0; j < m.addedNodes.length; j++) walk(m.addedNodes[j]);
-          }
+      for (var i = 0; i < list.length; i++) {
+        var m = list[i];
+        if (m.type === "characterData") {
+          var node = m.target;
+          if (node.__qnTr !== undefined && node.nodeValue === node.__qnTr) continue;
+          node.__qnOrig = undefined; node.__qnTr = undefined;
+          trText(node);
+        } else if (m.type === "attributes") {
+          var el = m.target, a = m.attributeName, rec = el.__qnA && el.__qnA[a];
+          if (rec && el.getAttribute(a) === rec.t) continue;
+          if (rec) delete el.__qnA[a];
+          trAttrs(el);
+        } else {
+          for (var j = 0; j < m.addedNodes.length; j++) walk(m.addedNodes[j]);
         }
-      } finally { busy = false; }
+      }
+      // 自分の書き込みで溜まった通知を捨てる
+      observer.takeRecords();
     });
     observer.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ATTRS });
   }
-  function stopObserver() { if (observer) { observer.disconnect(); observer = null; } }
 
   function applyAll() {
-    var lang = getLang();
-    document.documentElement.lang = lang;
+    cur = getLang();
+    document.documentElement.lang = cur;
     if (!document.body) return;
-    busy = true;
-    try {
-      if (lang === "en") { walk(document.body); startObserver(); }
-      else { stopObserver(); restore(document.body); }
-    } finally { busy = false; }
+    if (observer) observer.disconnect();
+    restore(document.body);
+    walk(document.body);
+    if (observer) observer.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ATTRS });
+    else startObserver();
   }
 
   function setPref(v) {
@@ -343,9 +377,9 @@
     try { window.dispatchEvent(new CustomEvent("qn-lang-change", { detail: { lang: getLang(), pref: pref } })); } catch (e) {}
   }
 
-  // 公開API。t(ja)はJS側で動的に文字列を作る時の保険(英語表示ならtr、日本語ならそのまま)
+  // 公開API。t(s)はJS側で動的に文字列を作る時の保険(現在の言語へ変換)
   window.QNI18N = {
-    t: function (ja) { return getLang() === "en" ? tr(ja) : ja; },
+    t: function (s) { cur = getLang(); return tr(s); },
     getLang: getLang,
     getPref: getPref,
     setPref: setPref,
@@ -353,6 +387,9 @@
     // 追加辞書(JS/qn-i18n-apps.js等から)。rulesは[RegExp(g付き), 置換]の配列で、既存RULESより前に適用される
     addDict: function (obj) { for (var k in obj) DICT[k] = obj[k]; cache = Object.create(null); },
     addRules: function (arr) { RULES = arr.concat(RULES); cache = Object.create(null); },
+    // 英語→日本語(日本語表示用)
+    addJaDict: function (obj) { for (var k in obj) DICT_JA[k] = obj[k]; cacheJa = Object.create(null); },
+    addJaRules: function (arr) { RULES_JA = arr.concat(RULES_JA); cacheJa = Object.create(null); },
     OPTIONS: ["auto", "ja", "en"]
   };
 
@@ -362,7 +399,8 @@
     window[k] = function (msg) { return orig.call(window, typeof msg === "string" ? window.QNI18N.t(msg) : msg); };
   });
 
-  document.documentElement.lang = getLang();
+  cur = getLang();
+  document.documentElement.lang = cur;
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", applyAll);
   else applyAll();
   window.addEventListener("load", applyAll);

@@ -148,10 +148,10 @@
         host.appendChild(row);
         var chips = el("div", "qn-qp-chips");
         [["−1s", -1], ["+1s", 1]].forEach(function (c) {
-          var b = el("button", "pin-memo-preset-chip", c[0]); b.type = "button";
+          var b = el("button", "pin-memo-preset-chip qn-qp-act", c[0]); b.type = "button";
           b.onclick = function () { hap(); nudge(c[1]); row.sync(); }; chips.appendChild(b);
         });
-        var clr = el("button", "pin-memo-preset-chip", "Clear"); clr.type = "button";
+        var clr = el("button", "pin-memo-preset-chip qn-qp-act", "Clear"); clr.type = "button";
         clr.onclick = function () { hap(); put(null); ctx.close(); };
         chips.appendChild(clr);
         host.appendChild(chips);

@@ -1,6 +1,6 @@
 # 多言語化(日本語/English)
 
-QNPLAYER v3.57.0時点の実装メモ。第1段階(PLAYER本体)・第2段階(YouTube/PITCH/TUNER)完了。
+QNPLAYER v3.60.0時点の実装メモ。第1段階(PLAYER本体)・第2段階(YouTube/PITCH/TUNER)完了。
 
 ## 仕組み(`JS/qn-i18n.js`)
 - ソース内の文言は**日本語のまま**。英語表示の時だけDOMを英語へ差し替える(日本語文字列をキーにした辞書方式)。`data-i18n`やキー名は使わない。
@@ -11,6 +11,13 @@ QNPLAYER v3.57.0時点の実装メモ。第1段階(PLAYER本体)・第2段階(Yo
 - API: `QNI18N.getLang()`(実効: ja|en) / `getPref()`(auto|ja|en) / `setPref(v)` / `apply()` / `OPTIONS`。切替時に `qn-lang-change` イベント。
 - 保存: localStorage `qn_lang`(auto|ja|en、既定auto。autoはブラウザ言語がjaなら日本語、他は英語)。
 - 設定UI: Settings > General > Language(`player-ui-pc-v2.js` の `ensureSettingsBody` の `rowsLang`)。
+
+## 日本語表示(英語→日本語)
+- ソースの英語文言は`JS/qn-i18n-ja.js`(`QNI18N.addJaDict` / `addJaRules`)で日本語にする。仕組みは英語表示と対称(observerは常時動く)。
+- **英語のまま残す**: アイコンボタンのラベルとパネル見出し。`qn-i18n.js`の`KEEP_SEL`(例: `.top-controls-btn-label`, `.pcv2-icon-item`, `.pcv2-panel-header-title`, FABやアプリの下部ボタン)。新しいアイコンボタン/見出しを足したらここへクラスを足す。
+- **変換しない**: ユーザーデータ(曲名・マーカーメモ・プリセット名)。`DATA_SEL`。プリセットチップは`.pin-memo-preset-chip`だが、操作用のチップには`.qn-qp-act`を付けて変換対象にする。
+- title/aria-label/placeholderは日本語化する(KEEPでも)。
+- 設定項目・クイック設定・ツールチップ・トースト・モーダルは日本語。固有名(Auto Next, Loop, Skip ON等)は英語のまま使うことがある。
 
 ## 文言を足す時
 1. 日本語をそのままコードに書く。
