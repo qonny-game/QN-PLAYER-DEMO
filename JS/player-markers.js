@@ -842,12 +842,6 @@ function fmtABTime(t) {
   return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
 }
 
-function clearAB() {
-  hapticTap();
-  abA = null; abB = null;
-  afterABChange();
-}
-
 function updateABButtons() {
   [["A", abA], ["B", abB]].forEach(([kind, v]) => {
     const btn = document.getElementById(kind === "A" ? "setABtn" : "setBBtn");
@@ -1072,16 +1066,6 @@ function openColorChoicePopup(anchorBtn, currentColorName, onPick) {
     document.addEventListener("click", closeMarkerColorPicker);
   }, 0);
   popup.onclick = e => e.stopPropagation();
-}
-
-function openMarkerColorPicker(anchorBtn, pinObj, index) {
-  openColorChoicePopup(anchorBtn, pinObj.color || null, (colorName) => {
-    pinObj.color = colorName;
-    savePins();
-    renderPins();
-    renderSegments();
-    renderPinList();
-  });
 }
 
 // Colorポップアップ用の編集パネル(ラベル+プリセット+色。PLAYER/YouTube共通)。opts={label,color,placeholder}。変更毎にonChange({label,color})(パネルは開いたまま)

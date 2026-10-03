@@ -477,8 +477,18 @@
       if (typeof addCurrentPin === "function") addCurrentPin();
     });
     const waveFabRow = el('<div id="pcV2WaveFabRow"></div>');
-    waveFabRow.appendChild(waveAddAudioBtn);
-    waveFabRow.appendChild(waveAddMarkerBtn);
+    // Audio/Marker/再生の左に、シークバーの常用設定を常時表示(設定パネルのSeek bar項目と同じ値。変更は相互に同期)。狭い幅では折り返して上の段になる
+    const waveBarStrip = QNSettingsUI.inline([
+      { label: "Bar length", type: "stepper", values: () => QNBars.OPTIONS, get: () => QNBars.getSec(), set: v => QNBars.setSec(v), fmt: v => v + "s" },
+      { label: "Rows", type: "stepper", values: () => QNBars.ROWS_OPTIONS, get: () => QNBars.getRows(), set: v => QNBars.setRows(v), fmt: v => v === 0 ? "Auto" : String(v) },
+      { label: "Follow", type: "switch", get: () => QNBars.getFollow(), set: on => QNBars.setFollow(on) }
+    ], () => syncSettingsBody());
+    window.qnBarStripSync = waveBarStrip.sync;
+    waveFabRow.appendChild(waveBarStrip.el);
+    const waveFabBtns = el('<div class="pcv2-wave-fab-btns"></div>');
+    waveFabRow.appendChild(waveFabBtns);
+    waveFabBtns.appendChild(waveAddAudioBtn);
+    waveFabBtns.appendChild(waveAddMarkerBtn);
     // 【v3.38.0】MARKERの右に再生/停止ボタン(#playToggleを押すのと同じ。アイコンはaudioのplay/pauseに追従)
     const waveFabPlayBtn = el(
       '<button type="button" class="panel-fab-btn panel-fab-play-btn" id="pcV2WaveFabPlayBtn" title="Play / Pause">' +
@@ -492,7 +502,7 @@
       waveFabPlayBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="' + (playing ? "M6 19h4V5H6v14zm8-14v14h4V5h-4z" : "M8 5v14l11-7z") + '"/></svg>';
     };
     ["play", "pause", "ended", "emptied", "loadedmetadata"].forEach(n => audio.addEventListener(n, syncFabPlay));
-    waveFabRow.appendChild(waveFabPlayBtn);
+    waveFabBtns.appendChild(waveFabPlayBtn);
     waveArea.appendChild(waveFabRow);
 
     const basicPanelBox = document.querySelector(".basic-panel-box");
@@ -920,7 +930,32 @@
         get: () => (window.QNI18N ? QNI18N.getPref() : "auto"), set: v => { if (window.QNI18N) QNI18N.setPref(v); },
         fmt: v => v === "auto" ? "Auto" : v === "ja" ? "日本語" : "English" }
     ];
-    settingsUI = QNSettingsUI.build([{ title: "Seek bar", rows: rowsBar }, { title: "Playback", rows: rowsPlay }, { title: "General", rows: rowsLang }]);
+    // 操作ガイド(説明だけの行=typeなし)。長押し対象(player-quickpop.jsのTARGETS)・波形ジェスチャー(player-ui-shared.js)・行スワイプ(qn-apps.jsのswipeRows)を変えたら文言も合わせる
+    const rowsHold = [
+      { label: "Hold a button marked ◢", hint: "Opens its quick settings in place" },
+      { label: "Play", hint: "Speed and key" },
+      { label: "Previous / next marker", hint: "Jump to any marker" },
+      { label: "A / B", hint: "Fine tune in 0.1 s steps" },
+      { label: "Add marker", hint: "Add a marker with a preset label" },
+      { label: "Previous / next track", hint: "Jump to a folder or track" },
+      { label: "Loop", hint: "Pre/post-roll seconds" },
+      { label: "Skip back / forward", hint: "Skip seconds" },
+      { label: "Repeat", hint: "Library repeat range" },
+      { label: "Library row", hint: "Favorite, skip, move, rename, delete" }
+    ];
+    const rowsGesture = [
+      { label: "Tap", hint: "Seek and play from that position" },
+      { label: "Hold", hint: "Add a marker at that position" },
+      { label: "Swipe sideways", hint: "Scrub the playback position" },
+      { label: "Double tap while playing", hint: "Stop at that position" }
+    ];
+    const rowsSwipe = [
+      { label: "Swipe a Library or Markers row", hint: "Show edit and delete buttons (mobile)" }
+    ];
+    const settingsSections = [{ title: "Seek bar", rows: rowsBar }, { title: "Playback", rows: rowsPlay }, { title: "General", rows: rowsLang },
+      { title: "Hold for quick settings", rows: rowsHold }, { title: "Seek bar gestures", rows: rowsGesture }, { title: "List gestures", rows: rowsSwipe }];
+    settingsSections.onChange = () => { if (window.qnBarStripSync) window.qnBarStripSync(); };
+    settingsUI = QNSettingsUI.build(settingsSections);
     const body = settingsUI.el;
     body.id = "pcV2SettingsBody";
     const more = QNSettingsUI.list(["backup", "import", "color", "keyboard", "transfer"], openSettingsSub);

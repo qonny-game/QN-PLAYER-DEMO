@@ -255,14 +255,6 @@
   min-width: 0;
   padding: 4px 0;
 }
-.qn-marker-preset-color-name {
-  font-size: var(--fs-body);
-  font-weight: 600;
-  color: var(--text-bright, #f0f0f3);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .qn-marker-preset-color-swatch {
   flex-shrink: 0;
 }

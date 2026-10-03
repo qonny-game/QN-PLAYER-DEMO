@@ -387,10 +387,6 @@
 .pinItem button.qn-ab-block.active-a:hover { background: var(--accent-primary); }
 .pinItem button.qn-ab-block.active-b:hover { background: #b45309; }
 
-/* Skipボタン(v3.46.0): マーカー一覧のA/Bと同じ角ブロック。ON=アンバー */
-.pinItem button.qn-ab-block.qn-skip-block.is-skip, .qn-skip-block.is-skip { background: #6b4e16; color: #fff; }
-.pinItem button.qn-ab-block.qn-skip-block.is-skip:hover { background: #6b4e16; }
-
 /* ---------- PLAYERマーカー行の操作ボタン(v3.51.0→v3.52.0で整理) ----------
    通常=SKIP/HIDE(背景なし・区切り線のみ。ON中はアイコンを薄暗く)。EDIT=SKIP/HIDE/編集(背景付き)/削除選択タイル(背景付き・選択=赤)。
    アイコン・ラベルはplayer-markers.jsのQN_ROW_ACTが決める(スワイプトレイは編集/削除のみ)。A/Bボタンは撤去(YouTube側の.qn-ab-blockは別) */

@@ -1,5 +1,5 @@
 // player-quickpop.js — 下部コントロールの長押しクイック設定ポップアップ(v3.54.0)。
-// Loop(長押し)=プリロール秒 / ±skip=送り戻し秒 / Repeat=Library範囲 / 時間表示=Bar length系。部品は設定パネルと同じQNSettingsUI(「‹ 値 ›」)。
+// Loop(長押し)=プリロール秒 / ±skip=送り戻し秒 / Repeat=Library範囲。部品は設定パネルと同じQNSettingsUI(「‹ 値 ›」)。
 // 押下はdocument委譲(下部バー/ドックが作り直されても効く)。長押し成立後のclickは握りつぶす。依存: qn-settings-ui.js, player-ui-pc-v2.js(window.QNSkip), player-controls.js, player-bars.js
 (function () {
   "use strict";
@@ -250,14 +250,6 @@
           set: function (v) { setAutoNextScope(v); if (typeof syncAutoNextScopeButton === "function") syncAutoNextScopeButton(); },
           fmt: function (v) { return v === "folder" ? "Folder" : "All"; } }
       ] };
-    },
-    bars: function () {
-      var B = QNBars;
-      return { title: "Bars", rows: [
-        { label: "Bar length", hint: "1 bar = seconds", type: "stepper", values: function () { return B.OPTIONS; }, get: function () { return B.getSec(); }, set: function (v) { B.setSec(v); }, fmt: seconds },
-        { label: "Bars on screen", hint: "Rows shown at once", type: "stepper", values: function () { return B.ROWS_OPTIONS; }, get: function () { return B.getRows(); }, set: function (v) { B.setRows(v); }, fmt: function (v) { return v === 0 ? "Auto" : String(v); } },
-        { label: "Follow playhead", hint: "Auto-scroll while playing", type: "switch", get: function () { return B.getFollow(); }, set: function (on) { B.setFollow(on); } }
-      ] };
     }
   };
 
@@ -271,8 +263,7 @@
     ["#playlistBox .playlistItem:not(.is-nowplaying)", "libitem"],
     ["#loopToggleBtn, #pcV2DockLoop", "loop"],
     ["#pcV2SkipBackBtn, #pcV2SkipFwdBtn", "skip"],
-    ["#allRepeatToggleBtn", "repeat"],
-    ["#timeDisplay, .vbar-time", "bars"]
+    ["#allRepeatToggleBtn", "repeat"]
   ];
   function findTarget(el) {
     for (var i = 0; i < TARGETS.length; i++) {
@@ -293,8 +284,6 @@
       var body = document.getElementById("pcV2PanelBody");
       if ((body && body.classList.contains("playlist-edit-mode")) || e.target.closest(".playlist-drag-handle, button, input, textarea")) return;
     }
-    // 波形行の時刻ラベルは行(シーク)の子。長押し/タップで行のシークが走らないよう、ここで止める
-    if (e.target.closest && e.target.closest(".vbar-time")) e.stopPropagation();
     if (pop && pop.contains(e.target)) return;
     cancelTimer();
     startX = e.clientX; startY = e.clientY;
@@ -312,7 +301,6 @@
   ["pointerup", "pointercancel"].forEach(function (n) { document.addEventListener(n, cancelTimer, true); });
   // 長押し成立後に指を離した時のclick(=本来の操作)は発火させない
   document.addEventListener("click", function (e) {
-    if (e.target.closest && e.target.closest(".vbar-time")) { e.stopPropagation(); swallow = null; return; }
     if (swallow && swallow.contains(e.target)) { e.stopPropagation(); e.preventDefault(); swallow = null; }
   }, true);
   // 長押しで出るOS標準メニュー/選択を抑止

@@ -103,6 +103,7 @@
     right: 14px;
     bottom: 14px;
     gap: 8px;
+    max-width: calc(100% - 28px);
   }
 
   #pcV2WaveFabRow .panel-fab-btn {
@@ -131,24 +132,6 @@
   #pcV2WaveHead #appTitle #appTitleText { display: inline; }
   #pcV2WaveHead #appTitle #appTitleText.marquee-clone { display: none; }
   #pcV2WaveHead .time-controls-row { grid-column: 1; grid-row: 2; min-width: 0; }
-
-  #pcV2BottomBar .pcv2-ctrl-btn {
-    padding: 14px 12px;
-  }
-
-  #pcV2BottomBar .pcv2-ctrl-btn svg {
-    width: 28px;
-    height: 28px;
-  }
-
-  #pcV2BottomBar .pcv2-ctrl-btn.primary svg {
-    width: 38px;
-    height: 38px;
-  }
-
-  #pcV2BottomBar .pcv2-ctrl-btn span {
-    font-size: 11px;
-  }
 
   #pcV2BottomBar .tripleNavBtn-third {
     padding: 10px 6px;

@@ -34,7 +34,7 @@
 <link rel="stylesheet" href="CSS/style-pitch.css">
 <script>
   // アプリバージョン一元管理(QN_APP_VERSION)。<title>はここで即更新、#splashVersion/#appVersionは各要素直後のinline scriptが反映
-  window.QN_APP_VERSION = "4.0.0";
+  window.QN_APP_VERSION = "4.0.2";
   document.title = "QNPLAYER " + window.QN_APP_VERSION;
 
   window.QN_SHORTCUTS = [
@@ -293,7 +293,7 @@
             <button class="mini-reset-btn" id="controlSpeedResetBtn" title="Reset speed to 1.00x">Reset</button>
             <button type="button" class="glow-switch control-effect-toggle" id="controlSpeedEnableToggle" role="switch" aria-checked="true" title="Speed effect on/off"><span class="glow-switch-knob"></span></button>
           </label>
-          <div class="control-slider-row" id="controlSpeedSliderRow">
+          <div class="control-slider-row">
             <button type="button" class="control-step-btn" id="controlSpeedDownBtn" title="Speed −5%">−</button>
             <input type="range" id="controlSpeedRange" min="0.5" max="1.5" step="0.01" value="1.0">
             <button type="button" class="control-step-btn" id="controlSpeedUpBtn" title="Speed +5%">＋</button>
@@ -347,7 +347,7 @@
             <button class="mini-reset-btn" id="controlKeyResetBtn" title="Reset key to 0">Reset</button>
             <button type="button" class="glow-switch control-effect-toggle" id="controlKeyEnableToggle" role="switch" aria-checked="true" title="Key effect on/off"><span class="glow-switch-knob"></span></button>
           </label>
-          <div class="control-slider-row" id="controlKeySliderRow">
+          <div class="control-slider-row">
             <button type="button" class="control-step-btn" id="controlKeyDownBtn" title="Key down 1 semitone">−</button>
             <input type="range" id="controlKeyRange" min="-12" max="12" step="1" value="0">
             <button type="button" class="control-step-btn" id="controlKeyUpBtn" title="Key up 1 semitone">＋</button>

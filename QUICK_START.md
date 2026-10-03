@@ -23,6 +23,7 @@
 | マーカーメモのプリセット／Colorパネル | `JS/player-marker-presets.js` |
 | 保存されるデータ・キー | `AI_ASSISTANT_PROJECT_CONTEXT.md`§3 |
 | 「あのボタン」が指す場所が曖昧 | `UI_TERMINOLOGY.md` |
+| **定期お掃除・不要コード整理** | **`CLEANUP.md`（掃除ルール。お掃除のたびに更新）** |
 
 ## 2. 進め方
 1. 該当ファイルを`grep -n`で確認（`PC_V2_FILE_INDEX.md`で当たりを付ける）。

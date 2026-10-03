@@ -238,7 +238,6 @@ function notifyLoopCompleted() {
 updateAutoSpeedStatus();
 
 const keyDisplay = document.getElementById("keyDisplay");
-const keyStepperFill = document.getElementById("keyStepperFill");
 const controlKeyDisplay = document.getElementById("controlKeyDisplay");
 const controlKeyRange = document.getElementById("controlKeyRange");
 const KEY_MIN = -12;
@@ -246,14 +245,7 @@ const KEY_MAX = 12;
 
 function renderKeyDisplay() {
   const text = (currentKeySemitones > 0 ? "+" : "") + currentKeySemitones;
-  const pct = (Math.abs(currentKeySemitones) / KEY_MAX) * 50;
-  const left = currentKeySemitones >= 0 ? "50%" : (50 - pct) + "%";
-
   if (keyDisplay) keyDisplay.textContent = text;
-  if (keyStepperFill) {
-    keyStepperFill.style.width = pct + "%";
-    keyStepperFill.style.left = left;
-  }
   if (controlKeyDisplay) controlKeyDisplay.textContent = text;
   if (controlKeyRange) {
     controlKeyRange.value = currentKeySemitones;

@@ -169,7 +169,11 @@ body.pc-v2-active > .app-container {
   align-items: center;
   gap: 10px;
   pointer-events: none;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: calc(100% - 40px);
 }
+.pcv2-wave-fab-btns { display: flex; align-items: center; gap: inherit; }
 
 
 #pcV2WaveHead {
@@ -476,64 +480,6 @@ body.pc-v2-active > .app-container {
 }
 
 
-#pcV2BottomBar .pcv2-ctrl-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0;
-  padding: 8px 7px;
-  cursor: pointer;
-  color: var(--icon-muted);
-  background: none;
-  border: none;
-  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
-  position: relative;
-  transition: transform var(--dur-press) var(--ease-snap);
-}
-
-
-@media (hover: hover) and (pointer: fine) {
-  #pcV2BottomBar .pcv2-ctrl-btn:hover {
-    color: var(--text-bright);
-  }
-}
-
-
-#pcV2BottomBar .pcv2-ctrl-btn:active {
-  transform: scale(0.94);
-}
-
-
-#pcV2BottomBar .pcv2-ctrl-btn.primary,
-#pcV2BottomBar .pcv2-ctrl-btn.active {
-  color: var(--accent-primary);
-}
-
-
-#pcV2BottomBar .pcv2-ctrl-btn svg {
-  width: 20px;
-  height: 20px;
-  fill: currentColor;
-}
-
-
-#pcV2BottomBar .pcv2-ctrl-btn.primary svg {
-  width: 26px;
-  height: 26px;
-}
-
-
-#pcV2BottomBar .pcv2-ctrl-btn span {
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  display: block;
-  white-space: nowrap;
-}
-#pcV2BottomBar .pcv2-ctrl-btn:not(.pcv2-step-btn) svg { margin: 6px auto; box-sizing: content-box; }
-#pcV2BottomBar .pcv2-ctrl-btn:not(.pcv2-step-btn) { min-height: 57px; }
-
-
 #pcV2BottomBar #topControls {
   position: static !important;
   display: flex !important;
@@ -720,112 +666,6 @@ body.pc-v2-active #qnMenuMount {
 }
 
 
-#pcV2HeaderNav {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-
-.pcv2-header-nav-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  color: var(--icon-muted);
-  cursor: pointer;
-  padding: 0;
-  background: none;
-  border: none;
-  border-radius: var(--radius-pill);
-  transition: color 120ms ease, background 120ms ease;
-}
-
-
-.pcv2-header-nav-trigger:hover,
-#pcV2HeaderNav.open .pcv2-header-nav-trigger {
-  color: var(--text-bright);
-  background: var(--bg-hover-subtle);
-}
-
-
-.pcv2-header-nav-trigger svg {
-  width: 16px;
-  height: 16px;
-  fill: currentColor;
-  transition: transform 120ms ease;
-}
-
-
-#pcV2HeaderNav.open .pcv2-header-nav-trigger svg {
-  transform: rotate(180deg);
-}
-
-
-.pcv2-header-nav-dropdown {
-  position: absolute;
-  top: calc(100% + 10px);
-  left: 0;
-  background: #101013;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-popup);
-  padding: 8px;
-  min-width: 320px;
-  max-width: 360px;
-  display: none;
-  flex-direction: column;
-  z-index: 300;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-}
-
-
-#pcV2HeaderNav.open .pcv2-header-nav-dropdown {
-  display: flex;
-}
-
-
-.pcv2-header-nav-link {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  padding: 8px 10px;
-  border-radius: var(--radius-field);
-  text-decoration: none;
-}
-
-
-.pcv2-header-nav-link:hover {
-  background: var(--bg-hover-subtle);
-}
-
-
-.pcv2-header-nav-link-name {
-  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  color: var(--text-bright);
-  flex-shrink: 0;
-}
-
-
-.pcv2-header-nav-link-name-qn {
-  color: var(--accent-primary);
-}
-
-
-.pcv2-header-nav-link-desc {
-  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
-  font-size: 11px;
-  color: var(--icon-muted);
-  text-align: right;
-  flex: 1;
-  white-space: normal;
-  word-break: break-word;
-}
-
-
 #pcV2WaveArea #topControls {
   margin-top: 4px;
 }
@@ -846,8 +686,7 @@ body.pc-v2-active #qnMenuMount {
   /* auto marginなら、幅が足りない時は左端から横スクロール(左が切れない) */
   #pcV2BottomBar #topControls { margin: 0 auto; flex-shrink: 0; }
   #pcV2BottomBar .tripleNavBtn-third,
-  #pcV2BottomBar .loopbtn,
-  #pcV2BottomBar .pcv2-ctrl-btn:not(.pcv2-step-btn) {
+  #pcV2BottomBar .loopbtn {
     padding: 10px 16px;
     min-width: 68px;
     min-height: 64px;
@@ -894,8 +733,7 @@ body.pc-v2-active #qnMenuMount {
 @media screen and (min-width: 901px) and (max-width: 1600px) {
   #pcV2BottomBar { padding: 10px 12px; }
   #pcV2BottomBar .tripleNavBtn-third,
-  #pcV2BottomBar .loopbtn,
-  #pcV2BottomBar .pcv2-ctrl-btn:not(.pcv2-step-btn) { padding: 8px 6px; min-width: 48px; }
+  #pcV2BottomBar .loopbtn { padding: 8px 6px; min-width: 48px; }
   #pcV2BottomBar .tripleNavBtn-center { min-width: 60px; }
   #pcV2BottomBar .pcv2-ctrl-divider { margin: 0 12px; }
   #pcV2BottomBar #pcV2BarMixer { gap: 10px; }

@@ -44,6 +44,28 @@
 }
 .qn-set-switch.is-on { background: var(--accent-primary); border-color: var(--accent-primary); }
 .qn-set-switch.is-on span { transform: translateX(18px); }
+/* 波形エリアの常時表示の帯(QNSettingsUI.inline)。設定行より小さい例外(操作部34px)。値の見た目は.qn-stepper/.qn-set-switchをそのまま使う */
+.qn-set-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px 14px;
+  padding: 4px 10px;
+  background: rgba(12, 12, 16, 0.86);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-popup);
+  pointer-events: auto;
+}
+.qn-set-inline-item { display: flex; align-items: center; gap: 8px; }
+.qn-set-inline-label { font-size: var(--fs-small); color: var(--icon-muted); white-space: nowrap; }
+.qn-set-inline .qn-stepper { height: 34px; }
+.qn-set-inline .qn-stepper-btn { width: 30px; }
+.qn-set-inline .qn-stepper-btn svg { width: 20px; height: 20px; }
+.qn-set-inline .qn-stepper-val { min-width: 44px; font-size: var(--fs-small); }
+.qn-set-inline .qn-set-switch { width: 42px; height: 26px; }
+.qn-set-inline .qn-set-switch span { width: 18px; height: 18px; }
+.qn-set-inline .qn-set-switch.is-on span { transform: translateX(16px); }
 .qn-set-list { display: flex; flex-direction: column; padding: 2px 0 8px; }
 .qn-set-list-item {
   display: flex;

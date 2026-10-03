@@ -4,7 +4,7 @@ QN-PLAYER（QNシリーズのブラウザ完結型MP3プレイヤー）の設計
 修正依頼の前に該当節を見て、同じ調査・同じ失敗を繰り返さないようにする。
 
 **関連ファイル（`md/`）：** `QUICK_START.md`（最初に読む）／`GOTCHAS.md`（落とし穴）／`PC_V2_FILE_INDEX.md`（大きいファイルの目次）／
-`YOUTUBE_APP.md`（YouTubeアプリの仕様＋規約ルール。最優先）／`TUNER_APP.md`（TUNERアプリの仕様）／`PITCH_APP.md`（PITCHアプリの仕様）／`DOM_ID_REFERENCE.md`／`UI_TERMINOLOGY.md`／`CHANGELOG.md`
+`YOUTUBE_APP.md`（YouTubeアプリの仕様＋規約ルール。最優先）／`TUNER_APP.md`（TUNERアプリの仕様）／`PITCH_APP.md`（PITCHアプリの仕様）／`DOM_ID_REFERENCE.md`／`UI_TERMINOLOGY.md`／`CLEANUP.md`（お掃除ルール）／`CHANGELOG.md`
 
 ---
 

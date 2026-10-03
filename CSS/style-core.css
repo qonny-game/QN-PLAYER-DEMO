@@ -566,7 +566,6 @@ body {
   gap: 0;
 }
 
-.adjust-controls-row #eqToggleBtn,
 .adjust-controls-row #exportToggleBtn{
   flex-grow: 1;
   flex-shrink: 1;
@@ -585,19 +584,6 @@ body {
 .adjust-controls-row .time-controls-buttons > *:first-child .av-toggle-btn {
   border-left-width: 1px !important;
 }
-
-#keyToggleBtn {
-  border-top-right-radius: 16px !important;
-}
-
-#eqToggleBtn {
-  border-bottom-left-radius: 16px !important;
-}
-
-#fileUploadWrapper .av-toggle-btn {
-  border-bottom-right-radius: 16px !important;
-}
-
 
 .av-toggle-btn {
   flex-shrink: 0;
@@ -654,10 +640,6 @@ body {
   text-transform: none;
   color: inherit;
   opacity: 0.65;
-}
-
-#eqToggleBtn .av-toggle-btn-text {
-  justify-content: center;
 }
 
 .av-toggle-btn.key-disabled {

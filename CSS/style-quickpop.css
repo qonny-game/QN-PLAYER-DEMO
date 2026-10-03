@@ -14,16 +14,15 @@
 .qn-quickpop .qn-set-sec { border-bottom: none; padding: 12px 0 2px; }
 .qn-quickpop .qn-set-row { min-height: 40px; padding: 6px 0; }
 /* 長押し対象はOS標準の選択/メニューを出さない */
-#loopToggleBtn, #pcV2DockLoop, #pcV2SkipBackBtn, #pcV2SkipFwdBtn, #allRepeatToggleBtn, #timeDisplay, #playToggle, #pcV2DockPlay, #prevMarkerBtn, #nextMarkerBtn, #pcV2DockPrevMarker, #pcV2DockNextMarker, #setABtn, #setBBtn, #addPinBtn, #pcV2DockAdd, #prevTrackBtn, #nextTrackBtn, #playlistBox .playlistItem {
+#loopToggleBtn, #pcV2DockLoop, #pcV2SkipBackBtn, #pcV2SkipFwdBtn, #allRepeatToggleBtn, #playToggle, #pcV2DockPlay, #prevMarkerBtn, #nextMarkerBtn, #pcV2DockPrevMarker, #pcV2DockNextMarker, #setABtn, #setBBtn, #addPinBtn, #pcV2DockAdd, #prevTrackBtn, #nextTrackBtn, #playlistBox .playlistItem {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
 }
 
 /* 長押しで設定が出る対象の目印: 右下の小さな直角三角(◢)。対象を増やす時はplayer-quickpop.jsのTARGETSとここのセレクタを揃える */
-#playToggle, #pcV2DockPlay, #prevMarkerBtn, #nextMarkerBtn, #pcV2DockPrevMarker, #pcV2DockNextMarker, #setABtn, #setBBtn, #addPinBtn, #pcV2DockAdd, #prevTrackBtn, #nextTrackBtn, #loopToggleBtn, #pcV2DockLoop, #pcV2SkipBackBtn, #pcV2SkipFwdBtn, #allRepeatToggleBtn, #timeDisplay { position: relative; }
-#vbarRows .vbar-time { position: absolute; }
-#playToggle::after, #pcV2DockPlay::after, #prevMarkerBtn::after, #nextMarkerBtn::after, #pcV2DockPrevMarker::after, #pcV2DockNextMarker::after, #setABtn::after, #setBBtn::after, #addPinBtn::after, #pcV2DockAdd::after, #prevTrackBtn::after, #nextTrackBtn::after, #loopToggleBtn::after, #pcV2DockLoop::after, #pcV2SkipBackBtn::after, #pcV2SkipFwdBtn::after, #allRepeatToggleBtn::after, #timeDisplay::after, #vbarRows .vbar-time::after {
+#playToggle, #pcV2DockPlay, #prevMarkerBtn, #nextMarkerBtn, #pcV2DockPrevMarker, #pcV2DockNextMarker, #setABtn, #setBBtn, #addPinBtn, #pcV2DockAdd, #prevTrackBtn, #nextTrackBtn, #loopToggleBtn, #pcV2DockLoop, #pcV2SkipBackBtn, #pcV2SkipFwdBtn, #allRepeatToggleBtn { position: relative; }
+#playToggle::after, #pcV2DockPlay::after, #prevMarkerBtn::after, #nextMarkerBtn::after, #pcV2DockPrevMarker::after, #pcV2DockNextMarker::after, #setABtn::after, #setBBtn::after, #addPinBtn::after, #pcV2DockAdd::after, #prevTrackBtn::after, #nextTrackBtn::after, #loopToggleBtn::after, #pcV2DockLoop::after, #pcV2SkipBackBtn::after, #pcV2SkipFwdBtn::after, #allRepeatToggleBtn::after {
   content: "";
   position: absolute;
   right: 3px;
@@ -36,7 +35,6 @@
   opacity: 0.7;
   pointer-events: none;
 }
-#timeDisplay::after, #vbarRows .vbar-time::after { right: -9px; bottom: 1px; }
 
 /* ---------- v3.56.0 リスト/チップ/±調整 ---------- */
 .qn-qp-list { display: flex; flex-direction: column; max-height: min(50vh, 320px); overflow-y: auto; margin: 0 -8px; }

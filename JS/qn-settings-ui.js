@@ -29,6 +29,44 @@ window.QNSettingsUI = (function () {
       '</button><span class="qn-stepper-val"></span><button type="button" class="qn-stepper-btn" data-d="1" aria-label="Next">' + CHEV_R + '</button></div>');
   }
 
+  function syncInfo(i) {
+    var d = i.def;
+    if (d.type === "stepper") {
+      var vals = d.values(), cur = d.get();
+      i.ctl.querySelector(".qn-stepper-val").textContent = d.fmt ? d.fmt(cur) : String(cur);
+      i.ctl.querySelector('[data-d="-1"]').disabled = vals.length < 2; // 端でループするので無効にしない(v3.61.0)
+      i.ctl.querySelector('[data-d="1"]').disabled = vals.length < 2;
+    } else if (d.type === "switch") {
+      var on = !!d.get();
+      i.ctl.classList.toggle("is-on", on);
+      i.ctl.setAttribute("aria-checked", on ? "true" : "false");
+    }
+    if (d.disabledWhen) i.row.classList.toggle("is-disabled", !!d.disabledWhen());
+  }
+
+  // ボタンが行の操作部なら値を変えてtrueを返す(build/inline共通)
+  function applyClick(infos, btn) {
+    for (var k = 0; k < infos.length; k++) {
+      var i = infos[k], d = i.def;
+      if (!i.ctl || !i.ctl.contains(btn)) continue;
+      if (d.type === "stepper" && btn.dataset.d) {
+        var vals = d.values(), n = vals.indexOf(d.get()) + parseInt(btn.dataset.d, 10);
+        if (vals.length > 1) { n = (n + vals.length) % vals.length; haptic(); d.set(vals[n]); } // 端でループ(v3.61.0)
+      } else if (d.type === "switch") {
+        haptic();
+        d.set(!d.get());
+      }
+      return true;
+    }
+    return false;
+  }
+
+  function newControl(r) {
+    if (r.type === "stepper") return stepper();
+    if (r.type === "switch") return make('<button type="button" class="qn-set-switch" role="switch" aria-checked="false"><span></span></button>');
+    return null;
+  }
+
   function build(sections) {
     var root = make('<div class="qn-set-body"></div>');
     var rowsInfo = [];
@@ -51,40 +89,36 @@ window.QNSettingsUI = (function () {
       root.appendChild(secEl);
     });
 
-    function sync() {
-      rowsInfo.forEach(function (i) {
-        var d = i.def;
-        if (d.type === "stepper") {
-          var vals = d.values(), cur = d.get(), idx = vals.indexOf(cur);
-          i.ctl.querySelector(".qn-stepper-val").textContent = d.fmt ? d.fmt(cur) : String(cur);
-          i.ctl.querySelector('[data-d="-1"]').disabled = vals.length < 2; // 端でループするので無効にしない(v3.61.0)
-          i.ctl.querySelector('[data-d="1"]').disabled = vals.length < 2;
-        } else if (d.type === "switch") {
-          var on = !!d.get();
-          i.ctl.classList.toggle("is-on", on);
-          i.ctl.setAttribute("aria-checked", on ? "true" : "false");
-        }
-        if (d.disabledWhen) i.row.classList.toggle("is-disabled", !!d.disabledWhen());
-      });
-    }
+    function sync() { rowsInfo.forEach(syncInfo); }
 
     root.addEventListener("click", function (e) {
       var btn = e.target.closest ? e.target.closest("button") : null;
-      if (!btn) return;
-      for (var k = 0; k < rowsInfo.length; k++) {
-        var i = rowsInfo[k], d = i.def;
-        if (!i.ctl || !i.ctl.contains(btn)) continue;
-        if (d.type === "stepper" && btn.dataset.d) {
-          var vals = d.values(), n = vals.indexOf(d.get()) + parseInt(btn.dataset.d, 10);
-          if (vals.length > 1) { n = (n + vals.length) % vals.length; haptic(); d.set(vals[n]); } // 端でループ(v3.61.0)
-        } else if (d.type === "switch") {
-          haptic();
-          d.set(!d.get());
-        }
-        sync();
-        if (sections.onChange) sections.onChange();
-        return;
-      }
+      if (!btn || !applyClick(rowsInfo, btn)) return;
+      sync();
+      if (sections.onChange) sections.onChange();
+    });
+    sync();
+    return { el: root, sync: sync };
+  }
+
+  // ラベル+操作部だけを横に並べた小さな帯(波形エリアの常時表示用)。rowsはbuildと同じ定義({label,type,values,get,set,fmt})。変更後にonChange()
+  function inline(rows, onChange) {
+    var root = make('<div class="qn-set-inline"></div>');
+    var infos = [];
+    rows.forEach(function (r) {
+      var item = make('<div class="qn-set-inline-item"><span class="qn-set-inline-label"></span></div>');
+      item.querySelector("span").textContent = r.label;
+      var ctl = newControl(r);
+      if (ctl) item.appendChild(ctl);
+      infos.push({ def: r, row: item, ctl: ctl });
+      root.appendChild(item);
+    });
+    function sync() { infos.forEach(syncInfo); }
+    root.addEventListener("click", function (e) {
+      var btn = e.target.closest ? e.target.closest("button") : null;
+      if (!btn || !applyClick(infos, btn)) return;
+      sync();
+      if (onChange) onChange();
     });
     sync();
     return { el: root, sync: sync };
@@ -116,5 +150,5 @@ window.QNSettingsUI = (function () {
     return d;
   }
 
-  return { versionLine: versionLine, build: build, list: list, backButton: backButton, LABELS: LABELS, ICONS: ICONS };
+  return { versionLine: versionLine, build: build, inline: inline, list: list, backButton: backButton, LABELS: LABELS, ICONS: ICONS };
 })();

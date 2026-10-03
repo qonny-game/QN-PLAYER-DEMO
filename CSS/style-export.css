@@ -468,19 +468,6 @@
   color: var(--text-pure-white, #fff);
 }
 
-#trackBackupTargetName {
-  display: block;
-  margin-bottom: 12px;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-bright);
-  text-transform: none;
-  letter-spacing: normal;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .track-backup-tracklist-header {
   display: flex;
   align-items: center;

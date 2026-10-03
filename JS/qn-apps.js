@@ -87,7 +87,6 @@
   }
 
   function isSp() { return window.matchMedia(SP_QUERY).matches; }
-  function canHover() { return window.matchMedia("(hover: hover) and (pointer: fine)").matches; }
 
   // ロゴ(#qnAppLogoBtn)の真下に左揃えで出す(PC/SP共通)
   function positionFlyout() {

@@ -407,11 +407,6 @@
 }
 
 
-#trackBackupSizeAudio {
-  color: var(--accent-primary);
-}
-
-
 :is(#pcV2PanelBody.pcv2-panel-backup, .qn-yt-sec-backup, .qn-pt-sec-backup) #trackBackupCancelBtn,
 :is(#pcV2PanelBody.pcv2-panel-import, .qn-yt-sec-import, .qn-pt-sec-import) #trackImportCancelBtn[data-mode="cancel"] {
   display: none;

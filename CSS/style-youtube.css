@@ -169,12 +169,6 @@
   font-size: var(--fs-micro);
 }
 
-.qn-yt-btn.danger {
-  background: var(--danger, #ef4444);
-  border-color: transparent;
-  color: #fff;
-}
-
 .qn-yt-message {
   min-height: 18px;
   font-size: var(--fs-small);
@@ -1121,35 +1115,28 @@
 /* v3.12.6: PLAYER下部バー(#pcV2BottomBar)とYouTube下段バー(.qn-yt-bar)の寸法を1仕様に(Speed/Keyトグルのみ例外)。最後に読まれるので個別指定を上書き。PC: バーpadding 10px 12px/ボタン 8px 4px/アイコン20px(中央32px)/ラベル9px/区切り余白6px。SP: ボタンpadding 10px/アイコン26px(中央38px)/ラベル11px */
 @media screen and (min-width: 901px) {
   #pcV2BottomBar, .qn-yt-bar { box-sizing: border-box; min-height: 80px; padding: 10px 12px; gap: 4px; }
-  #pcV2BottomBar .pcv2-ctrl-btn:not(.pcv2-step-btn),
   #pcV2BottomBar .tripleNavBtn-third,
   #pcV2BottomBar .loopbtn,
   .qn-yt-bbtn { padding: 8px 4px; min-height: 59px; box-sizing: border-box; }
-  #pcV2BottomBar .pcv2-ctrl-btn:not(.pcv2-step-btn) svg,
   #pcV2BottomBar .tripleNavBtn-third:not(.tripleNavBtn-center) svg,
   #pcV2BottomBar .loopbtn svg { width: 20px; height: 20px; margin: 6px auto; }
   #pcV2BottomBar .tripleNavBtn-center svg { width: 32px; height: 32px; margin: 0; }
-  #pcV2BottomBar .top-controls-btn-label,
-  #pcV2BottomBar .pcv2-ctrl-btn span { font-size: 9px; }
+  #pcV2BottomBar .top-controls-btn-label { font-size: 9px; }
   #pcV2BottomBar .pcv2-ctrl-divider, .qn-yt-bdiv { margin: 0 6px; }
 }
 @media screen and (max-width: 900px) {
-  #pcV2BottomBar .pcv2-ctrl-btn:not(.pcv2-step-btn),
   #pcV2BottomBar .tripleNavBtn-third,
   #pcV2BottomBar .loopbtn,
   .qn-yt-bbtn { padding: 10px 10px; min-height: 0; }
-  #pcV2BottomBar .pcv2-ctrl-btn:not(.pcv2-step-btn) svg,
   #pcV2BottomBar .tripleNavBtn-third:not(.tripleNavBtn-center) svg,
   #pcV2BottomBar .loopbtn svg { width: 26px; height: 26px; margin: 6px auto; }
   #pcV2BottomBar .tripleNavBtn-center svg { width: 38px; height: 38px; margin: 0; }
-  #pcV2BottomBar .top-controls-btn-label,
-  #pcV2BottomBar .pcv2-ctrl-btn span { font-size: 11px; }
+  #pcV2BottomBar .top-controls-btn-label { font-size: 11px; }
 }
 
 
 /* v3.16.0: PLAYER下部バーのラベル・Speed/Keyステッパーもyoutube下段バーと同表示に(PLは大文字化+行高9pxで幅広・1px低かった) */
-#pcV2BottomBar .top-controls-btn-label,
-#pcV2BottomBar .pcv2-ctrl-btn span {
+#pcV2BottomBar .top-controls-btn-label {
   text-transform: none;
   line-height: normal;
   white-space: nowrap;
