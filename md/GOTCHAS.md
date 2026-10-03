@@ -144,3 +144,8 @@
 - `DEFS[kind](el)` は `{title, rows}` か `{title, build(ctx)}`(独自本文)を返す。対象を増やす時は TARGETS / `style-quickpop.css` の ◢ セレクタ(position:relative込み)/ no-select セレクタの3か所を揃える。
 - libitem は Libraryの編集モード、ドラッグハンドル・button・input上では起動しない。
 - 波形ポップアップの微調整は `pinPopNudge`(pin→pins再ソート+refreshAfterPinChange、A/B→afterABChange)。
+
+## i18n(3.57.0)
+- 表示文は日本語で書き、`qn-i18n.js`のDICT/RULESに英訳を足す(キー方式ではない)。辞書に無い文は日本語のまま出る。
+- 表示文をコード側で比較(`textContent === "…"`)しない。英語表示で外れる。
+- localStorageキー `qn_lang` を AI_ASSISTANT_PROJECT_CONTEXT.md のキー表に追記済みか確認すること。

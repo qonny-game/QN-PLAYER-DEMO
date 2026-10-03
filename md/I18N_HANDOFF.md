@@ -1,29 +1,35 @@
-# 多言語化(日本語/English)の引き継ぎメモ
+# 多言語化(日本語/English)
 
-別チャットで作業する前提のメモ。QNPLAYER v3.38.0時点。
+QNPLAYER v3.57.0時点の実装メモ。第1段階(PLAYER本体)完了。第2段階(YouTube/PITCH/TUNER/アプリメニュー)は未対応。
 
-## 目的
-- 設定パネル(歯車)に「Language」を追加し、日本語/Englishで**文章系**の表示を切り替える。**ボタンのラベルは対象外**(現状ほぼ英語のまま)。
-- 初期言語: ブラウザ言語(`navigator.languages`)が`ja`なら日本語、それ以外は英語。手動選択が優先。
-- IPによる国判定は使わない(外部API必要・VPN/旅行で外れる)。必要なら後から追加。
+## 仕組み(`JS/qn-i18n.js`)
+- ソース内の文言は**日本語のまま**。英語表示の時だけDOMを英語へ差し替える(日本語文字列をキーにした辞書方式)。`data-i18n`やキー名は使わない。
+- 英語表示中のみ MutationObserver が動く(日本語表示中はobserverなし)。後から作られるDOM・トースト・ポップアップ・モーダルも自動で英語になる。
+- 対象はテキストノードと `title` / `aria-label` / `placeholder`。元の日本語はノード/要素(`__qnJa` / `__qnJaAttrs`)に保持し、日本語へ戻す時に復元する。
+- 変換は `DICT`(完全一致) → `RULES`(数字入りの断片を順に置換)。**訳せない文字列は日本語のまま表示**(誤訳より安全)。結果に日本語が残る場合も元の日本語を表示。
+- `alert` / `confirm` の本文も英語化。JS側で文字列を組み立てて直接使う時は `QNI18N.t("日本語")`。
+- API: `QNI18N.getLang()`(実効: ja|en) / `getPref()`(auto|ja|en) / `setPref(v)` / `apply()` / `OPTIONS`。切替時に `qn-lang-change` イベント。
+- 保存: localStorage `qn_lang`(auto|ja|en、既定auto。autoはブラウザ言語がjaなら日本語、他は英語)。
+- 設定UI: Settings > General > Language(`player-ui-pc-v2.js` の `ensureSettingsBody` の `rowsLang`)。
 
-## 方針
-1. 辞書ファイル `JS/qn-i18n.js` を新設(`QNI18N.t(key, vars)`、`QNI18N.getLang()/setLang()`、`apply(root)`)。保存先localStorage `qn_lang`(`auto`/`ja`/`en`、既定`auto`)。
-2. HTML固定文: `data-i18n="key"`(属性は`data-i18n-title`、`data-i18n-placeholder`等)を付け、`apply()`で差し替え。
-3. JSが出す文(トースト、エラー、`title`、確認ダイアログ、動的ラベル): `t("key")`へ置換。
-4. 辞書にenが無いキーは日本語へフォールバック。
-5. 設定パネル(`ensureSettingsBody()` / `syncSettingsBody()` in `player-ui-pc-v2.js`)に`settingsSeg("lang", ["auto","ja","en"], ...)`を追加。言語変更時は`apply(document)`と、再描画が必要な箇所(ライブラリ件数など)を再実行。
-6. 設定パネル自身の文言(Bar length等)も辞書化の対象。
+## 文言を足す時
+1. 日本語をそのままコードに書く。
+2. `qn-i18n.js` の `DICT`(固定文)か `RULES`(数字入り)に英訳を足す。
+3. 英語はUIルール: 先頭大文字・以後小文字(略語MP3/ZIP/EQ等・音名・単位は例外)、簡潔・中立、絵文字なし。
+4. 検証: `localStorage.qn_lang="en"` で読み込み、日本語が残っていないか確認(下記スニペット)。
 
-## 範囲
-- 第1段階: 本体PLAYER(`index.html`, `JS/player-*.js`, 設定パネル, Backup/Import画面, Sync/Transfer)。
-- 第2段階: YouTube(`qn-app-youtube.js`)、PITCH(`qn-app-pitch.js`)、アプリメニュー/ログイン周り。
-
-## 洗い出しのコツ
-- 日本語を含む文字列を検索: `grep -nP "[\x{3040}-\x{30FF}\x{4E00}-\x{9FFF}]" index.html JS/*.js`(コメント行は除外して見る)。
-- `title="..."`、`toast`/`showToast`系、`confirm(`、`alert(`、`placeholder=`、`aria-label=`が主な出所。
-- アプリ内の文言は丁寧すぎ・砕けすぎを避け、簡潔で中立に。絵文字なし。
+```js
+// 英語表示で日本語が残っているテキスト/属性を列挙
+const o=new Set(),w=document.createTreeWalker(document.body,4);let n;
+while(n=w.nextNode()){if(/[぀-ヿ一-鿿]/.test(n.nodeValue))o.add(n.nodeValue.trim())}
+console.log([...o])
+```
 
 ## 注意
-- 既存のデザインを崩さない。英語は日本語より長くなりがちなので、SP幅(390px)でのはみ出しを確認する。
-- `QN_APP_VERSION`を上げ、CHANGELOGに追記。localStorageキーはAI_ASSISTANT_PROJECT_CONTEXT.md §3の表に追記。
+- 英語は日本語より長い。SP幅(390px)ではみ出しを確認する。
+- コードが `textContent === "日本語"` のように表示文を比較していると、英語表示で外れる。状態はDOM文字列でなくデータで持つこと。
+- アプリ内の文言は丁寧すぎ・砕けすぎを避け、簡潔で中立に。
+
+## 第2段階(未)
+- YouTube(`qn-app-youtube.js`)、PITCH(`qn-app-pitch.js`)、TUNER、アプリメニュー/ログイン周りの日本語を洗い出して`DICT`へ。observerはグローバルなので辞書を足せば効く。
+- 洗い出し: `grep -nP "[\x{3040}-\x{30FF}\x{4E00}-\x{9FFF}]"`(コメント除外)。または上のスニペットを各アプリを開いた状態で実行。

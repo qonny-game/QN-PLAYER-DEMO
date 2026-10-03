@@ -869,7 +869,12 @@
         get: () => (typeof getSpeedStepPct === "function" ? getSpeedStepPct() : 5), set: v => { if (typeof setSpeedStepPct === "function") setSpeedStepPct(v); }, fmt: v => v + "%" }
     ];
     if (!preCtl) rowsPlay.shift();
-    settingsUI = QNSettingsUI.build([{ title: "Seek bar", rows: rowsBar }, { title: "Playback", rows: rowsPlay }]);
+    const rowsLang = [
+      { label: "Language", hint: "Interface text", type: "stepper", values: () => (window.QNI18N ? QNI18N.OPTIONS : ["auto"]),
+        get: () => (window.QNI18N ? QNI18N.getPref() : "auto"), set: v => { if (window.QNI18N) QNI18N.setPref(v); },
+        fmt: v => v === "auto" ? "Auto" : v === "ja" ? "日本語" : "English" }
+    ];
+    settingsUI = QNSettingsUI.build([{ title: "Seek bar", rows: rowsBar }, { title: "Playback", rows: rowsPlay }, { title: "General", rows: rowsLang }]);
     const body = settingsUI.el;
     body.id = "pcV2SettingsBody";
     const more = QNSettingsUI.list(["backup", "import", "color", "keyboard", "transfer"], openSettingsSub);

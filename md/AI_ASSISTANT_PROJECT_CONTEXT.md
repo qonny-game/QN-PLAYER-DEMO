@@ -91,6 +91,7 @@ favicon/  md/  pricing*.html  QUICK_START.md
 | 手動スクロール後の追従停止秒数 | localStorage | `qn_bar_follow_pause`（1〜30、既定6） |
 | シークバーの1画面の本数 | localStorage | `qn_bar_rows`（0=自動/3/4/5/6/8、既定0） |
 | 送り戻しボタンの秒数 | localStorage | `qn_skip_sec`（5/10/15/30/60、既定10） |
+| 表示言語 | localStorage | `qn_lang`（`auto`既定\|`ja`\|`en`。autoはブラウザ言語がjaなら日本語）。`JS/qn-i18n.js` |
 | 速度±ボタンの刻み(%) | localStorage | `qn_speed_step_pct`（1/2/5/10、既定5） |
 | YouTubeの送り戻し秒数 | localStorage | `qn_yt_skip_sec`（5/10/15/30/60、既定10） |
 | SPの下段バー(More)の開閉 | localStorage | `qn_sp_more`（"1"で開く、既定は閉） |
