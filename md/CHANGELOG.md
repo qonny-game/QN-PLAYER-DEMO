@@ -65,3 +65,5 @@
 - 3.58.0 波形をよりリアルに: ピーク密度を毎秒40→160(`player-ui-shared.js`)、バー刻みを1.5→0.5CSSpx(`BAR_STEP_CSS`)、Mirror(上下対称・既定)/Bottom(従来)切替を追加(Settings>Seek bar>Wave shape、`qn_bar_wave`)。
 - 3.59.0 PC幅の下部コントロール: ボタン幅/クリック領域を拡大、波形エリアの中央揃え、再生系とマーカー系の間を拡大、右にVolume/Speed(スライダー)・Key(−/＋)を追加(`#pcV2BarMixer`、既存のapplyVolumeChange/handleSpeedRangeInput/setKeySemitonesに委譲、pcv2WaveLoopで表示同期)。SP幅は非表示。狭いPC幅(<=1600px)は余白を詰め、足りなければ横スクロール。
 - 3.60.0 日本語表示を本格対応: 英語のUI文言(設定項目・ポップアップ・ツールチップ・メッセージ等)を日本語化する`JS/qn-i18n-ja.js`(英語→日本語辞書)を追加。`qn-i18n.js`を双方向化(日本語表示でもobserverが動く、`KEEP_SEL`のアイコンボタン/パネル見出しは英語のまま、`DATA_SEL`のユーザーデータは変換しない)。PCバーのVolumeにミュートボタンを追加。
+- 3.61.0 Speedバーを0.50/0.75/1.00/1.25/1.50でスナップ(コントロール・PCバーミキサー共通)。Controlパネル: Speed/KeyのON/OFFをEQと同じスイッチに、−/＋をバー左右へ、Keyをスライダー化(0でスナップ)、OFF時は無彩色。設定の見出しをコントロール見出しと同サイズに、設定のステッパーは端でループ。EQのSave as Presetをプリセットボタンと同じデザインに。Backup: YouTubeは曲選択をやめ「YouTube各種データ」の1項目に、「PLAYER音声データ」「ユーザー設定データ」へ改名。
+- 3.61.0(追記) マーカー線ポップアップのLoopアイコンを下部Loopボタンと同じに統一。

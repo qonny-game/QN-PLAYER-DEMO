@@ -60,6 +60,13 @@ const trackBackupTotalSizeEl = document.getElementById("trackBackupTotalSize");
 
 const trackBackupIncludeAudioEl = document.getElementById("trackBackupIncludeAudio");
 const trackBackupIncludeSettingsEl = document.getElementById("trackBackupIncludeSettings");
+const trackBackupIncludeYoutubeEl = document.getElementById("trackBackupIncludeYoutube");
+// 「YouTube各種データ」にチェックが入っていればLibrary全動画(マーカー・A/B・フォルダ含む)を出力。件数を返す
+function ytIncludeCount() {
+  const y = ytBackupApi();
+  return (trackBackupIncludeYoutubeEl && trackBackupIncludeYoutubeEl.checked && y) ? y.list().length : 0;
+}
+if (trackBackupIncludeYoutubeEl) trackBackupIncludeYoutubeEl.addEventListener("change", () => updateTrackBackupSelectionSummary());
 
 let trackBackupSelectedNames = new Set();
 // YouTube動画のチェック状態(キー=item.id)。開くたび全選択でリセット
@@ -80,7 +87,8 @@ function formatFileSize(bytes) {
 function updateTrackBackupSelectionSummary() {
   if (!Array.isArray(playlist)) return;
   const selectedTracks = playlist.filter(t => trackBackupSelectedNames.has(t.name));
-  const ytCount = trackBackupSelectedYtIds.size;
+  // YouTubeは曲単位で選ばず「YouTube各種データ」の1項目で丸ごと(v3.61.0)
+  const ytCount = ytIncludeCount();
   const pt = ptBackupApi();
   const ptSel = pt ? pt.list().filter(it => trackBackupSelectedPtIds.has(it.id)) : [];
   const ptCount = ptSel.length;
@@ -88,7 +96,6 @@ function updateTrackBackupSelectionSummary() {
     // 曲(PLAYER)・動画(YouTube)・録音(PITCH)を数える
     const parts = [];
     if (selectedTracks.length > 0) parts.push(`${selectedTracks.length}曲`);
-    if (ytCount > 0) parts.push(`${ytCount}動画`);
     if (ptCount > 0) parts.push(`${ptCount}録音`);
     trackBackupSelectedCountEl.textContent = parts.length ? parts.join(" + ") + "選択中" : "0曲選択中";
   }
@@ -115,7 +122,6 @@ function renderTrackBackupTrackList() {
 
   const tracks = Array.isArray(playlist) ? playlist : [];
   const yt = ytBackupApi();
-  const ytList = yt ? yt.list() : [];
   const ptApi = ptBackupApi();
   const ptList = ptApi ? ptApi.list() : [];
   // 【v3.55.0】Audio / YouTube / Pitch はそれぞれ独立した枠(見出し+一覧)にする
@@ -162,37 +168,6 @@ function renderTrackBackupTrackList() {
 
     host.appendChild(row);
   });
-
-  if (ytList.length > 0) {
-    startGroup("YouTube");
-    ytList.forEach(it => {
-      const row = document.createElement("label");
-      row.className = "track-backup-track-row";
-
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.checked = trackBackupSelectedYtIds.has(it.id);
-      checkbox.onchange = () => {
-        if (checkbox.checked) trackBackupSelectedYtIds.add(it.id);
-        else trackBackupSelectedYtIds.delete(it.id);
-        updateTrackBackupSelectionSummary();
-      };
-      row.appendChild(checkbox);
-
-      const nameSpan = document.createElement("span");
-      nameSpan.className = "track-backup-track-name";
-      nameSpan.textContent = it.title;
-      nameSpan.title = it.title;
-      row.appendChild(nameSpan);
-
-      const sizeSpan = document.createElement("span");
-      sizeSpan.className = "track-backup-track-size";
-      sizeSpan.textContent = it.markerCount + " markers";
-      row.appendChild(sizeSpan);
-
-      host.appendChild(row);
-    });
-  }
 
   if (ptList.length > 0) {
     startGroup("Pitch");
@@ -267,6 +242,7 @@ function prepareBackupView() {
   }
   if (trackBackupIncludeAudioEl) trackBackupIncludeAudioEl.checked = true;
   if (trackBackupIncludeSettingsEl) trackBackupIncludeSettingsEl.checked = true;
+  if (trackBackupIncludeYoutubeEl) trackBackupIncludeYoutubeEl.checked = true;
 
   renderTrackBackupTrackList();
   updateTrackBackupSelectionSummary();
@@ -320,7 +296,7 @@ function downloadBlobAs(blob, name) {
 async function runTrackBackup() {
   const targetTracks = (Array.isArray(playlist) ? playlist : []).filter(t => trackBackupSelectedNames.has(t.name));
   const yt = ytBackupApi();
-  const ytIds = yt ? yt.list().map(it => it.id).filter(id => trackBackupSelectedYtIds.has(id)) : [];
+  const ytIds = (yt && ytIncludeCount() > 0) ? yt.list().map(it => it.id) : [];
   const ptApi = ptBackupApi();
   const ptIds = ptApi ? ptApi.list().map(it => it.id).filter(id => trackBackupSelectedPtIds.has(id)) : [];
   if (targetTracks.length === 0 && ytIds.length === 0 && ptIds.length === 0) {
@@ -399,7 +375,7 @@ async function runTrackBackup() {
     }
 
     // ---------- YouTube側のJSON（YouTubeアプリの形式。設定データ=タイトル・マーカー・AB点） ----------
-    const ytJsonText = hasYt ? JSON.stringify(yt.buildExport(ytIds, opts.settings), null, 2) : null;
+    const ytJsonText = hasYt ? JSON.stringify(yt.buildExport(ytIds, true), null, 2) : null;
 
     // ---------- PITCH側(pitch.json + pitch/音声ファイル) ----------
     const ptExport = hasPt ? await ptApi.buildExport(ptIds, opts.audio) : null;

@@ -6,6 +6,8 @@ const controlSpeedDisplay = document.getElementById("controlSpeedDisplay");
 const spStatusSpeedValue = document.getElementById("spStatusSpeedValue");
 const SPEED_MIN = 0.5;
 const SPEED_MAX = 1.5;
+const SPEED_SNAPS = [0.5, 0.75, 1, 1.25, 1.5];
+const SPEED_SNAP_RANGE = 0.02;
 
 function syncSpeedDisplays() {
   if (speedDisplay) speedDisplay.textContent = currentSpeed.toFixed(2);
@@ -42,7 +44,13 @@ function handleSpeedRangeInput(e) {
   // スライダー操作時にWeb Audio接続を試みる(未操作なら接続しない設計を維持)
   setupAudioGraph().catch(err => console.warn("setupAudioGraph failed:", err));
 
-  currentSpeed = parseFloat(e.target.value);
+  let rawSpeed = parseFloat(e.target.value);
+  // 0.50/0.75/1.00/1.25/1.50の近くでカチッとはまる(PCバーのミキサーも同じ入口)
+  for (let i = 0; i < SPEED_SNAPS.length; i++) {
+    if (Math.abs(rawSpeed - SPEED_SNAPS[i]) <= SPEED_SNAP_RANGE) { rawSpeed = SPEED_SNAPS[i]; break; }
+  }
+  e.target.value = rawSpeed;
+  currentSpeed = rawSpeed;
   if (currentSpeed !== lastSpeedTickValue) {
     hapticTick();
     lastSpeedTickValue = currentSpeed;
@@ -232,7 +240,7 @@ updateAutoSpeedStatus();
 const keyDisplay = document.getElementById("keyDisplay");
 const keyStepperFill = document.getElementById("keyStepperFill");
 const controlKeyDisplay = document.getElementById("controlKeyDisplay");
-const controlKeyStepperFill = document.getElementById("controlKeyStepperFill");
+const controlKeyRange = document.getElementById("controlKeyRange");
 const KEY_MIN = -12;
 const KEY_MAX = 12;
 
@@ -247,9 +255,9 @@ function renderKeyDisplay() {
     keyStepperFill.style.left = left;
   }
   if (controlKeyDisplay) controlKeyDisplay.textContent = text;
-  if (controlKeyStepperFill) {
-    controlKeyStepperFill.style.width = pct + "%";
-    controlKeyStepperFill.style.left = left;
+  if (controlKeyRange) {
+    controlKeyRange.value = currentKeySemitones;
+    controlKeyRange.style.setProperty("--range-progress", String(((currentKeySemitones - KEY_MIN) / (KEY_MAX - KEY_MIN)) * 100));
   }
   const spStatusKeyValue = document.getElementById("spStatusKeyValue");
   if (spStatusKeyValue) spStatusKeyValue.textContent = text;
@@ -289,6 +297,8 @@ const controlKeyDownBtn = document.getElementById("controlKeyDownBtn");
 if (controlKeyUpBtn) controlKeyUpBtn.onclick = () => setKeySemitones(currentKeySemitones + 1);
 if (controlKeyDownBtn) controlKeyDownBtn.onclick = () => setKeySemitones(currentKeySemitones - 1);
 
+if (controlKeyRange) controlKeyRange.oninput = () => { setKeySemitones(parseInt(controlKeyRange.value, 10)); renderKeyDisplay(); };
+
 const controlKeyResetBtn = document.getElementById("controlKeyResetBtn");
 if (controlKeyResetBtn) controlKeyResetBtn.onclick = () => setKeySemitones(0);
 
@@ -296,7 +306,7 @@ renderKeyDisplay();
 
 // ピッチシフト準備完了でKEY/SPEED有効化。非対応(AudioWorklet無し)は無効のまま。トグルごと触れなくする
 function updateKeyControlAvailability() {
-  const keyElements = [controlKeyUpBtn, controlKeyDownBtn, controlKeyResetBtn, controlKeyEnableToggle];
+  const keyElements = [controlKeyUpBtn, controlKeyDownBtn, controlKeyResetBtn, controlKeyEnableToggle, controlKeyRange];
   const speedElements = [controlSpeedRange, controlSpeedResetBtn, controlSpeedEnableToggle, controlSpeedDownBtn, controlSpeedUpBtn];
 
   if (pitchShiftAvailable) {
@@ -502,6 +512,7 @@ if (controlSpeedEnableToggle) {
     hapticTap();
     speedEffectEnabled = !speedEffectEnabled;
     controlSpeedEnableToggle.setAttribute("aria-checked", String(speedEffectEnabled));
+    if (controlSpeedRange) controlSpeedRange.classList.toggle("is-effect-off", !speedEffectEnabled);
     updatePlaybackRate();
   };
 }
@@ -516,6 +527,7 @@ if (controlKeyEnableToggle) {
     hapticTap();
     keyEffectEnabled = !keyEffectEnabled;
     controlKeyEnableToggle.setAttribute("aria-checked", String(keyEffectEnabled));
+    if (controlKeyRange) controlKeyRange.classList.toggle("is-effect-off", !keyEffectEnabled);
     updatePlaybackRate();
   };
 }

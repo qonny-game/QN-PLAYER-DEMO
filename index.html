@@ -34,7 +34,7 @@
 <link rel="stylesheet" href="CSS/style-pitch.css">
 <script>
   // アプリバージョン一元管理(QN_APP_VERSION)。<title>はここで即更新、#splashVersion/#appVersionは各要素直後のinline scriptが反映
-  window.QN_APP_VERSION = "3.60.0";
+  window.QN_APP_VERSION = "3.61.0";
   document.title = "QNPLAYER " + window.QN_APP_VERSION;
 
   window.QN_SHORTCUTS = [
@@ -291,13 +291,13 @@
           <label>
             Speed <span id="controlSpeedDisplay" style="color:#fff;">1.00</span>x
             <button class="mini-reset-btn" id="controlSpeedResetBtn" title="Reset speed to 1.00x">Reset</button>
-            <span class="control-stepper">
-              <button type="button" class="control-effect-toggle control-effect-icon" id="controlSpeedEnableToggle" role="switch" aria-checked="true" title="Speed effect on/off"><svg viewBox="0 0 24 24"><path d="M20.38 8.57l-1.23 1.85a8 8 0 0 1-.22 7.58H5.07A8 8 0 0 1 15.58 6.85l1.85-1.23A10 10 0 0 0 3.35 19a2 2 0 0 0 1.72 1h13.85a2 2 0 0 0 1.74-1 10 10 0 0 0-.27-10.44zm-9.79 6.84a2 2 0 0 0 2.83 0l5.66-8.49-8.49 5.66a2 2 0 0 0 0 2.83z"/></svg></button>
-              <button type="button" class="control-step-btn" id="controlSpeedDownBtn" title="Speed −5%">−</button>
-              <button type="button" class="control-step-btn" id="controlSpeedUpBtn" title="Speed +5%">＋</button>
-            </span>
+            <button type="button" class="glow-switch control-effect-toggle" id="controlSpeedEnableToggle" role="switch" aria-checked="true" title="Speed effect on/off"><span class="glow-switch-knob"></span></button>
           </label>
-          <input type="range" id="controlSpeedRange" min="0.5" max="1.5" step="0.01" value="1.0">
+          <div class="control-slider-row" id="controlSpeedSliderRow">
+            <button type="button" class="control-step-btn" id="controlSpeedDownBtn" title="Speed −5%">−</button>
+            <input type="range" id="controlSpeedRange" min="0.5" max="1.5" step="0.01" value="1.0">
+            <button type="button" class="control-step-btn" id="controlSpeedUpBtn" title="Speed +5%">＋</button>
+          </div>
 
           <div class="auto-speed-card" id="controlAutoSpeedCard">
             <label class="auto-speed-header">
@@ -345,16 +345,12 @@
           <label>
             Key <span id="controlKeyDisplay" style="color:#fff;">0</span> st
             <button class="mini-reset-btn" id="controlKeyResetBtn" title="Reset key to 0">Reset</button>
-            <span class="control-stepper">
-              <button type="button" class="control-effect-toggle control-effect-icon" id="controlKeyEnableToggle" role="switch" aria-checked="true" title="Key effect on/off"><svg viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg></button>
-              <button type="button" class="control-step-btn" id="controlKeyDownBtn" title="Key down 1 semitone">−</button>
-              <button type="button" class="control-step-btn" id="controlKeyUpBtn" title="Key up 1 semitone">＋</button>
-            </span>
+            <button type="button" class="glow-switch control-effect-toggle" id="controlKeyEnableToggle" role="switch" aria-checked="true" title="Key effect on/off"><span class="glow-switch-knob"></span></button>
           </label>
-          <div class="key-stepper">
-            <div class="key-stepper-bar">
-              <div class="key-stepper-fill" id="controlKeyStepperFill"></div>
-            </div>
+          <div class="control-slider-row" id="controlKeySliderRow">
+            <button type="button" class="control-step-btn" id="controlKeyDownBtn" title="Key down 1 semitone">−</button>
+            <input type="range" id="controlKeyRange" min="-12" max="12" step="1" value="0">
+            <button type="button" class="control-step-btn" id="controlKeyUpBtn" title="Key up 1 semitone">＋</button>
           </div>
         </div>
       </div>
@@ -479,10 +475,7 @@
             <button type="button" class="eq-preset-btn" data-preset="vshape">V-Shape</button>
           </div>
           <div class="eq-preset-buttons eq-preset-custom-row" id="eqCustomPresetButtons"></div>
-          <button type="button" class="eq-preset-save-btn" id="eqSavePresetBtn" title="Save current EQ as a custom preset">
-            <svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
-            <span>Save as Preset</span>
-          </button>
+          <button type="button" class="eq-preset-btn eq-preset-save-btn" id="eqSavePresetBtn" title="Save current EQ as a custom preset">Save as Preset</button>
         </div>
       </div>
     </div>
@@ -659,11 +652,15 @@
         <div class="track-backup-checklist">
           <label class="track-backup-row">
             <input type="checkbox" id="trackBackupIncludeAudio" checked>
-            <span class="track-backup-row-label">音声データ</span>
+            <span class="track-backup-row-label">PLAYER音声データ</span>
           </label>
           <label class="track-backup-row">
             <input type="checkbox" id="trackBackupIncludeSettings" checked>
-            <span class="track-backup-row-label">設定データ</span>
+            <span class="track-backup-row-label">ユーザー設定データ</span>
+          </label>
+          <label class="track-backup-row">
+            <input type="checkbox" id="trackBackupIncludeYoutube" checked>
+            <span class="track-backup-row-label">YouTube各種データ</span>
           </label>
         </div>
       </div>

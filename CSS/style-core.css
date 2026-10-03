@@ -841,10 +841,11 @@ body {
   flex-shrink: 0;
 }
 
-.control-stepper { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
-.control-card .control-stepper .control-step-btn,
-.control-card .control-stepper .control-effect-toggle.control-effect-icon {
+.control-slider-row { display: flex; align-items: center; gap: 8px; }
+.control-slider-row input[type="range"] { flex: 1 1 auto; min-width: 0; width: auto; }
+.control-card .control-step-btn {
   box-sizing: border-box;
+  flex-shrink: 0;
   width: 28px;
   height: 22px;
   padding: 0;
@@ -862,19 +863,21 @@ body {
   cursor: pointer;
   transition: transform var(--dur-press, 100ms) var(--ease-snap, ease), color 0.15s;
 }
-.control-card .control-stepper .control-step-btn:active,
-.control-card .control-stepper .control-effect-icon:active { transform: scale(0.93); }
-.control-card .control-stepper .control-step-btn:disabled { opacity: 0.4; cursor: default; }
-.control-card .control-effect-icon svg { width: 14px; height: 14px; fill: currentColor; display: block; }
-.control-card .control-effect-icon[aria-checked="true"] { color: var(--accent-primary); border-color: color-mix(in srgb, var(--accent-primary) 45%, transparent); }
-.control-card .control-effect-icon[aria-checked="false"] { opacity: 0.55; }
+.control-card .control-step-btn:active { transform: scale(0.93); }
+.control-card .control-step-btn:disabled { opacity: 0.4; cursor: default; }
 @media (hover: hover) and (pointer: fine) {
-  .control-card .control-stepper .control-step-btn:hover { color: var(--text-bright, #fff); }
+  .control-card .control-step-btn:hover { color: var(--text-bright, #fff); }
 }
 @media screen and (max-width: 900px) {
-  .control-card .control-stepper .control-step-btn,
-  .control-card .control-stepper .control-effect-toggle.control-effect-icon { width: 34px; height: 28px; }
+  .control-card .control-step-btn { width: 34px; height: 28px; }
 }
+/* 効果OFF時のスライダーは無彩色(アクセント色を使わない) */
+.control-card input[type="range"].is-effect-off::-webkit-slider-runnable-track {
+  background: linear-gradient(to right, #5a5a64 0%, #5a5a64 calc(var(--range-progress, 50) * 1%), #2a2a35 calc(var(--range-progress, 50) * 1%), #2a2a35 100%);
+}
+.control-card input[type="range"].is-effect-off::-moz-range-progress { background: #5a5a64; }
+.control-card input[type="range"].is-effect-off::-webkit-slider-thumb { background: #7a7a84; }
+.control-card input[type="range"].is-effect-off::-moz-range-thumb { background: #7a7a84; }
 
 .control-card .control-effect-toggle .glow-switch-knob {
   width: 11px;

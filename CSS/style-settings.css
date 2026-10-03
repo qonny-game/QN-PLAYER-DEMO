@@ -7,8 +7,9 @@
 .qn-set-sec:last-child { border-bottom: none; }
 .qn-set-sec-title {
   padding-bottom: 6px;
-  font-size: var(--fs-micro);
-  font-weight: 700;
+  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
+  font-size: var(--fs-heading);
+  font-weight: 600;
   letter-spacing: 0.5px;
   text-transform: none;
   color: var(--icon-muted);
