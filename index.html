@@ -24,6 +24,7 @@
 <link rel="stylesheet" href="CSS/style-pcv2-panels.css">
 <link rel="stylesheet" href="CSS/style-bars.css">
 <link rel="stylesheet" href="CSS/style-settings.css">
+<link rel="stylesheet" href="CSS/style-stem.css">
 <link rel="stylesheet" href="CSS/style-quickpop.css">
 <link rel="stylesheet" href="CSS/style-auth.css">
 <link rel="stylesheet" href="CSS/style-shareware.css">
@@ -34,7 +35,7 @@
 <link rel="stylesheet" href="CSS/style-pitch.css">
 <script>
   // アプリバージョン一元管理(QN_APP_VERSION)。<title>はここで即更新、#splashVersion/#appVersionは各要素直後のinline scriptが反映
-  window.QN_APP_VERSION = "4.0.2";
+  window.QN_APP_VERSION = "4.27.0";
   document.title = "QNPLAYER " + window.QN_APP_VERSION;
 
   window.QN_SHORTCUTS = [
@@ -75,7 +76,7 @@
   }, 5000);
 </script>
 
-<div id="dropOverlay">Drop audio file here</div>
+<div id="dropOverlay">Drop audio or video files here</div>
 
 <div id="appHeader">
   <div id="qnMenuMount">
@@ -255,14 +256,7 @@
       <!-- #fileInputはPlaylistタブのAdd Fileボタン等から参照されるのでdisplay:noneのまま残す -->
       <div class="time-controls-row adjust-controls-row">
         <div class="time-controls-buttons">
-          <button id="exportToggleBtn" class="av-toggle-btn" title="Export Audio">
-            <svg viewBox="0 0 24 24"><path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zM13 12.67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z"/></svg>
-            <span class="av-toggle-btn-text">
-              <span class="av-toggle-btn-label">Export</span>
-            </span>
-          </button>
-
-          <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.ogg,.oga,.m4a,.aac,.flac,.webm,.opus" multiple style="display:none;">
+          <input type="file" id="fileInput" accept="audio/*,video/*,.mp3,.wav,.ogg,.oga,.m4a,.aac,.flac,.webm,.opus,.mp4,.m4v,.mov,.3gp,.3g2,.mkv,.mka,.weba,.ogv,.aif,.aiff,.aifc,.caf,.mp2,.mpga,.amr" multiple style="display:none;">
         </div>
       </div>
     </div>
@@ -295,7 +289,7 @@
           </label>
           <div class="control-slider-row">
             <button type="button" class="control-step-btn" id="controlSpeedDownBtn" title="Speed −5%">−</button>
-            <input type="range" id="controlSpeedRange" min="0.5" max="1.5" step="0.01" value="1.0">
+            <input type="range" id="controlSpeedRange" min="0.25" max="1.5" step="0.01" value="1.0">
             <button type="button" class="control-step-btn" id="controlSpeedUpBtn" title="Speed +5%">＋</button>
           </div>
 
@@ -331,7 +325,7 @@
                 <div class="auto-speed-field">
                   <span class="auto-speed-row-label">Limit</span>
                   <div class="auto-speed-field-input">
-                    <input type="number" id="controlAutoSpeedLimit" class="auto-speed-number" min="50" max="150" step="1" value="150">
+                    <input type="number" id="controlAutoSpeedLimit" class="auto-speed-number" min="25" max="150" step="1" value="150">
                     <span class="auto-speed-unit">%</span>
                   </div>
                 </div>
@@ -482,120 +476,6 @@
   </div>
 </div>
 
-<div id="exportModalOverlay" class="export-modal-overlay">
-  <div class="export-modal">
-    <div class="export-modal-header">
-      <span>Export Audio</span>
-      <button id="exportModalCloseBtn" class="export-modal-close" title="Close">✕</button>
-    </div>
-
-    <div class="export-modal-body">
-      <div class="export-section">
-        <label class="export-section-label">Range</label>
-        <div class="export-range-options">
-          <label class="export-radio-row">
-            <input type="radio" name="exportRange" id="exportRangeAll" value="all" checked>
-            <span>All (Full Track)</span>
-          </label>
-          <label class="export-radio-row">
-            <input type="radio" name="exportRange" id="exportRangeMarker" value="marker">
-            <span>Marker Range</span>
-          </label>
-        </div>
-        <div class="export-marker-range-selects" id="exportMarkerRangeSelects">
-          <div class="export-marker-select-group">
-            <label class="export-marker-select-label">Start</label>
-            <select id="exportMarkerStartSelect" class="export-marker-select" disabled>
-              <option value="">No markers available</option>
-            </select>
-          </div>
-          <div class="export-marker-select-group">
-            <label class="export-marker-select-label">End</label>
-            <select id="exportMarkerEndSelect" class="export-marker-select" disabled>
-              <option value="">No markers available</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div class="export-section">
-        <label class="export-section-label">Apply Effects</label>
-        <div class="export-effect-options">
-          <label class="export-checkbox-row">
-            <input type="checkbox" id="exportApplySpeed" checked>
-            <span>Speed</span>
-          </label>
-          <label class="export-checkbox-row">
-            <input type="checkbox" id="exportApplyKey" checked>
-            <span>Key</span>
-          </label>
-          <label class="export-checkbox-row">
-            <input type="checkbox" id="exportApplyEq" checked>
-            <span>EQ</span>
-          </label>
-        </div>
-      </div>
-
-      <div class="export-section">
-        <label class="export-section-label">File Name</label>
-        <input type="text" id="exportFileName" class="export-filename-input" placeholder="output">
-      </div>
-
-      <div class="export-section">
-        <label class="export-section-label">Format</label>
-        <div class="export-format-options">
-          <label class="export-radio-row">
-            <input type="radio" name="exportFormat" id="exportFormatWav" value="wav" checked>
-            <span>WAV</span>
-          </label>
-          <label class="export-radio-row">
-            <input type="radio" name="exportFormat" id="exportFormatMp3" value="mp3">
-            <span>MP3</span>
-          </label>
-        </div>
-
-        <div class="export-format-detail" id="exportWavDetail">
-          <label class="export-marker-select-label">Sample Rate</label>
-          <div class="export-format-options">
-            <label class="export-radio-row">
-              <input type="radio" name="exportWavSampleRate" value="44100" checked>
-              <span>44.1 kHz</span>
-            </label>
-            <label class="export-radio-row">
-              <input type="radio" name="exportWavSampleRate" value="48000">
-              <span>48 kHz</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="export-format-detail" id="exportMp3Detail" style="display:none;">
-          <label class="export-marker-select-label">Bitrate</label>
-          <div class="export-format-options">
-            <label class="export-radio-row">
-              <input type="radio" name="exportMp3Bitrate" value="128" checked>
-              <span>128 kbps</span>
-            </label>
-            <label class="export-radio-row">
-              <input type="radio" name="exportMp3Bitrate" value="192">
-              <span>192 kbps</span>
-            </label>
-            <label class="export-radio-row">
-              <input type="radio" name="exportMp3Bitrate" value="320">
-              <span>320 kbps</span>
-            </label>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="export-modal-footer">
-      <div id="exportStatus" class="export-status"></div>
-      <button id="exportCancelBtn" class="export-cancel-btn" title="Close">Cancel</button>
-      <button id="exportRunBtn" class="export-run-btn">Export</button>
-    </div>
-  </div>
-</div>
-
 <div id="cancelModalOverlay" class="export-modal-overlay">
   <div class="export-modal cancel-modal">
     <div class="export-modal-header">
@@ -722,12 +602,14 @@
 <script src="JS/qn-i18n-apps.js"></script>
 <script src="JS/qn-i18n-ja.js"></script>
 <script src="JS/jszip.min.js"></script>
-<script src="JS/lame_min.js"></script>
 <script src="JS/player-shareware.js"></script>
 <script src="JS/qn-marker-core.js"></script>
 <script src="JS/player-core.js"></script>
 <script src="JS/player-bars.js"></script>
 <script src="JS/player-ui-shared.js"></script>
+<script src="JS/player-normalize.js"></script>
+<script src="JS/qn-chord-core.js"></script>
+<script src="JS/player-chords.js"></script>
 <script src="JS/player-id3.js"></script>
 <script src="JS/player-playlist.js"></script>
 <script src="JS/player-track-backup.js"></script>
@@ -738,8 +620,8 @@
 <script src="JS/player-control-eq.js"></script>
 <script src="JS/player-controls.js"></script>
 <script src="JS/qn-settings-ui.js"></script>
-<script src="JS/player-export.js"></script>
 <script src="JS/player-text.js"></script>
+<script src="JS/player-stem.js"></script>
 <script src="JS/player-ui-pc-v2.js"></script>
 <script src="JS/player-quickpop.js"></script>
 <script src="JS/qn-wakelock.js"></script>

@@ -1,5 +1,5 @@
 // player-quickpop.js — 下部コントロールの長押しクイック設定ポップアップ(v3.54.0)。
-// Loop(長押し)=プリロール秒 / ±skip=送り戻し秒 / Repeat=Library範囲。部品は設定パネルと同じQNSettingsUI(「‹ 値 ›」)。
+// Loop(長押し)=プリロール秒 / ±skip=送り戻し秒 / 前後Track=フォルダ一覧 / 前後Marker=前後のトラックへ(ポップアップ無しの即実行。定義が{action}を返す)。部品は設定パネルと同じQNSettingsUI(「‹ 値 ›」)。
 // 押下はdocument委譲(下部バー/ドックが作り直されても効く)。長押し成立後のclickは握りつぶす。依存: qn-settings-ui.js, player-ui-pc-v2.js(window.QNSkip), player-controls.js, player-bars.js
 (function () {
   "use strict";
@@ -96,10 +96,6 @@
   function fmtT(t) { return typeof formatTime === "function" ? formatTime(t) : t.toFixed(1) + "s"; }
   function round1(v) { return Math.round(v * 10) / 10; }
   function hasAudio() { return typeof audio !== "undefined" && audio && isFinite(audio.duration) && audio.duration > 0; }
-  function seekPlay(t) {
-    beginSeek(); audio.currentTime = t; prevTime = t; audio.play(); updatePlayButtonState();
-    renderSegments(getActiveSegment(t)); setTimeout(function () { isSeeking = false; }, 150);
-  }
 
   var seconds = function (v) { return v + "s"; };
   var DEFS = {
@@ -120,22 +116,14 @@
         return host;
       } };
     },
-    // 前/次マーカー長押し: マーカー一覧からジャンプ
-    markers: function () {
-      return { title: "Jump to marker", build: function (ctx) {
-        var cur = hasAudio() ? audio.currentTime : -1, nearest = -1;
-        pins.forEach(function (p, i) { if (p.t <= cur + 0.05) nearest = i; });
-        var items = pins.map(function (p, i) {
-          return { label: (i + 1) + " - " + (p.memo || fmtT(p.t)), sub: p.memo ? fmtT(p.t) : "", dim: !p.enabled, on: i === nearest,
-            color: p.color && MARKER_COLOR_PALETTE[p.color] ? MARKER_COLOR_PALETTE[p.color] : null,
-            run: function () { if (hasAudio()) seekPlay(p.t); } };
-        });
-        return listBody(items, ctx, "No markers yet");
-      } };
+    // 前/次マーカー長押し: 前/次のトラックへ(ポップアップは出さず、その場で実行。{action}を返す)
+    markers: function (target) {
+      var prev = !!(target && /^(prevMarkerBtn|pcV2DockPrevMarker)$/.test(target.id));
+      return { action: function () { if (prev) playPrevTrack(); else playNextTrack(); } };
     },
     // A/B長押し: 0.1秒単位の微調整
     ab: function (target) {
-      var kind = target && target.id === "setBBtn" ? "B" : "A";
+      var kind = target && (target.id === "setBBtn" || target.id === "pcV2FabSetB") ? "B" : "A";
       var get = function () { return kind === "A" ? abA : abB; };
       var put = function (v) { if (kind === "A") abA = v; else abB = v; afterABChange(); };
       return { title: kind + " point", build: function (ctx) {
@@ -242,14 +230,6 @@
         { label: "Skip time", hint: "Seconds for back / forward", type: "stepper", values: function () { return S.options; },
           get: function () { return S.get(); }, set: function (v) { S.set(v); }, fmt: seconds }
       ] };
-    },
-    repeat: function () {
-      return { title: "Repeat", rows: [
-        { label: "Library repeat range", hint: "Auto Next / Repeat scope", type: "stepper", values: function () { return ["folder", "all"]; },
-          get: function () { return getAutoNextScope(); },
-          set: function (v) { setAutoNextScope(v); if (typeof syncAutoNextScopeButton === "function") syncAutoNextScopeButton(); },
-          fmt: function (v) { return v === "folder" ? "Folder" : "All"; } }
-      ] };
     }
   };
 
@@ -257,15 +237,20 @@
   var TARGETS = [
     ["#playToggle, #pcV2DockPlay", "play"],
     ["#prevMarkerBtn, #nextMarkerBtn, #pcV2DockPrevMarker, #pcV2DockNextMarker", "markers"],
-    ["#setABtn, #setBBtn", "ab"],
+    ["#setABtn, #setBBtn, #pcV2FabSetA, #pcV2FabSetB", "ab"],
     ["#addPinBtn, #pcV2DockAdd", "addpin"],
-    ["#prevTrackBtn, #nextTrackBtn", "tracks"],
+    ["#prevTrackBtn, #nextTrackBtn, #pcV2HeadPrevTrack, #pcV2HeadNextTrack", "tracks"],
     ["#playlistBox .playlistItem:not(.is-nowplaying)", "libitem"],
     ["#loopToggleBtn, #pcV2DockLoop", "loop"],
-    ["#pcV2SkipBackBtn, #pcV2SkipFwdBtn", "skip"],
-    ["#allRepeatToggleBtn", "repeat"]
+    ["#pcV2SkipBackBtn, #pcV2SkipFwdBtn", "skip"]
   ];
+  // 他アプリ(VIDEO等)の対象: add(selector, defFn(el))。defFnは{title, rows|build}を返す
+  var EXTRA = [];
   function findTarget(el) {
+    for (var j = 0; j < EXTRA.length; j++) {
+      var h = el.closest ? el.closest(EXTRA[j][0]) : null;
+      if (h) return { el: h, kind: "extra", fn: EXTRA[j][1] };
+    }
     for (var i = 0; i < TARGETS.length; i++) {
       var hit = el.closest ? el.closest(TARGETS[i][0]) : null;
       if (hit) return { el: hit, kind: TARGETS[i][1] };
@@ -289,9 +274,11 @@
     startX = e.clientX; startY = e.clientY;
     timer = setTimeout(function () {
       timer = null;
-      var d = DEFS[t.kind](t.el);
+      var d = t.kind === "extra" ? t.fn(t.el) : DEFS[t.kind](t.el);
+      if (!d) return;
       swallow = t.el;
       setTimeout(function () { if (swallow === t.el) swallow = null; }, 1200);
+      if (d.action) { close(); hap(); d.action(); return; } // ポップアップを出さず、その場で実行する長押し
       show(t.el, d);
     }, HOLD_MS);
   }, true);
@@ -306,5 +293,5 @@
   // 長押しで出るOS標準メニュー/選択を抑止
   document.addEventListener("contextmenu", function (e) { var t = findTarget(e.target); if (t) e.preventDefault(); }, true);
 
-  window.QNQuickPop = { show: show, close: close };
+  window.QNQuickPop = { show: show, close: close, add: function (sel, fn) { EXTRA.push([sel, fn]); }, adjustRow: adjustRow, listBody: listBody, el: el, hap: hap };
 })();

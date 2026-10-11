@@ -12,7 +12,7 @@
 - **Save**：左パネルに一時パネル「Save Recording」（名前入力、既定`REC MM/DD HH:MM`）。Cancel/Saveでパネルを元に戻す。
 - **Clear**：2回タップ（1回目で「Sure?」、3秒以内にもう一度で消去）。
 - **Recordings**：PL共通の`.playlistItem`行。行タップで再生（同じ行ならPlay/Pause）、鉛筆で改名、EDIT→OK＋丸チェック→Deleteで一括削除（YouTubeアプリと同じ）。並びは新しい順。
-- **Filters**：急変スキップ／スパイク除去／音量ゲート／音程ズレハイライト／ビブラート検出／スコア許容ズレ。変更は即ロールに反映、`qn_pitch_filters`に保存。スコアは「持続音のうち許容ズレ以内の割合」（ビブラート区間は除外）。再生中の表示は現在のフィルタで計算し直す。一覧の%は保存時の値。
+- **Filters**（表示はSettingsと同じ「項目名＋説明」。連続値は`QNSettingsUI.build`の`type:"range"`=説明の下にバー、ON/OFFは`switch`。親がOFFの間、子の項目は`disabledWhen`で薄く操作不可。項目・説明文は`qn-app-pitch.js`の`FILTER_UI`、英訳は`qn-i18n-apps.js`）：急変スキップ／スパイク除去／音量ゲート／音程ズレハイライト／ビブラート検出／スコア許容ズレ。変更は即ロールに反映、`qn_pitch_filters`に保存。スコアは「持続音のうち許容ズレ以内の割合」（ビブラート区間は除外）。再生中の表示は現在のフィルタで計算し直す。一覧の%は保存時の値。
 - **下段バー**（`#pcV2BottomBar`と同デザイン・同寸法）：Rec（中央・録音中は赤）｜Play｜Save｜Clear。SP幅は横スクロール、パネルを開くとステージごと隠れてパネルが全面。
 - **ショートカット**（表示中のみ）：Space=Play/Pause、R=Rec/Stop、S=Save。
 

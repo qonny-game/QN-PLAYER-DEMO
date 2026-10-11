@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>利用規約 - QNPLAYER</title>
+    <meta name="description" content="QNPLAYERの利用規約です。本サービスの利用条件、料金と解約、ユーザーのデータ、YouTubeに関する機能などについて定めています。">
+    
+    <!-- Instrument Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+
+    <!-- Favicon / App Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
+    <link rel="shortcut icon" href="/favicon/favicon.ico">
+
+  <style>
+    :root {
+      --accent-primary: #38bdf8;
+      --accent-secondary: #818cf8;
+      --accent-tertiary: #c084fc;
+      --font-body: 'Instrument Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Hiragino Kaku Gothic ProN", "メイリオ", sans-serif;
+      --bg-main: #090a0f;
+      --card-bg: rgba(18, 20, 29, 0.65);
+      --text-main: #f0f0f3;
+      --text-muted: #94a3b8;
+      --border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      background-image: 
+        radial-gradient(circle at 15% 0%, color-mix(in srgb, var(--accent-primary) 15%, transparent), transparent 50%),
+        radial-gradient(circle at 85% 30%, color-mix(in srgb, var(--accent-tertiary) 12%, transparent), transparent 45%),
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+      background-attachment: fixed;
+      color: var(--text-main);
+      font-family: var(--font-body);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: var(--accent-primary);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    header {
+      padding: 40px 0;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 50px;
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #ffffff;
+    }
+
+    .logo span {
+      background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .back-link {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .back-link:hover {
+      color: var(--accent-primary);
+    }
+
+    main {
+      padding-bottom: 80px;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      margin-bottom: 12px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .effective-date {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 40px;
+    }
+
+    section {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 28px;
+      backdrop-filter: blur(12px);
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      color: #ffffff;
+      margin-bottom: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 18px;
+      background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+      border-radius: 3px;
+    }
+
+    p {
+      margin-bottom: 16px;
+      color: #cbd5e1;
+      font-size: 0.98rem;
+    }
+
+    p:last-child {
+      margin-bottom: 0;
+    }
+
+    ul {
+      margin: 12px 0 16px 20px;
+      color: #cbd5e1;
+      font-size: 0.98rem;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    footer {
+      padding: 40px 0;
+      text-align: center;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border-color);
+      font-size: 0.875rem;
+      background: rgba(9, 10, 15, 0.9);
+    }
+
+    .footer-links {
+      margin-top: 10px;
+    }
+
+    .footer-links a {
+      color: var(--text-muted);
+      margin: 0 10px;
+    }
+
+    .footer-links a:hover {
+      color: var(--accent-primary);
+    }
+
+    .effective-date { line-height: 1.8; }
+    h3 { font-size: 1.02rem; color: #ffffff; margin: 20px 0 10px; font-weight: 700; }
+    h3:first-of-type { margin-top: 4px; }
+    ol { margin: 12px 0 16px 22px; color: #cbd5e1; font-size: 0.98rem; }
+    .note { border-left: 3px solid var(--accent-primary); padding: 4px 0 4px 14px; margin: 16px 0; color: #cbd5e1; font-size: 0.93rem; }
+    @media (max-width: 600px) {
+      section { padding: 22px 18px; }
+      h1 { font-size: 1.7rem; }
+      .header-content { flex-direction: column; align-items: flex-start; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="container header-content">
+      <a href="https://player.qnaudio.stream/" class="logo">QN<span>PLAYER</span></a>
+      <a href="https://player.qnaudio.stream/" class="back-link">&larr; QNPLAYERに戻る</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1>利用規約</h1>
+    <div class="effective-date">制定日：2026年9月16日<br>最終改定日：2026年10月10日</div>
+
+    <section>
+      <h2>第1条（適用）</h2>
+      <p>1. この利用規約（以下、「本規約」といいます。）は、QNAUDIO（以下、「当方」といいます。）が提供するWebオーディオプレイヤーサービス「QNPLAYER」（PLAYER、QNVIDEO、QNTUNER、QNPITCH を含みます。以下、「本サービス」といいます。）の利用条件を定めるものです。</p>
+      <p>2. ユーザーの皆様（以下、「ユーザー」といいます。）には、本規約および<a href="privacy.html">プライバシーポリシー</a>に従って、本サービスをご利用いただきます。本サービスを利用した時点で、ユーザーは本規約に同意したものとみなします。</p>
+      <p>3. 本サービス上に掲載する料金ページ、ガイドなどは、本規約の一部を構成します。それらの内容が本規約と異なるときは、本規約が優先します。</p>
+    </section>
+
+    <section>
+      <h2>第2条（本サービスの内容）</h2>
+      <p>1. 本サービスは、ブラウザ上で動作する、練習用のオーディオプレイヤーです。音声ファイルの再生、マーカーの設置、ループ再生、速度・キーの変更、音源のパート分離（Stem）、マイクによる録音、動画（YouTube）の再生補助、チューニング、音程の練習などの機能を提供します。</p>
+      <p>2. ユーザーが読み込んだ音声ファイルと、パート分離（Stem）の結果、マイクで録音した音声は、ユーザーの端末のブラウザ内で処理・保存され、当方のサーバーには送信されません。</p>
+      <p>3. 同期や転送などの一部の機能は、一部のアカウントに限って先行提供することがあります。</p>
+      <p>4. パート分離（Stem）は、初回の利用時に、学習済みモデルのデータ（数百MB程度）を外部の配信元から取得します。通信量にご注意ください。</p>
+    </section>
+
+    <section>
+      <h2>第3条（アカウント）</h2>
+      <p>1. 本サービスの一部機能の利用にあたり、ユーザーはGoogleアカウント等を用いた認証（ログイン）を行う必要があります。</p>
+      <p>2. 未成年のユーザーは、保護者の同意を得たうえで本サービスを利用してください。</p>
+      <p>3. ユーザーは、自己の責任においてアカウント情報を管理するものとし、第三者に譲渡・貸与・共有することはできません。</p>
+      <p>4. 当方は、アカウントの管理不十分、使用上の過誤、第三者の使用等によって生じた損害について、当方の故意または重過失による場合を除き、一切の責任を負いません。</p>
+    </section>
+
+    <section>
+      <h2>第4条（料金・決済・解約）</h2>
+      <p>1. 本サービスには、無料プランおよび有料プラン（月額・年額のサブスクリプション、買い切り型のライセンス等）が含まれます。広告の視聴による、機能の一時的な解放を提供することがあります。</p>
+      <p>2. 有料プランの内容と料金は、料金ページに表示します。サブスクリプションは、解約しない限り、期間ごとに自動で更新されます。</p>
+      <p>3. お支払いは、決済サービス（Stripe）を通じて行います。決済にあたり、ユーザーは、決済サービスの利用条件に従うものとします。</p>
+      <p>4. サブスクリプションの解約は、本サービス内の解約の手続きから、いつでも行えます。解約後も、すでにお支払いいただいた期間の終了まで、有料プランの機能をご利用いただけます。</p>
+      <p>5. お支払い済みの料金は、法令上必要な場合を除き、返金（日割り計算による払い戻しを含みます）を行いません。</p>
+      <p>6. 当方は、プランの内容、料金、機能を変更することがあります。料金の変更は、変更後の最初の更新から適用し、事前に本サービス上でお知らせします。</p>
+    </section>
+
+    <section>
+      <h2>第5条（ユーザーのデータ）</h2>
+      <p>1. ユーザーが本サービスに読み込む音声ファイル、マーカー、メモなどの権利は、ユーザーまたは正当な権利者に帰属します。当方は、これらに対する権利を取得しません。</p>
+      <p>2. ユーザーは、自己が適法に利用できる音声ファイル・動画だけを、本サービスで利用するものとします。</p>
+      <p>3. 本サービスのデータは、主にユーザーの端末のブラウザ内に保存されます。ブラウザのデータの消去、端末の故障や紛失、ブラウザの仕様変更などにより、データが失われることがあります。大切なデータは、ユーザー自身で、バックアップ機能などを使って保存してください。同期機能は、バックアップの代わりにはなりません。</p>
+    </section>
+
+    <section>
+      <h2>第6条（YouTube に関する機能）</h2>
+      <p>1. QNVIDEO は、YouTube API Services を利用して、YouTubeの動画を再生します。QNVIDEO を利用するユーザーは、<a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener noreferrer">YouTube利用規約</a>に拘束されることに同意するものとします。</p>
+      <p>2. ユーザーは、権利者の許諾なくアップロードされた動画など、権利を侵害する動画を、本サービスで利用してはなりません。</p>
+      <p>3. 動画の再生できるかどうかは、YouTubeや動画の投稿者の設定、方針によって変わります。再生できなくなっても、当方は責任を負いません。</p>
+      <p>4. 当方は、YouTubeの映像・音声をダウンロード、保存、加工する機能を、提供しません。</p>
+    </section>
+
+    <section>
+      <h2>第7条（禁止事項）</h2>
+      <p>ユーザーは、本サービスの利用にあたり、以下の行為を行ってはなりません。</p>
+      <ul>
+        <li>法令または公序良俗に違反する行為</li>
+        <li>犯罪行為に関連する行為</li>
+        <li>他者の著作権、肖像権、プライバシーその他の権利を侵害する行為</li>
+        <li>当方のサーバーまたはネットワークの機能を破壊したり、妨害したりする行為</li>
+        <li>本サービスの運営を妨げるおそれのある行為</li>
+        <li>不正アクセスをし、またはこれを試みる行為</li>
+        <li>プランの制限を回避する目的で、本サービスのデータや通信を改ざん・不正に操作する行為</li>
+        <li>決済に関する不正な行為（他人のカードの使用など）</li>
+        <li>本サービスを、解析、複製、改変して、これと同等のサービスを提供する行為</li>
+        <li>転送機能などを使って、他のユーザーに迷惑をかける行為</li>
+        <li>他のユーザーに関する個人情報等を収集または蓄積する行為</li>
+        <li>その他、当方が不適切と判断する行為</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>第8条（知的財産権）</h2>
+      <p>本サービスのプログラム、デザイン、ロゴ、ガイドなどに関する著作権その他の知的財産権は、当方または正当な権利者に帰属します。本規約は、これらの権利をユーザーに譲渡するものではありません。ユーザーには、本規約に従って本サービスを利用するための、非独占的で譲渡できない権利のみを許諾します。</p>
+    </section>
+
+    <section>
+      <h2>第9条（本サービスの提供の停止・変更・終了）</h2>
+      <p>1. 当方は、以下のいずれかの事由があると判断した場合、ユーザーに事前に通知することなく、本サービスの全部または一部の提供を停止または中断することができるものとします。</p>
+      <ul>
+        <li>本サービスにかかるコンピュータシステムの保守点検または更新を行う場合</li>
+        <li>地震、落雷、火災、停電または天災などの不可抗力により、本サービスの提供が困難となった場合</li>
+        <li>コンピュータまたは通信回線等が事故により停止した場合</li>
+        <li>外部サービス（Google、Stripe、YouTubeなど）の停止、仕様変更、規約の変更があった場合</li>
+        <li>その他、当方が本サービスの提供が困難と判断した場合</li>
+      </ul>
+      <p>2. 当方は、本サービスの内容を変更し、または提供を終了することがあります。有料プランの提供中に終了するときは、あらかじめ本サービス上でお知らせし、未経過期間の扱いについて、別途ご案内します。</p>
+    </section>
+
+    <section>
+      <h2>第10条（利用の停止）</h2>
+      <p>当方は、ユーザーが本規約に違反した場合、またはそのおそれがあると判断した場合、事前に通知することなく、そのユーザーによる本サービスの利用を制限または停止することができます。これによってユーザーに生じた損害について、当方は責任を負いません。</p>
+    </section>
+
+    <section>
+      <h2>第11条（免責事項）</h2>
+      <p>1. 当方は、本サービスに事実上または法律上の瑕疵（安全性、信頼性、正確性、完全性、有効性、特定の目的への適合性、セキュリティなどに関する欠陥、エラーやバグ、権利侵害などを含みます。）がないことを保証しません。</p>
+      <p>2. チューナー、音程の表示、パート分離（Stem）の結果などは、目安であり、正確性や品質を保証するものではありません。</p>
+      <p>3. 当方は、本サービスに起因してユーザーに生じたあらゆる損害（データの消失を含みます）について、当方の故意または重過失による場合を除き、一切の責任を負いません。</p>
+      <p>4. 前項のうち、当方に過失（重過失を除きます）がある場合における、有料プランのユーザーに対する損害賠償の額は、損害の原因となった事由が生じた時点から過去12か月間に、そのユーザーが当方に支払った料金の総額を上限とします。</p>
+      <p>5. 本サービスとユーザーまたは第三者との間で紛争が生じたときは、当事者間で解決するものとし、当方は責任を負いません。</p>
+      <p>6. 本条の定めは、消費者契約法その他の法令により無効とされる範囲では、適用しません。</p>
+    </section>
+
+    <section>
+      <h2>第12条（個人情報の取扱い）</h2>
+      <p>当方は、ユーザーの個人情報を、<a href="privacy.html">プライバシーポリシー</a>に従って取り扱います。</p>
+    </section>
+
+    <section>
+      <h2>第13条（利用規約の変更）</h2>
+      <p>1. 当方は、必要と判断した場合には、いつでも本規約を変更することができるものとします。</p>
+      <p>2. ユーザーに影響する重要な変更を行うときは、本サービス上でお知らせします。</p>
+      <p>3. 変更後の利用規約は、本サービス上に掲示した時点から効力を生じるものとします。変更後に本サービスを利用したユーザーは、変更後の規約に同意したものとみなします。</p>
+    </section>
+
+    <section>
+      <h2>第14条（準拠法・管轄裁判所）</h2>
+      <p>本規約の解釈には日本法を準拠法とします。本サービスに関して紛争が生じた場合は、当方の所在地を管轄する裁判所を、第一審の専属的合意管轄裁判所とします。</p>
+    </section>
+
+    <section>
+      <h2>第15条（お問い合わせ）</h2>
+      <p>本サービスに関するお問い合わせは、以下のメールアドレスまでご連絡ください。</p>
+      <p><strong>メールアドレス：</strong> contact@qnaudio.stream</p>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 QNAUDIO. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="https://player.qnaudio.stream/">QNPLAYERを起動</a> |
+        <a href="terms.html">利用規約</a> |
+        <a href="privacy.html">プライバシーポリシー</a> |
+        <a href="https://qnaudio.stream/">サービス紹介トップへ</a> |
+        <a href="mailto:contact@qnaudio.stream">お問い合わせ</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

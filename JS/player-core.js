@@ -234,7 +234,6 @@ async function loadAllPlaylistTracks() {
 // playlist[]は常に「フォルダ順にグループ化」した状態を保つ(normalizePlaylistGrouping)。→ 行のdata-index=配列indexのまま、選択/削除/ドラッグ/Auto Nextの既存ロジックがindexベースで動く。未分類は末尾グループ。
 // 曲ごとのfolderはqn_playlist_meta_v1(localStorageのみ。IndexedDBの音声レコードは書かない=GOTCHAS)
 const FOLDERS_KEY = "qn_folders_v1";
-const AUTONEXT_SCOPE_KEY = "qn_autonext_scope";
 let playlistFolders = readPlaylistFolders();
 
 function readPlaylistFolders() {
@@ -314,6 +313,25 @@ function movePlaylistFolder(id, dir) {
   normalizePlaylistGrouping();
 }
 
+// フォルダ表示順をid配列どおりに並べ替える(配列に無いフォルダは現在の相対順で末尾)。曲の並びも合わせて直す。変わったらtrueを返す(曲順の保存は呼び出し側のpersistPlaylistOrder)。呼び元: ドラッグ並び替え(player-playlist.js)・同期(player-sync.js)
+function setPlaylistFolderOrder(ids) {
+  const byId = new Map(playlistFolders.map(f => [f.id, f]));
+  const next = [];
+  (ids || []).forEach(id => {
+    const f = byId.get(id);
+    if (f && next.indexOf(f) < 0) next.push(f);
+  });
+  playlistFolders.forEach(f => { if (next.indexOf(f) < 0) next.push(f); });
+  const changed = next.some((f, i) => f !== playlistFolders[i]);
+  if (changed) {
+    playlistFolders.length = 0;
+    next.forEach(f => playlistFolders.push(f));
+    writePlaylistFolders();
+  }
+  const regrouped = normalizePlaylistGrouping();
+  return changed || regrouped;
+}
+
 // フォルダ削除: 中の曲は消さず未分類へ戻す
 function deletePlaylistFolder(id) {
   const i = playlistFolders.findIndex(f => f.id === id);
@@ -361,21 +379,6 @@ function moveTracksToFolder(indices, folderId) {
   normalizePlaylistGrouping();
   if (current) currentPlaylistIndex = playlist.indexOf(current);
   persistPlaylistOrder();
-}
-
-// Auto Nextの範囲: "folder"=今の曲と同じフォルダ内だけ / "all"=ライブラリ全体。フォルダが無い間は結果が同じ
-function getAutoNextScope() {
-  try {
-    return localStorage.getItem(AUTONEXT_SCOPE_KEY) === "all" ? "all" : "folder";
-  } catch (e) {
-    return "folder";
-  }
-}
-
-function setAutoNextScope(scope) {
-  try {
-    localStorage.setItem(AUTONEXT_SCOPE_KEY, scope === "all" ? "all" : "folder");
-  } catch (e) {}
 }
 
 // playlistの並びをsavedAtへ反映(連番)。Blobに触れず軽量更新のみ。savePlaylistTrack()で全曲書き直すと重くフリーズする
@@ -496,7 +499,9 @@ function replayAppTitleMarquee() {
 
 function getAudioCtx() {
   if (!window.__qnAudioCtx) {
-    window.__qnAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    // 再生用途なので大きめのバッファ(playback)。iOSでAudioWorkletの処理落ち(プツプツ)を減らす
+    try { window.__qnAudioCtx = new Ctx({ latencyHint: "playback" }); } catch (e) { window.__qnAudioCtx = new Ctx(); }
   }
   // 自動再生ポリシーでAudioContextがsuspendedのことがある。取得毎にresume
   if (window.__qnAudioCtx.state === "suspended") {
@@ -535,6 +540,22 @@ let eqFilters = [];
 let soundTouchNode = null;
 let pitchShiftAvailable = false;
 
+// Speedの伸縮エンジン。既定"st"=SoundTouchが時間伸縮(audio要素は音程を保たず再生速度だけ変える)。"native"=従来のブラウザ標準の伸縮(iOSでは伸びずに隙間が空く)。切替: URLに ?stretch=native / ?stretch=st を付けて開くと端末に保存
+function getStretchEngine() {
+  try {
+    const q = new URLSearchParams(location.search).get("stretch");
+    if (q === "native" || q === "st") localStorage.setItem("qn_stretch_engine", q);
+    return localStorage.getItem("qn_stretch_engine") === "native" ? "native" : "st";
+  } catch (e) { return "st"; }
+}
+const STRETCH_PARAMS = { sequenceMs: 120, seekWindowMs: 30, overlapMs: 20 }; // 遅い再生向けに窓を長め(既定より滑らか)
+function setElementPreservesPitch(on) {
+  audio.preservesPitch = on; audio.webkitPreservesPitch = on; audio.mozPreservesPitch = on;
+}
+// 自動ノーマライズ(player-normalize.js)用: EQの後ろに Gain → リミッタ を置く
+let normGainNode = null;
+let normLimiterNode = null;
+
 async function setupAudioGraph() {
   if (audioGraphSetupDone) return;
   audioGraphSetupDone = true;
@@ -558,6 +579,7 @@ async function setupAudioGraph() {
     const { SoundTouchNode } = await loadSoundTouchModule();
     await ensureSoundTouchWorklet(ctx, SoundTouchNode);
     stNode = new SoundTouchNode({ context: ctx });
+    try { stNode.setStretchParameters(STRETCH_PARAMS); } catch (e) {}
   } catch (err) {
     console.warn("SoundTouchJS unavailable, Speed/Key features disabled:", err);
     stNode = null;
@@ -588,7 +610,12 @@ async function setupAudioGraph() {
     node.connect(filter);
     node = filter;
   });
-  node.connect(ctx.destination);
+  normGainNode = ctx.createGain();
+  normLimiterNode = ctx.createDynamicsCompressor();
+  node.connect(normGainNode);
+  normGainNode.connect(normLimiterNode);
+  normLimiterNode.connect(ctx.destination);
+  if (window.QNNorm) QNNorm.apply();
 
   if (typeof setEqEffectEnabled === "function" && typeof eqEffectEnabled !== "undefined") {
     setEqEffectEnabled(eqEffectEnabled);
@@ -608,10 +635,13 @@ function updatePlaybackRate() {
   const effectiveSpeed = speedEffectEnabled ? currentSpeed : 1.0;
   const effectiveKeySemitones = keyEffectEnabled ? currentKeySemitones : 0;
   if (pitchShiftAvailable && soundTouchNode) {
+    const native = getStretchEngine() === "native";
+    // st: audio要素は音程そのまま(preservesPitch=false)で速度だけ変え、SoundTouchが「playbackRate分の速度差」を伸縮で埋める(pitch=1)。native: 要素側で伸縮(pitch=speedで相殺)
+    setElementPreservesPitch(native);
     audio.playbackRate = effectiveSpeed;
     try {
       soundTouchNode.playbackRate.value = effectiveSpeed;
-      soundTouchNode.pitch.value = effectiveSpeed;
+      soundTouchNode.pitch.value = native ? effectiveSpeed : 1;
       const clampedSemitones = Math.max(-24, Math.min(24, effectiveKeySemitones));
       soundTouchNode.pitchSemitones.value = clampedSemitones;
     } catch (e) {
@@ -700,223 +730,3 @@ function formatTime(seconds) {
   const sText = s.toFixed(1).padStart(4, '0');
   return `${String(m).padStart(2, '0')}:${sText}`;
 }
-
-function audioBufferToWavBlob(audioBuffer) {
-  const numChannels = audioBuffer.numberOfChannels;
-  const sampleRate = audioBuffer.sampleRate;
-  const numFrames = audioBuffer.length;
-  const bytesPerSample = 2;
-  const blockAlign = numChannels * bytesPerSample;
-  const dataSize = numFrames * blockAlign;
-  const headerSize = 44;
-  const buffer = new ArrayBuffer(headerSize + dataSize);
-  const view = new DataView(buffer);
-
-  function writeString(offset, str) {
-    for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
-  }
-
-  writeString(0, "RIFF");
-  view.setUint32(4, 36 + dataSize, true);
-  writeString(8, "WAVE");
-  writeString(12, "fmt ");
-  view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true);
-  view.setUint16(22, numChannels, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * blockAlign, true);
-  view.setUint16(32, blockAlign, true);
-  view.setUint16(34, 16, true);
-  writeString(36, "data");
-  view.setUint32(40, dataSize, true);
-
-  const channelData = [];
-  for (let ch = 0; ch < numChannels; ch++) {
-    channelData.push(audioBuffer.getChannelData(ch));
-  }
-
-  let offset = headerSize;
-  for (let i = 0; i < numFrames; i++) {
-    for (let ch = 0; ch < numChannels; ch++) {
-      let sample = channelData[ch][i];
-      sample = Math.max(-1, Math.min(1, sample));
-      const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
-      view.setInt16(offset, intSample, true);
-      offset += 2;
-    }
-  }
-
-  return new Blob([buffer], { type: "audio/wav" });
-}
-
-function audioBufferToMp3Blob(audioBuffer, kbps) {
-  if (typeof lamejs === "undefined" || !lamejs.Mp3Encoder) {
-    throw new Error("MP3 encoder (lamejs) is not available");
-  }
-
-  const numChannels = Math.min(2, audioBuffer.numberOfChannels);
-  const sampleRate = audioBuffer.sampleRate;
-  const numFrames = audioBuffer.length;
-
-  function toInt16Array(channelData) {
-    const out = new Int16Array(numFrames);
-    for (let i = 0; i < numFrames; i++) {
-      let sample = Math.max(-1, Math.min(1, channelData[i]));
-      out[i] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
-    }
-    return out;
-  }
-
-  const left = toInt16Array(audioBuffer.getChannelData(0));
-  const right = numChannels === 2 ? toInt16Array(audioBuffer.getChannelData(1)) : null;
-
-  const encoder = new lamejs.Mp3Encoder(numChannels, sampleRate, kbps || 128);
-  const mp3Chunks = [];
-  const blockSize = 1152;
-
-  for (let i = 0; i < numFrames; i += blockSize) {
-    const leftChunk = left.subarray(i, i + blockSize);
-    const mp3buf = numChannels === 2
-      ? encoder.encodeBuffer(leftChunk, right.subarray(i, i + blockSize))
-      : encoder.encodeBuffer(leftChunk);
-    if (mp3buf.length > 0) mp3Chunks.push(mp3buf);
-  }
-
-  const finalBuf = encoder.flush();
-  if (finalBuf.length > 0) mp3Chunks.push(finalBuf);
-
-  return new Blob(mp3Chunks, { type: "audio/mp3" });
-}
-
-// OfflineAudioContextで範囲・エフェクト指定レンダリング(毎回再デコード)。範囲切り出しはSoundTouchに渡す前に行う
-function sliceAudioBuffer(sourceBuffer, startTime, endTime) {
-  const sampleRate = sourceBuffer.sampleRate;
-  const startFrame = Math.max(0, Math.floor(startTime * sampleRate));
-  const endFrame = Math.min(sourceBuffer.length, Math.ceil(endTime * sampleRate));
-  const frameCount = Math.max(1, endFrame - startFrame);
-
-  const sliced = new AudioBuffer({
-    numberOfChannels: sourceBuffer.numberOfChannels,
-    length: frameCount,
-    sampleRate: sampleRate
-  });
-
-  const channelData = new Float32Array(frameCount);
-  for (let ch = 0; ch < sourceBuffer.numberOfChannels; ch++) {
-    sourceBuffer.copyFromChannel(channelData, ch, startFrame);
-    sliced.copyToChannel(channelData, ch, 0);
-  }
-
-  return sliced;
-}
-
-async function renderExportBuffer(startTime, endTime, applySpeed, applyKey, applyEq, targetSampleRate) {
-  if (currentPlaylistIndex < 0 || !playlist[currentPlaylistIndex]) {
-    throw new Error("No file loaded");
-  }
-  const file = playlist[currentPlaylistIndex].file;
-  const arrayBuffer = await file.arrayBuffer();
-
-  const decodeCtx = getAudioCtx();
-  const sourceBuffer = await decodeCtx.decodeAudioData(arrayBuffer.slice(0));
-
-  const speed = applySpeed ? currentSpeed : 1.0;
-  const keySemitones = applyKey ? currentKeySemitones : 0;
-  const outputSampleRate = targetSampleRate || sourceBuffer.sampleRate;
-
-  const clampedStart = Math.max(0, Math.min(startTime, sourceBuffer.duration));
-  const clampedEnd = Math.max(clampedStart, Math.min(endTime, sourceBuffer.duration));
-  const rangeDuration = clampedEnd - clampedStart;
-  if (rangeDuration <= 0) {
-    throw new Error("Invalid export range");
-  }
-
-  let workingBuffer = sliceAudioBuffer(sourceBuffer, clampedStart, clampedEnd);
-
-  const needsSoundTouch = (applySpeed && speed !== 1.0) || (applyKey && keySemitones !== 0);
-  if (needsSoundTouch && pitchShiftAvailable) {
-    try {
-      const { processOffline } = await loadSoundTouchModule();
-      const effectivePlaybackRate = speed || 1.0;
-      workingBuffer = await processOffline({
-        input: workingBuffer,
-        processorUrl: SOUNDTOUCH_PROCESSOR_URL,
-        // pitchはplaybackRateと同値(実ピッチ=pitch÷rate)。1.0固定だとSpeed変更でズレる
-        pitch: effectivePlaybackRate,
-        pitchSemitones: keySemitones,
-        playbackRate: effectivePlaybackRate
-      });
-    } catch (err) {
-      console.warn("SoundTouchJS offline processing failed, falling back to simple resampling:", err);
-      if (applySpeed && speed !== 1.0) {
-        const fallbackLength = Math.max(1, Math.ceil((workingBuffer.length / speed)));
-        const fallbackCtx = new OfflineAudioContext(
-          workingBuffer.numberOfChannels,
-          fallbackLength,
-          workingBuffer.sampleRate
-        );
-        const fallbackSource = fallbackCtx.createBufferSource();
-        fallbackSource.buffer = workingBuffer;
-        fallbackSource.playbackRate.value = speed;
-        fallbackSource.connect(fallbackCtx.destination);
-        fallbackSource.start(0);
-        workingBuffer = await fallbackCtx.startRendering();
-      }
-    }
-  } else if (applySpeed && speed !== 1.0) {
-    const fallbackLength = Math.max(1, Math.ceil((workingBuffer.length / speed)));
-    const fallbackCtx = new OfflineAudioContext(
-      workingBuffer.numberOfChannels,
-      fallbackLength,
-      workingBuffer.sampleRate
-    );
-    const fallbackSource = fallbackCtx.createBufferSource();
-    fallbackSource.buffer = workingBuffer;
-    fallbackSource.playbackRate.value = speed;
-    fallbackSource.connect(fallbackCtx.destination);
-    fallbackSource.start(0);
-    workingBuffer = await fallbackCtx.startRendering();
-  }
-
-  const needsEq = applyEq && eqFilters.some(f => f.gain.value !== 0);
-  const needsResample = outputSampleRate !== workingBuffer.sampleRate;
-  if (!needsEq && !needsResample) {
-    return workingBuffer;
-  }
-
-  const finalCtx = new OfflineAudioContext(
-    workingBuffer.numberOfChannels,
-    Math.max(1, Math.ceil(workingBuffer.duration * outputSampleRate)),
-    outputSampleRate
-  );
-  const finalSource = finalCtx.createBufferSource();
-  finalSource.buffer = workingBuffer;
-
-  let currentNode = finalSource;
-  if (needsEq) {
-    for (let i = 0; i < eqFilters.length; i++) {
-      const gain = eqFilters[i].gain.value;
-      if (gain === 0) continue;
-      const filter = finalCtx.createBiquadFilter();
-      filter.type = "peaking";
-      filter.frequency.value = EQ_FREQS[i];
-      filter.Q.value = 1.4;
-      filter.gain.value = gain;
-      currentNode.connect(filter);
-      currentNode = filter;
-    }
-  }
-
-  currentNode.connect(finalCtx.destination);
-  finalSource.start(0);
-
-  const renderedBuffer = await finalCtx.startRendering();
-  return renderedBuffer;
-}
-
-function suggestExportFileName() {
-  if (!currentFileName || currentFileName === "No file loaded") return "output";
-  const dot = currentFileName.lastIndexOf(".");
-  return dot > 0 ? currentFileName.slice(0, dot) : currentFileName;
-}
-

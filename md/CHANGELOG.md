@@ -70,3 +70,67 @@
 - 4.0.0 メジャー更新(機能は3.61.0と同じ)。PC v2統一UI・和英切替・長押しメニュー・波形/ミキサー・Backup再編までを一区切りとした完全版。
 - 4.0.1 お掃除ルールを`md/CLEANUP.md`に集約(以後お掃除のたびに更新)。QUICK_STARTとPROJECT_CONTEXTから参照を追加。
 - 4.0.2 お掃除(未使用JS関数・死んだCSS/idの削除、見た目差分0確認)。設定パネルに操作ガイド(◢長押し・シークバーのタップ/長押し/スワイプ/ダブルタップ・行スワイプ)を追加(en/ja)。波形右下の+Audio/+Marker/再生の行にBar length・Rows・Followの帯を常時表示し、時間表示/時刻ラベルの長押し(◢)は撤去。シークバー右端のマーカーが見切れる不具合を修正(`#vbarRows .vbar`に`width:auto`)。
+- 4.0.3 設定パネルの操作ガイドを説明文(Tips)に変更。TransferをモーダルからBackup/Importと同じ設定の下層パネルに作り直し(曲選択・全選択・サイズ表示も共通部品)。PLAYERでTransferが出ないことがあった不具合を修正(設定を開くたびに表示を判定)。
+- 4.0.4 シークバーのA/B旗が段(行)をまたぐと動かなくなる不具合を修正(ドラッグをdocumentで受ける方式に変更)。
+- 4.1.0 VIDEOにPLAYERの機能を移植: 下段バーの長押しクイック設定(◢。Play=Speed/前後マーカー=一覧ジャンプ/A・B=±0.1s微調整/+Marker=プリセット追加/前後Track=動画一覧/Loop=プリロール/±10s=スキップ秒。`QNQuickPop.add`で対象登録)、Settingsに「Seek bar > Rows」(1〜6段、`qn_yt_segs`)とTips。
+- 4.2.0 VIDEO: ステージ下のFABにURL入力+Saveを増設(Libraryを開かず保存。既存動画は手入力タイトルを保持)、Settings>Seek bar>RowsにOff(シークバー非表示。プレイヤーが広がる)、マーカー区間のSKIP(行のボタン/SPスワイプ。次のマーカーまで飛ばす。保存・Backup・同期にmarker.skipを追加)。
+- 4.3.0 VIDEOのSP幅にメインドックを追加(Prev/Loop/再生/Marker/Next/More。Moreで下段バーを開閉、既定は閉。`qn_yt_more`)。ドックのボタンも長押しクイック設定に対応。
+- 4.4.0 VIDEOをPLAYERの部品に寄せ直し: Library/Markersの行ボタン(SKIP/HIDE/編集タイル)・選択タイル・Cancel/OK→Deleteを共通化(CSSは:is()で両側に適用。VIDEO専用の行CSSを撤去、行のA/Bボタンを廃止)、ステージFABに段数(Rows)ストリップ、PC幅の下段バーをPLAYER寸法に拡大、SPのバー+ドックを1つのstickyに修正。
+- 4.4.1 PLAYERのSKIP区間の斜線が、バー秒数の変更・行のスクロールで別の区間に残る/ずれる不具合を修正(回収する行から.segmentSkipを外していなかった。player-bars.jsのstripRow)。
+- 4.5.0 PLAYERに自動ノーマライズを追加(Settings>Playback>Auto normalize/Normalize level。既定OFF)。波形デコード時にゲート付きRMS音量とピークを測り(player-normalize.js、結果はファイル名キーでlocalStorage保存)、目標との差をEQ後段のGainNode+リミッタ(DynamicsCompressor)で補正。ONにするとWeb Audio常時接続になる。VIDEOは対象外(音声に触れない規約)。エクスポートには未適用
+- 4.6.0 FAB帯にスライダー部品(QNSettingsUI.inline の type:"slider")を追加し、PLの波形FAB(Bar length/Rows)をスライダー化。VIDEO: ステージFABをURL欄+Saveの連結(アイコンなし)に変更し、Seek barのON/OFF・Bar length・Rows・Followを追加。シークバーは1行の秒数(Fit/5s〜5m)を指定でき、行数が窓(Rows)より多い時は縦スクロール+再生位置追従(Settings>Seek bar: Bar length/Follow playhead/Pause after scrolling)。VIDEOのClear ABボタンを撤去
+- 4.7.0 デザイン統一: 入力欄は全て--radius-field+#1c1c24(VIDEOのURL欄/Library欄をPLAYERと同じに)、ボタンはピル型で隣接する欄と同じ高さ(Save=38/40px)。FAB帯の設定は「ラベル+値」を1語に密着させ、設定ごとに区切り線(スライダーは上段ラベル+値/下段つまみ)。VIDEOのシークバーを高さ半分(40→20px、SP 18px)にし、押せる範囲は上下に拡張。SPでスクロールするシークバーは右に縦スクロール専用の余白を確保し、押した瞬間にシークせず(横なぞり=シーク/ほぼ動かさず離す=タップ/縦=スクロール)に変更
+- 4.7.1 SPのFAB帯を整理: 設定帯を2列の格子(上段=スライダー2つ、下段=スイッチ。折り返しで崩れない・背景は不透明)、VIDEOはURL欄+Save+(ドックと重複するMarkerはSPで非表示)、PLはADD AUDIOを帯と同じ左右端の全幅に。波形エリア下の空きをFAB帯の高さから自動計算(帯が高くてもシークバーに重ならない)
+- 4.7.2 VIDEOのRowsにAutoを追加(Settings/FAB。画面の余った高さに入る行数=2〜12行を自動計算し、リサイズ・動画の縦横比変更でも再計算)。SPは調整帯+URL欄を下段バーの直上に固定し、余白はシークバー側に回す。Rowsの最大を8に拡張
+- 4.8.0 VIDEO: Textパネルを追加(動画=URLごとのメモ。自動保存・Fullで全画面・文字サイズはPLAYERと共通、Backupのexport/importに含む)。シークバーの各行の左に開始時刻(押すと行頭へシーク)。Bar lengthは5/10/15/20/25/30/45/60秒(PLAYERも同じ。VIDEOのFitは廃止、既定30s)。スマホ幅のFAB帯からFollow(PL/VIDEO)とSeek barスイッチ(VIDEO)を撤去(Settingsには残る)
+- 4.8.1 SPのVIDEOでパネルを開いた時、パネルが動画の下辺まで上がらず下がっていた不具合を修正(4.7.2で入れたステージの高さ拡張をパネルを閉じている時だけに限定)
+- 4.8.2 SPのVIDEOで、URL欄+Save+設定帯(Bar length/Rows)を下段コントロール(バー/ドック)の直上に移して同じstickyで固定(シークバー側のスクロールに埋もれない)。PC幅は従来位置。Rowsの自動計算もこれに合わせて調整
+- 4.8.3 SPのVIDEOで、URL欄+Saveと設定帯(Bar length/Rows)をMoreの開閉に合わせて表示(閉じている間は隠してシークバー領域を拡大。開閉状態は保存。Rows=Autoは開閉で再計算)。PC幅は変更なし
+- 4.9.0 PLAYERに取り込める形式を拡大。mp4/m4v/mov/3gp/mkv等の動画ファイルと、aif/aiff/caf/mka/weba/amr等の音声を追加(動画は音声トラックのみ再生)。判定は`isSupportedMediaFile`(player-playlist.js)に一本化し、ファイル選択のaccept・ドロップ共通。再生できるかはブラウザの対応コーデック依存
+- 4.9.1 Library同期の失敗時、ステータス末尾に原因(Firestoreのcode等)を`[permission-denied]`の形で表示(原因調査用)。
+- 4.9.2 `setPlaylistFolderOrder`が未定義でLibrary同期が失敗していた不具合を修正(player-core.jsに追加。フォルダ見出しのドラッグ並び替えも同じ関数を使う)。同期エラー表示の文字数上限を80に拡大。
+- 4.9.3 Library同期で同名フォルダを自動統合(`mergeDuplicateFolders`)。id昇順で先頭を残し、曲・未インポート曲の所属を付け替えて他を削除(tombstoneで他端末にも伝わる)。同期の前後に実行。
+- 4.9.4 Transfer受信のコード入力で、iOS Chromeで同じ文字が二重に入る不具合を修正(入力中に値を書き換えるinputハンドラを廃止。整形はblur時のみ)。
+- 4.9.5 Libraryの「未インポート」見出しの横にTransferボタンを追加(押すとTransferパネル。戻るとLibrary)。同期ステータス行を左寄せ+タップ領域拡大(右下FABに隠れていた)。
+- 4.9.6 未インポート曲のタップ時トーストに「設定 > 転送で受信」の案内を追加。Libraryの未インポート一覧(開いている時)の先頭にも同じ説明を表示。
+- 4.10.0 Libraryに「他の端末にMP3が無い曲: N曲」+Sendボタンを追加(送信側の案内)。各端末が自分の未インポート一覧を`lib_devices`へ書き、他端末が読んで集計(30日以内の端末のみ)。Sendを押すとTransferパネルが開く。
+- 4.10.1 画面が見えない間(別アプリ・ロック中)にループ(A-B/区間)が効かない不具合を修正。折り返し判定を`loopTick`に切り出し、非表示中はsetInterval(100ms)+timeupdateで継続(表示中はrAFのみ)。
+- 4.10.2 PLAYERのシークバーポップアップで、Loop ON時にアイコンと文字がアクセント色にならない不具合を修正(SVGが灰色固定だった。`.qn-yt-seekpop-btn.is-set`で上書き)。
+- 4.11.0 SP幅の再配置。Moreはドックの上に開き(ドックが動かない)中身はBar length/Rowsの設定帯だけ(下段バーは廃止=Play/-10s/+10s/マーカー系/Loopは撤去、Track前次・Repeatは波形ヘッダー右端、A・BはAudioの隣)。Audioボタンを小型化。LibraryのAudio/Folderはパネルタイトルの右へ。操作元の下段バーのボタンはDOMに残し、ドック/ヘッダー/A・Bはミラー(`.click()`中継)。長押し(quickpop)はミラーにも対応。PC幅は変更なし。
+- 4.11.1 LibraryのAudio/Folderボタンをパネルタイトルの右へ(PCもSPと統一)。PC波形エリア右下の再生●ボタンを撤去。SPのMoreに Volume/Speed/Key(PC下部バーのミキサーと同じ要素。SPでは`#pcV2MorePanel`へ、PCでは元の下部バーへ戻す=syncMoreExtras)。
+- 4.11.2 リピートを One→Folder→All→Off の順に変更(新モード"folder"=今のフォルダ内でループ。Offはライブラリ全体を順送りで端で停止)。設定とリピート長押しの「Library repeat range」を撤去しAuto Next範囲はrepeatModeから決まる。SPヘッドのリピートにも"1"/"F"バッジを表示。Moreのミキサーはスライダーの白枠線を消してBar lengthと同じ外観に、Speedを長くKeyを狭く。ファイル名(タイトル)タップでLibraryを開く。 スライダー(Volume/Speed/Key系・設定・EQ)のつまみを白16pxの同一デザインに統一。
+- 4.11.3 ミキサー(Volume/Speed/Key)の見出しを「ラベル 値」左寄せ・同サイズ・値は太字白に統一(Bar length/Rowsと同じ表示)。Keyの値は中央から見出し側へ移動。
+- 4.11.4 ミキサーのKeyを±ボタンからスライダー(-12〜+12)に変更しVolume/Speedと統一(PC/SP共通)。
+- 4.11.5 SPのMoreのSpeed/Keyにもバー左にアイコンのリセットボタンを追加(Volumeのミュートボタンと同じ位置・サイズ。タップで1.00x/0に戻す)。PC下部バーは変更なし。
+- 4.12.0 アプリ内ガイドを追加。サイドバーのSettings直上に「Guide」ボタン(別タブで`guide/index.html`を開く=再生は止まらない)。ガイドは`guide/`配下の静的ページ8枚(はじめに/はじめての方へ/画面の見かた/操作ガイド/保存・同期/アプリの切り替え/無料版とPremium/設定・ショートカット・FAQ)+スクリーンショット`guide/img/*.webp`。スタイル`guide/guide.css`、ライトボックスとテーマ色反映`guide/guide.js`(`qn_theme`を読んでアクセント色に)。アプリ側のサイドバーでもGuideは表示(`style-apps.css`の例外に追加)。文言は日本語のみ。
+- 4.12.1 使われていない「Export Audio」(現在曲の範囲書き出し WAV/MP3)を撤去。`JS/player-export.js`・`JS/lame_min.js`を削除、index.htmlの`#exportToggleBtn`と`#exportModalOverlay`、player-core.jsの書き出し用関数(`audioBufferToWavBlob`/`audioBufferToMp3Blob`/`sliceAudioBuffer`/`renderExportBuffer`/`suggestExportFileName`)、player-ui-pc-v2.jsの非表示Export項目とパネル分岐、style-core.cssの`#exportToggleBtn`を削除。`CSS/style-export.css`はEQ/Backup/Import/解約モーダルと共用のため残した(書き出し専用セレクタの掃除は未実施)。ガイドのBackup説明に「書き出し(エクスポート)」の表記を追加。
+- 4.12.2 Guideの入口をサイドバーのアイコンから設定の「More」一覧(Transferの下)へ移動。`qn-settings-ui.js`にguide行を追加(別タブで`guide/index.html`)、`player-ui-pc-v2.js`のアイコンボタンと`style-apps.css`の例外、翻訳辞書の"User guide"を削除。`qn-apps.js`(アプリの設定)の一覧にも追加。ガイドの本文・スクショ(サイドバーにアイコンが写っていたもの)を差し替え。
+- 4.13.0 利用規約(`terms.html`)とプライバシーポリシー(`privacy.html`)をアプリ側に設置し、内容を現状に合わせて全面改定(最終改定2026-10-06)。ログイン情報・プラン情報・同期データ・Transfer・Stripe決済と解約・YouTube API Services(youtube.readonly、トークンは保存しない)・端末内保存・保存期間と削除・広告導入時の扱いなどを追記。設定の最下段(バージョン表記の上)に「利用規約」「プライバシーポリシー」リンクを追加(別タブ、PLAYERもアプリも共通)。pricing.html/pricing-en.htmlのフッターとガイド(reference.html)にもリンク。設定のGuide行の表示名を日本語UIで「ガイド」に。
+- 4.14.0 YouTubeのMoreをPLAYERと同じ配置に(SP: Track前/次・Repeatはタイトル行右、A/Bはシークバー直下、Moreは Bar length/Rows＋URL+Save/Speedスライダー。SPの-10s/+10sは廃止)。Auto Nextの切替を廃止して標準搭載にし、PLと同じRepeat(Off/One/Folder/All)に置換。
+- 4.14.1 iPhoneでSpeedを下げると音が途切れる(隙間が空く)不具合を修正。時間伸縮をブラウザ標準からSoundTouchに変更(audio要素は音程保持なしで速度だけ変更、SoundTouchはpitch=1)、AudioContextをlatencyHint=playbackに、伸縮の窓を長めに。従来方式は URLに ?stretch=native を付けると戻せる(?stretch=stで再び新方式)。
+- 4.15.0 Bar lengthに3s/2min/3min/4minを追加し、60sを1min表記に(PLAYER/YouTube共通。保存値は秒のまま)。スライダー横にFitボタンを追加(曲/動画全体が画面の行数に収まる最小のバー長を選ぶ。QNSettingsUI.inlineの行に action:{label,title,run} を指定すると小ボタンが付く)。
+- 4.15.1 Rows(行数)をAuto/3〜12に拡張(PLAYER/YouTube共通。YouTubeの旧1・2行は3に読み替え)。バーの設定帯の「Auto」「Fit」は日本語表示でも英語のまま。
+- 4.16.0 Stemパネルを追加(PC専用・サイドバーのStemアイコン)。再生中のローカル曲をブラウザ内(Demucs/ONNX Runtime Web, WebGPU優先・無ければWASM)で4パート(Vocals/Drums/Bass/Other)に分離し、パート別の音量・ミュート・ソロで再生。結果は曲ごとにIndexedDBへ保存(player-stem.js/player-stem-worker.js/JS/stem/)。
+- 4.17.0 Stemパネルに録音トラック(Rec 1〜4)を追加。マイクで曲を聴きながら録音、トラック別の音量・ミュート・遅延補正(-500〜+500ms)。曲ごとにIndexedDBへ保存。Stem/録音の曲キーを名前|サイズに変更(ライブラリ復元で変わらないように)。
+- 4.18.0 Bar lengthを1秒刻みに変更。スライダー上限=曲(動画)長÷「Rows Autoで画面に入る行数」(一番俯瞰できる秒数)で自動決定。PLAYER/YouTube共通。
+- 4.19.0 Stemに6パート(Vocals/Guitar/Piano/Drums/Bass/Other)を追加。パネル上部の4 parts/6 partsで切替(モデルはhtdemucs_6sのfp16重み版 約136MB、結果は4/6別に保存)。
+- 4.19.1 Bar lengthの上限を行数連動に変更(3行なら3行で全体が収まる秒数、6行なら6行で収まる秒数。Autoは画面に入る行数)。PLAYER/YouTube共通。
+- 4.20.0 Stemのパートごとに波形を1行表示(クリックでシーク、再生位置線つき)。音量スライダーを0〜100表示にし、70=原音レベル・100=3倍ブーストへ(Web Audioのゲイン+ソフトリミッター)。録音トラックの音量も同じ仕様。
+- 4.20.1 Stem 6パートのWebGPU対応: WebGPU時はWebGPU用モデル(約285MB)、CPU時は軽いモデル(約136MB)を使う。WebGPU/CPUに落ちた理由をパネルに表示。
+- 4.21.0 PC版サイドバー: Controlを下段(Settingsの上)へ移動。上段は曲固有のLibrary/Markers/Text/Stem、下段はプレイヤー設定のControl/Settings。
+- 4.21.1 SP: Moreを波形の上に重ねて開く(波形を縮めない)。
+- 4.22.0 SP: Moreは5秒間操作(パネル内・ドック)がなければ自動で閉じる。
+- 4.22.1 お掃除。旧Export機能の残りCSS(`.export-format-*`/`.export-marker-*`/`.export-checkbox-row`/`.export-radio-row`ほか)、旧ミキサーの`.pcv2-mix-btn`/`.pcv2-mix-keyrow`、`.av-toggle-btn`、`.qn-yt-mix-head/-label`、`.skip-off`、Auto Nextスコープボタン一式(`syncAutoNextScopeButton`・`getAutoNextScope`ほかJS、`.playlist-scope-btn`)を削除(見た目の差分0)。ガイドを現状に合わせて更新(バー長=1秒刻み・Fit、Rows=自動/3〜12、Stemと録音の節、サイドメニューの並び、SPのMore、保存先表にStem)。利用規約・プライバシーポリシーにStem/録音/マイク、Hugging Face・jsDelivrへの通信、YouTube APIキーの端末内保存を追記(最終改定2026-10-10)。mdの食い違いを修正(ファイルマップ・読み込み順・保存キー・SYNC・削除済みIDの記述)、`md/USER_DOCS.md`(ガイド・規約・料金の更新ルール)と`md/tools/`(掃除用スクリプト)を追加。
+- 4.22.2 開発用の道具を追加(`md/tools/`: `release.py`=確認・版上げ・パッチZIP/完全版ZIPを一括、`qnbrowser.py`=ブラウザ確認の共通土台、`compare_snap.py`、`i18n_check.py`、`smoke.py`/`snap.py`/`md_audit.py`を改良)。使い方は`md/TOOLS.md`。アプリ本体の変更なし。
+- 4.22.3 `smoke.py`を拡張(PC 1920・SP 360を追加、tuner/pitch/youtube/playerのアプリ切替も確認)。全項目でエラー0、アプリ本体の変更なし。
+- 4.23.0 YouTubeのLibraryでフォルダを見出しのつまみのドラッグで並び替え可能に(`attachFolderReorder`)。PITCHのFiltersとTUNERのSensitivity/Smoothingを設定パネルと同じ「項目名＋説明」の表示に統一(`QNSettingsUI`に連続値バー`type:"range"`を追加、TUNERは「‹ 値 ›」、各項目に説明を追加)。前/次マーカーの長押しで前/次のトラックへ(ポップアップ無しの即実行。`QNQuickPop`定義が`{action}`を返せる)。シークバー上のタイトルを上下スワイプで前/次のトラック(`QNApps.vSwipe`)。Repeatと前/次マーカーの右下◢を削除。SPのシークバー上のタイトルをLibraryの再生中の曲名と同じ見た目にし、Libraryと同じ曲名を表示。Speed/Keyのバーはダブルクリック/ダブルタップで初期値(`bindDoubleReset`)。PITCH/TUNERのマイクONは確認済み(問題なし)。ガイドとTips・mdを更新。
+- 4.24.0 シークバー上の曲名をLibraryの1行と同一表示に（PCはSKIP/PIN/EDIT追加）
+- 4.24.1 ツール整備(qa.py追加、監査系の引数省略対応)
+- 4.24.2 TUNER: 表示保持を感度から独立(約1.5秒)、感度は最小音量に
+- 4.25.0 TUNER: Hold設定(推奨マーク付き)、再生スピード下限0.25
+- 4.25.1 TUNER: 無音判定を約1/10〜1/25に下げ周期性チェックで雑音除外(減衰音を長く追従)
+- 4.26.0 TUNER: MIC自動ON・大きなMICボタン・メーター拡大・Sens/Smoothingをバー化・Hold 0.1〜1秒(推奨0.3)
+- 4.26.1 TUNER: ゲージ拡大・目盛り4倍(2.5¢刻み)
+- 4.26.2 TUNER: Guitar Meter拡大・目盛り4倍(1.25¢刻み81本)
+- 4.26.3 ツール整備(qa並列・--ship、try.py、where.py、擬似マイク)
+- 4.27.0 シークバーにコードモード(プロトタイプ)。View(Wave/Chord)切替、コード解析(qn-chord-core/worker/player-chords)、マーカー・色・ラベルは波形と同様に表示

@@ -194,6 +194,16 @@ body.pc-v2-active > .app-container {
   flex-shrink: 0;
   white-space: nowrap;
 }
+/* 曲があるとき: ヘッダーの左はLibraryと同じ行(#pcV2HeadRow。renderHeadRowが.playlistItemを入れる)。曲名(#appTitle)は曲が無い時だけ。時刻は行の右、PC幅はSKIP/PIN/EDITが続く */
+#pcV2WaveHead.has-track { align-items: center; }
+#pcV2WaveHead.has-track #appTitle { display: none; }
+#pcV2HeadRow { flex: 1 1 auto; min-width: 0; }
+#pcV2HeadRow:empty { display: none; }
+#pcV2HeadRow .playlistItem { display: flex; align-items: center; gap: 12px; padding: 0; min-height: 0; border-bottom: none; cursor: default; }
+#pcV2HeadRow .playlist-info-block { flex: 1 1 auto; min-width: 0; }
+#pcV2HeadRow .playlist-duration { display: none; }
+#pcV2HeadRow .playlist-act-cell { margin: 0; }
+#pcV2HeadRow .playlist-head-edit { color: var(--icon-muted); }
 #pcV2WaveHead #timeDisplay .time-val { font-size: 14px; }
 #pcV2WaveHead #timeDisplay .time-dur { font-size: 13px; }
 
@@ -708,7 +718,7 @@ body.pc-v2-active #qnMenuMount {
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-item[data-mix="speed"] .pcv2-mix-val,
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-keyval { cursor: pointer; }
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-val { font-size: 12px; color: var(--text-bright, #fff); font-variant-numeric: tabular-nums; }
-  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-range { width: 100%; height: 28px; margin: 0; cursor: pointer; accent-color: var(--accent-primary, #3b82f6); }
+  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-range { width: 100%; height: 18px; margin: 0; }
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-key { width: 104px; }
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-item[data-mix="vol"] { width: 144px; }
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-volrow { display: flex; align-items: center; gap: 6px; }
@@ -718,15 +728,7 @@ body.pc-v2-active #qnMenuMount {
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-mute .pcv2-mix-ico-off, #pcV2BottomBar #pcV2BarMixer .pcv2-mix-mute.is-muted .pcv2-mix-ico-on { display: none; }
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-mute.is-muted .pcv2-mix-ico-off { display: block; }
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-mute.is-muted { color: var(--accent-primary, #3b82f6); }
-  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-keyrow { display: flex; align-items: center; justify-content: space-between; height: 28px; }
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-keyval { min-width: 32px; text-align: center; font-size: 14px; }
-  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-btn {
-    width: 32px; height: 28px; padding: 0;
-    border: 1px solid var(--border-subtle); border-radius: 8px;
-    background: none; color: var(--icon-muted); font-size: 16px; line-height: 1; cursor: pointer;
-  }
-  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-btn:hover { color: var(--text-bright, #fff); background: rgba(255, 255, 255, 0.06); }
-  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-btn:active { transform: scale(0.94); }
 }
 
 /* 狭いPC幅(サイドパネル表示中の1280px等): 余白を詰めて全部が収まるように。それでも足りない時は横スクロール */
@@ -740,5 +742,4 @@ body.pc-v2-active #qnMenuMount {
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-item { width: 76px; }
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-key { width: 92px; }
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-item[data-mix="vol"] { width: 116px; }
-  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-btn { width: 28px; }
 }

@@ -4,9 +4,9 @@ const speedDisplay = document.getElementById("speedDisplay");
 const controlSpeedRange = document.getElementById("controlSpeedRange");
 const controlSpeedDisplay = document.getElementById("controlSpeedDisplay");
 const spStatusSpeedValue = document.getElementById("spStatusSpeedValue");
-const SPEED_MIN = 0.5;
+const SPEED_MIN = 0.25;
 const SPEED_MAX = 1.5;
-const SPEED_SNAPS = [0.5, 0.75, 1, 1.25, 1.5];
+const SPEED_SNAPS = [0.25, 0.5, 0.75, 1, 1.25, 1.5];
 const SPEED_SNAP_RANGE = 0.02;
 
 function syncSpeedDisplays() {
@@ -45,7 +45,7 @@ function handleSpeedRangeInput(e) {
   setupAudioGraph().catch(err => console.warn("setupAudioGraph failed:", err));
 
   let rawSpeed = parseFloat(e.target.value);
-  // 0.50/0.75/1.00/1.25/1.50の近くでカチッとはまる(PCバーのミキサーも同じ入口)
+  // 0.25/0.50/0.75/1.00/1.25/1.50の近くでカチッとはまる(PCバーのミキサーも同じ入口)
   for (let i = 0; i < SPEED_SNAPS.length; i++) {
     if (Math.abs(rawSpeed - SPEED_SNAPS[i]) <= SPEED_SNAP_RANGE) { rawSpeed = SPEED_SNAPS[i]; break; }
   }
@@ -63,6 +63,7 @@ function handleSpeedRangeInput(e) {
   }, 90);
 }
 if (controlSpeedRange) controlSpeedRange.oninput = handleSpeedRangeInput;
+bindDoubleReset(controlSpeedRange, () => { hapticTap(); setSpeed(1); }); // ダブルクリック/ダブルタップで1.00x
 
 // 速度±ボタンの刻み(%)。設定パネルで変更(localStorage qn_speed_step_pct)。キーボードCtrl+←→の1%は別
 const SPEED_STEP_OPTIONS = [1, 2, 5, 10];
@@ -132,7 +133,7 @@ function getAutoSpeedStepPercent() {
 
 function getAutoSpeedLimitRatio() {
   const p = parseFloat(autoSpeedLimitInputs[0].value);
-  const clamped = Number.isFinite(p) ? Math.max(50, Math.min(150, p)) : 150;
+  const clamped = Number.isFinite(p) ? Math.max(25, Math.min(150, p)) : 150;
   return clamped / 100;
 }
 
@@ -290,6 +291,7 @@ if (controlKeyUpBtn) controlKeyUpBtn.onclick = () => setKeySemitones(currentKeyS
 if (controlKeyDownBtn) controlKeyDownBtn.onclick = () => setKeySemitones(currentKeySemitones - 1);
 
 if (controlKeyRange) controlKeyRange.oninput = () => { setKeySemitones(parseInt(controlKeyRange.value, 10)); renderKeyDisplay(); };
+bindDoubleReset(controlKeyRange, () => { hapticTap(); setKeySemitones(0); renderKeyDisplay(); }); // ダブルクリック/ダブルタップで0
 
 const controlKeyResetBtn = document.getElementById("controlKeyResetBtn");
 if (controlKeyResetBtn) controlKeyResetBtn.onclick = () => setKeySemitones(0);
@@ -449,13 +451,14 @@ const REPEAT_MODE_STORAGE_KEY = "mp3player_repeat_mode";
 
 const REPEAT_ICON_OFF = '<svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>';
 const REPEAT_ICON_ALL = '<svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>';
+const REPEAT_ICON_FOLDER = '<svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg><span class="repeat-one-badge repeat-folder-badge">F</span>';
 const REPEAT_ICON_ONE = '<svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg><span class="repeat-one-badge">1</span>';
 
 function applyRepeatModeUI() {
   if (!allRepeatToggleBtn) return;
 
-  const iconHtml = repeatMode === "one" ? REPEAT_ICON_ONE : repeatMode === "all" ? REPEAT_ICON_ALL : REPEAT_ICON_OFF;
-  const labelText = repeatMode === "one" ? "Repeat 1" : repeatMode === "all" ? "Repeat All" : "Repeat";
+  const iconHtml = repeatMode === "one" ? REPEAT_ICON_ONE : repeatMode === "folder" ? REPEAT_ICON_FOLDER : repeatMode === "all" ? REPEAT_ICON_ALL : REPEAT_ICON_OFF;
+  const labelText = repeatMode === "one" ? "Repeat 1" : repeatMode === "folder" ? "Repeat Folder" : repeatMode === "all" ? "Repeat All" : "Repeat";
 
   allRepeatToggleBtn.innerHTML = iconHtml;
   const label = document.createElement("span");
@@ -465,13 +468,13 @@ function applyRepeatModeUI() {
 
   const isActive = repeatMode !== "off";
   allRepeatToggleBtn.classList.toggle("is-active", isActive);
-  allRepeatToggleBtn.title = repeatMode === "one" ? "Repeat One (click to cycle)" : repeatMode === "all" ? "Repeat All (click to cycle)" : "Repeat Off (click to cycle)";
+  allRepeatToggleBtn.title = repeatMode === "one" ? "Repeat One (click to cycle)" : repeatMode === "folder" ? "Repeat Folder (click to cycle)" : repeatMode === "all" ? "Repeat All (click to cycle)" : "Repeat Off (click to cycle)";
 }
 
 if (allRepeatToggleBtn) {
   try {
     const savedRepeatMode = localStorage.getItem(REPEAT_MODE_STORAGE_KEY);
-    if (savedRepeatMode === "one" || savedRepeatMode === "all" || savedRepeatMode === "off") {
+    if (savedRepeatMode === "one" || savedRepeatMode === "folder" || savedRepeatMode === "all" || savedRepeatMode === "off") {
       repeatMode = savedRepeatMode;
     }
   } catch (e) {}
@@ -486,7 +489,7 @@ if (allRepeatToggleBtn) {
       return;
     }
     hapticTap();
-    repeatMode = repeatMode === "off" ? "one" : repeatMode === "one" ? "all" : "off";
+    repeatMode = repeatMode === "off" ? "one" : repeatMode === "one" ? "folder" : repeatMode === "folder" ? "all" : "off";
     try { localStorage.setItem(REPEAT_MODE_STORAGE_KEY, repeatMode); } catch (e) {}
     applyRepeatModeUI();
   };

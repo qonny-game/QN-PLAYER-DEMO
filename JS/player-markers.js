@@ -879,7 +879,7 @@ function renderABPoints() {
 }
 
 function attachABDrag(el, kind) {
-  let moved = false, startX = 0, startY = 0;
+  let moved = false, startX = 0, startY = 0, pid = null;
   let stopEdge = null;
   const lastPt = { x: 0, y: 0 };
 
@@ -895,34 +895,29 @@ function attachABDrag(el, kind) {
     renderSegments();
   }
 
-  function endDrag() {
-    if (stopEdge) { stopEdge(); stopEdge = null; }
-    draggingABKind = null;
-    el.classList.remove("dragging");
-  }
-
-  el.addEventListener("pointerdown", e => {
-    if (!audio.duration) return;
-    e.stopPropagation();
-    e.preventDefault();
-    el.setPointerCapture(e.pointerId);
-    moved = false; startX = e.clientX; startY = e.clientY;
-    lastPt.x = e.clientX; lastPt.y = e.clientY;
-    el.classList.add("dragging");
-    draggingABKind = kind;
-    beginSeek();
-  });
-  el.addEventListener("pointermove", e => {
-    if (!el.hasPointerCapture(e.pointerId)) return;
+  // 段をまたぐと旗をappendChildで付け替える=掴んだ要素が一度DOMから外れ、setPointerCaptureが切れて動かなくなる。
+  // そのためキャプチャは使わず、ドラッグ中だけdocumentで受ける(マーカーのstartDragPinと同じ方式)
+  function onMove(e) {
+    if (e.pointerId !== pid) return;
     if (Math.abs(e.clientX - startX) > 4 || Math.abs(e.clientY - startY) > 4) moved = true;
     if (!moved) return;
     lastPt.x = e.clientX; lastPt.y = e.clientY;
     applyMove(e.clientX, e.clientY);
     if (!stopEdge) stopEdge = QNBars.startEdgeScroll(() => lastPt, () => applyMove(lastPt.x, lastPt.y));
-  });
-  el.addEventListener("pointerup", e => {
-    if (!el.hasPointerCapture(e.pointerId)) return;
-    el.releasePointerCapture(e.pointerId);
+  }
+
+  function endDrag() {
+    document.removeEventListener("pointermove", onMove);
+    document.removeEventListener("pointerup", onUp);
+    document.removeEventListener("pointercancel", onCancel);
+    pid = null;
+    if (stopEdge) { stopEdge(); stopEdge = null; }
+    draggingABKind = null;
+    el.classList.remove("dragging");
+  }
+
+  function onUp(e) {
+    if (e.pointerId !== pid) return;
     endDrag();
     const v = kind === "A" ? abA : abB;
     if (moved) {
@@ -940,12 +935,29 @@ function attachABDrag(el, kind) {
     }
     setTimeout(() => { isSeeking = false; }, 150);
     QNBars.ensureRows(true);
-  });
-  el.addEventListener("pointercancel", () => {
+  }
+
+  function onCancel(e) {
+    if (e.pointerId !== pid) return;
     endDrag();
     afterABChange();
     setTimeout(() => { isSeeking = false; }, 150);
     QNBars.ensureRows(true);
+  }
+
+  el.addEventListener("pointerdown", e => {
+    if (!audio.duration) return;
+    e.stopPropagation();
+    e.preventDefault();
+    pid = e.pointerId;
+    moved = false; startX = e.clientX; startY = e.clientY;
+    lastPt.x = e.clientX; lastPt.y = e.clientY;
+    el.classList.add("dragging");
+    draggingABKind = kind;
+    beginSeek();
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+    document.addEventListener("pointercancel", onCancel);
   });
 }
 

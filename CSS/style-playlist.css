@@ -337,10 +337,6 @@ body.dragover #dropOverlay {
   flex-shrink: 0;
 }
 
-.playlistItem .playlist-skip-toggle.skip-off {
-  color: var(--accent-primary);
-  border-color: var(--accent-primary);
-}
 
 /* DELETE選択中はPLAY/SKIPトグルを押せない(押すと選択がリセットされるため。disabled属性はplayer-ui-pc-v2.js/player-playlist.jsが切替) */
 .playlistItem .playlist-skip-toggle:disabled {
@@ -348,7 +344,7 @@ body.dragover #dropOverlay {
   cursor: not-allowed;
 }
 
-/* ---------- 【v3.24.0】フォルダ見出し(.playlistFolderHeader)・Auto Nextスコープボタン・移動ピッカー ---------- */
+/* ---------- 【v3.24.0】フォルダ見出し(.playlistFolderHeader)・移動ピッカー ---------- */
 .playlistFolderHeader {
   display: flex;
   align-items: center;
@@ -434,10 +430,6 @@ body.dragover #dropOverlay {
 }
 .playlistItem.drop-target-row { background: var(--bg-hover-subtle); }
 
-/* Libraryヘッダー右のAuto Nextスコープ(.mini-reset-btnを流用) */
-.playlist-scope-btn { gap: 6px; }
-.playlist-scope-btn[hidden] { display: none; }
-.playlist-scope-btn svg { width: 15px; height: 15px; fill: currentColor; flex-shrink: 0; }
 
 .playlist-folder-picker {
   position: fixed;
@@ -475,26 +467,22 @@ body.dragover #dropOverlay {
 
 /* ---------- v3.28.0 Library同期(player-sync.js): 未インポート(ghost)セクション/同期ステータス行 ---------- */
 .playlist-ghost-section { margin-top: 10px; border-top: 1px dashed var(--border, rgba(128,128,128,.35)); padding-top: 6px; opacity: .85; }
-.playlist-ghost-head { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 6px 8px; font-size: 12px; font-weight: 600; letter-spacing: .02em; color: inherit; opacity: .8; cursor: pointer; }
+.playlist-ghost-head { display: block; flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 6px 8px; font-size: 12px; font-weight: 600; letter-spacing: .02em; color: inherit; opacity: .8; cursor: pointer; }
 .playlist-ghost-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; cursor: default; }
 .playlist-ghost-row:hover { background: rgba(128,128,128,.12); }
 .playlist-ghost-info { flex: 1; min-width: 0; }
 .playlist-ghost-title { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .75; }
 .playlist-ghost-sub { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .55; }
 .playlist-ghost-del { flex: none; width: 28px; height: 28px; border-radius: 50%; border: 0; background: rgba(128,128,128,.2); color: inherit; font-size: 12px; cursor: pointer; }
-.playlist-sync-foot { margin: 8px 0 2px; padding: 4px 8px; font-size: 11px; text-align: right; opacity: .6; user-select: none; }
+.playlist-sync-foot { margin: 8px 0 2px; padding: 10px 8px; font-size: 11px; text-align: left; /* 右下のFABに隠れないよう左寄せ */ opacity: .6; user-select: none; }
 .playlist-sync-foot.can { cursor: pointer; }
 .playlist-sync-foot.err { color: #e5534b; opacity: .9; }
 
-/* ---------- v3.29.0 MP3のP2P転送(player-p2p.js)。モーダルは既存の.export-modal*部品を流用、ここは固有部分のみ ---------- */
-.qn-p2p-overlay { z-index: 450; }
+/* ---------- v3.29.0 MP3のP2P転送(player-p2p.js)。設定の下層パネル(Backup/Importと同じ.export-*/.track-backup-*部品を流用)、ここは固有部分のみ ---------- */
+.qn-p2p-host { display: contents; }
 .qn-p2p-text { font-family: var(--font-body, 'Instrument Sans'), sans-serif; font-size: var(--fs-small); line-height: 1.7; color: var(--icon-muted); }
-.qn-p2p-modal .export-run-btn:disabled { opacity: 0.4; }
-.qn-p2p-modal .export-section .export-run-btn, .qn-p2p-modal .export-section .export-cancel-btn { align-self: flex-start; }
-.qn-p2p-modal .qn-p2p-small { padding: 6px 14px; font-size: var(--fs-btn); }
-.qn-p2p-modal .track-backup-checklist { max-height: 44vh; overflow-y: auto; }
-.qn-p2p-row-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-body); color: var(--text-bright); }
-.qn-p2p-row-s { flex: none; font-size: var(--fs-micro); color: var(--icon-muted); }
+.qn-p2p-host .export-run-btn:disabled { opacity: 0.4; }
+:is(#pcV2PanelBody, .qn-pt-sec-backup) .qn-p2p-host .export-section > .export-run-btn { width: 100%; margin-top: 12px; }
 .qn-p2p-code { text-align: center; padding: 14px 0; font-family: var(--font-display, 'Instrument Sans'), sans-serif; font-size: 40px; font-weight: 700; letter-spacing: 0.14em; color: var(--text-pure-white); font-variant-numeric: tabular-nums; background: #1c1c24; border: 1px solid var(--border-subtle); border-radius: var(--radius-field); }
 .qn-p2p-input { text-align: center; font-size: 26px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; padding: 12px; }
 .qn-p2p-bar { height: 6px; border-radius: var(--radius-pill); background: rgba(255, 255, 255, 0.1); overflow: hidden; }
@@ -504,3 +492,10 @@ body.dragover #dropOverlay {
 /* ---------- v3.30.0 Markersパネルの「再生中の曲」(renderNowPlaying)。行はライブラリと同じ.playlistItem、並び替えつまみだけ無し ---------- */
 #markersNowPlaying { border-bottom: 1px solid var(--border-subtle); margin-bottom: 8px; }
 #markersNowPlaying .playlistItem.is-nowplaying { grid-template-columns: auto 1fr auto auto; cursor: default; }
+
+.playlist-ghost-headrow { display: flex; align-items: center; gap: 8px; }
+.playlist-ghost-transfer { flex: none; margin-right: 8px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border, rgba(128,128,128,.45)); background: none; color: inherit; font-size: 11px; font-weight: 600; cursor: pointer; opacity: .85; }
+@media (hover: hover) and (pointer: fine) { .playlist-ghost-transfer:hover { background: rgba(128,128,128,.15); } }
+.playlist-ghost-note { padding: 2px 10px 8px; font-size: 11px; line-height: 1.5; opacity: .6; }
+.playlist-peer-section { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 6px 0 6px 10px; border-top: 1px dashed var(--border, rgba(128,128,128,.35)); }
+.playlist-peer-text { flex: 1; min-width: 0; font-size: 12px; line-height: 1.4; opacity: .75; }

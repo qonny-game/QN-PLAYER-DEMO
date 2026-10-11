@@ -59,10 +59,6 @@
     el[k] = v;
     if (v === null || v === false) el.removeAttribute(name); else el.setAttribute(name, v === true ? "" : v);
   }
-  function setRangeProgress(input) {
-    var min = parseFloat(input.min) || 0, max = parseFloat(input.max) || 100;
-    input.style.setProperty("--range-progress", String(max > min ? ((input.value - min) / (max - min)) * 100 : 0));
-  }
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
   function fmtTime(sec) { sec = Math.max(0, sec || 0); return Math.floor(sec / 60) + ":" + pad2(Math.floor(sec % 60)); }
   function fmtDateTime(ts) { var d = new Date(ts); return pad2(d.getMonth() + 1) + "/" + pad2(d.getDate()) + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes()); }
@@ -821,47 +817,67 @@
   }
 
   // ---------- Filtersパネル(設定はQNPitchFilters。ここは画面だけ) ----------
+  // 項目名と説明(hint)は設定パネル(QNSettingsUI)と同じ表示。バーは連続値(type:"range")。subsは親がOFFの間は薄く操作不可
   var FILTER_UI = [
-    { key: "jumpWindowMs", label: "急変スキップ：時間窓", unit: " ms", min: 0, max: 500, step: 10, dec: 0 },
-    { key: "jumpSemitones", label: "急変スキップ：音程変化量", unit: " 半音", min: 0, max: 12, step: 1, dec: 0 },
-    { key: "spikeRemoval", label: "スパイク除去", toggle: true },
-    { key: "rmsThreshold", label: "音量ゲート：最低音量", unit: "", min: 0, max: 0.5, step: 0.01, dec: 2 },
-    { key: "pitchDriftEnabled", label: "音程ズレハイライト", toggle: true, subs: [
-      { key: "pitchDriftDurationMs", label: "最低保持期間", unit: " ms", min: 100, max: 2000, step: 50, dec: 0 },
-      { key: "pitchDriftCents", label: "平均ズレ閾値", unit: " ¢", min: 1, max: 50, step: 1, dec: 0 }
+    { title: "ノイズ除去", rows: [
+      { key: "jumpWindowMs", label: "急変スキップ：時間窓", hint: "この時間内に急に跳んだ音程を、ノイズとして飛ばします", unit: " ms", min: 0, max: 500, step: 10, dec: 0 },
+      { key: "jumpSemitones", label: "急変スキップ：音程変化量", hint: "急な音程変化がこの大きさ以上なら、ノイズとみなします", unit: " 半音", min: 0, max: 12, step: 1, dec: 0 },
+      { key: "spikeRemoval", label: "スパイク除去", hint: "一瞬だけ跳ねる音程を取り除きます", toggle: true },
+      { key: "rmsThreshold", label: "音量ゲート：最低音量", hint: "この音量より小さい音は、音程として扱いません", unit: "", min: 0, max: 0.5, step: 0.01, dec: 2 }
     ] },
-    { key: "vibratoEnabled", label: "ビブラート検出", toggle: true, subs: [
-      { key: "vibratoMinRateHz", label: "揺れ周期（下限）", unit: " Hz", min: 1, max: 10, step: 0.5, dec: 1 },
-      { key: "vibratoMaxRateHz", label: "揺れ周期（上限）", unit: " Hz", min: 1, max: 12, step: 0.5, dec: 1 },
-      { key: "vibratoMinCents", label: "最低揺れ幅", unit: " ¢", min: 5, max: 50, step: 1, dec: 0 }
+    { title: "検出", rows: [
+      { key: "pitchDriftEnabled", label: "音程ズレハイライト", hint: "音程がずれたままの区間を色で示します", toggle: true, subs: [
+        { key: "pitchDriftDurationMs", label: "最低保持期間", hint: "ずれがこの時間続いた区間を対象にします", unit: " ms", min: 100, max: 2000, step: 50, dec: 0 },
+        { key: "pitchDriftCents", label: "平均ズレ閾値", hint: "区間内の平均のずれがこの値以上なら対象にします", unit: " ¢", min: 1, max: 50, step: 1, dec: 0 }
+      ] },
+      { key: "vibratoEnabled", label: "ビブラート検出", hint: "ビブラートの区間を検出して示します", toggle: true, subs: [
+        { key: "vibratoMinRateHz", label: "揺れ周期（下限）", hint: "検出する揺れの速さの下限", unit: " Hz", min: 1, max: 10, step: 0.5, dec: 1 },
+        { key: "vibratoMaxRateHz", label: "揺れ周期（上限）", hint: "検出する揺れの速さの上限", unit: " Hz", min: 1, max: 12, step: 0.5, dec: 1 },
+        { key: "vibratoMinCents", label: "最低揺れ幅", hint: "検出する揺れの大きさの下限", unit: " ¢", min: 5, max: 50, step: 1, dec: 0 }
+      ] }
     ] },
-    { key: "scoreCentsThreshold", label: "スコア判定：許容ズレ閾値", unit: " ¢", min: 1, max: 50, step: 1, dec: 0, reset: true }
+    { title: "スコア", rows: [
+      { key: "scoreCentsThreshold", label: "スコア判定：許容ズレ閾値", hint: "この範囲内のずれなら、正しい音程として数えます", unit: " ¢", min: 1, max: 50, step: 1, dec: 0 },
+      { reset: true, label: "フィルタの初期化", hint: "すべてのフィルタを初期値に戻します" }
+    ] }
   ];
 
-  function sliderHtml(c, sub) {
-    var v = F.settings[c.key];
-    return '<div' + (sub ? ' class="qn-pt-sub"' : '') + '>' +
-      '<label' + (sub ? ' class="qn-pt-sublabel"' : '') + '>' + c.label + ' <span class="qn-pt-white" data-fv="' + c.key + '">' + v.toFixed(c.dec) + '</span>' + c.unit +
-        (c.reset ? '<button type="button" class="mini-reset-btn" data-pt="filterReset" title="Reset all filters">Reset</button>' : '') + '</label>' +
-      '<input type="range" data-f="' + c.key + '" min="' + c.min + '" max="' + c.max + '" step="' + c.step + '" value="' + v + '">' +
-    '</div>';
+  var filtersUI = null;
+  function filterRow(c, parent) {
+    var key = c.key;
+    var r = { label: c.label, hint: c.hint };
+    if (c.toggle) {
+      r.type = "switch";
+      r.get = function () { return !!F.settings[key]; };
+      r.set = function (on) { F.set(key, on); };
+    } else {
+      r.type = "range"; r.min = c.min; r.max = c.max; r.step = c.step; r.dec = c.dec; r.unit = c.unit;
+      r.get = function () { return F.settings[key]; };
+      r.set = function (v) { F.set(key, v); };
+    }
+    if (parent) r.disabledWhen = function () { return !F.settings[parent]; };
+    return r;
   }
   function buildFilters() {
-    var html = "";
-    FILTER_UI.forEach(function (c) {
-      html += '<div class="control-card">';
-      if (c.toggle) {
-        html += '<label>' + c.label + '<button type="button" class="glow-switch control-effect-toggle" data-ft="' + c.key +
-          '" role="switch" aria-checked="' + F.settings[c.key] + '"><span class="glow-switch-knob"></span></button></label>';
-        (c.subs || []).forEach(function (s) { html += sliderHtml(s, true); });
-      } else {
-        html += sliderHtml(c, false);
-      }
-      html += '</div>';
+    var secs = FILTER_UI.map(function (sec) {
+      var rows = [];
+      sec.rows.forEach(function (c) {
+        if (c.reset) {
+          var btn = document.createElement("button");
+          btn.type = "button"; btn.className = "mini-reset-btn"; btn.setAttribute("data-pt", "filterReset"); btn.title = "Reset all filters"; btn.textContent = "Reset";
+          btn.addEventListener("click", function () { haptic(); F.reset(); filtersUI.sync(); onFilterChange(); });
+          rows.push({ type: "node", label: c.label, hint: c.hint, node: btn });
+          return;
+        }
+        rows.push(filterRow(c));
+        (c.subs || []).forEach(function (sub) { rows.push(filterRow(sub, c.key)); });
+      });
+      return { title: sec.title, rows: rows };
     });
-    refs.filtersBox.innerHTML = html;
-    var ranges = refs.filtersBox.querySelectorAll("input[type=range]");
-    for (var i = 0; i < ranges.length; i++) setRangeProgress(ranges[i]);
+    secs.onChange = onFilterChange;
+    filtersUI = QNSettingsUI.build(secs);
+    refs.filtersBox.innerHTML = "";
+    refs.filtersBox.appendChild(filtersUI.el);
     refs.filterReset = refs.filtersBox.querySelector('[data-pt="filterReset"]');
   }
   function onFilterChange() {
@@ -975,44 +991,12 @@
     });
     refs.scroll.addEventListener("scroll", function () { if (!recording) scheduleRedraw(); }, { passive: true });
 
-    refs.filtersBox.addEventListener("input", function (e) {
-      var inp = e.target.closest("input[data-f]");
-      if (!inp) return;
-      var key = inp.getAttribute("data-f"), cfg = findCfg(key);
-      var v = parseFloat(inp.value);
-      F.set(key, v);
-      setRangeProgress(inp);
-      var lab = refs.filtersBox.querySelector('[data-fv="' + key + '"]');
-      if (lab && cfg) setText(lab, v.toFixed(cfg.dec));
-      onFilterChange();
-    });
-    refs.filtersBox.addEventListener("click", function (e) {
-      var rs = e.target.closest('[data-pt="filterReset"]');
-      if (rs) { haptic(); F.reset(); buildFilters(); onFilterChange(); return; }
-      var tg = e.target.closest("[data-ft]");
-      if (!tg) return;
-      haptic();
-      var key = tg.getAttribute("data-ft"), on = !F.settings[key];
-      F.set(key, on);
-      tg.setAttribute("aria-checked", String(on));
-      onFilterChange();
-    });
-
     if (window.ResizeObserver) {
       resizeObs = new ResizeObserver(scheduleSize);
       resizeObs.observe(refs.roll);
     }
     window.addEventListener("resize", function () { if (shown) { applyCollapse(); } });
   }
-  function findCfg(key) {
-    for (var i = 0; i < FILTER_UI.length; i++) {
-      var c = FILTER_UI[i];
-      if (c.key === key) return c;
-      for (var j = 0; c.subs && j < c.subs.length; j++) if (c.subs[j].key === key) return c.subs[j];
-    }
-    return null;
-  }
-
   function mount(view) {
     root = view;
     root.innerHTML = TEMPLATE;

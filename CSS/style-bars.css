@@ -130,14 +130,6 @@
 }
 
 
-/* 波形エリア右下の再生/停止ボタン(MARKERの右。v3.38.0) */
-.panel-fab-play-btn { padding: 12px 14px; }
-.panel-fab-play-btn svg { width: 20px; height: 20px; }
-.panel-fab-play-btn.is-playing { background: var(--accent-primary); } /* v3.54.0: 停止中と同じ色 */
-@media (max-width: 900px) {
-  .panel-fab-play-btn { padding: 10px 12px; }
-}
-
 /* 波形ヘッダーの歯車: SP幅は大きく(タップしやすく) */
 @media screen and (max-width: 900px) {
   .qn-bar-gear { width: 40px; height: 40px; margin-left: 4px; }

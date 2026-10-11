@@ -55,9 +55,6 @@
 .qn-pt[data-panel="recordings"] .qn-pt-sec-recordings { padding: 0; }
 .qn-pt[data-panel="recordings"] .qn-pt-panel-scroll { padding-bottom: 140px; }
 
-.qn-pt-white { color: #fff; }
-.qn-pt-sub { margin-top: 10px; }
-.qn-pt-sublabel { font-size: var(--fs-small); color: var(--icon-muted); }
 
 /* ---------- Recordings: 行は共通の.playlistItem。本体の「#pcV2PanelBody …」限定ルールだけ再掲(YouTubeと同じ) ---------- */
 .qn-pt-recbox { display: flex; flex-direction: column; }

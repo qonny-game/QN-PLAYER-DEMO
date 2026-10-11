@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>操作ガイド | QNPLAYER ガイド</title>
+<link rel="icon" type="image/x-icon" href="../favicon/favicon.ico">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&amp;display=swap">
+<link rel="stylesheet" href="guide.css">
+<script src="guide.js"></script>
+</head>
+<body>
+<header class="g-top">
+  <a class="g-logo" href="index.html"><b>QN</b>PLAYER<small>ガイド</small></a>
+  <span class="g-top-spacer"></span>
+  <a class="g-back" href="../index.html">アプリへ戻る</a>
+</header>
+<div class="g-shell">
+  <nav class="g-nav" aria-label="ガイドの目次">
+    <p class="g-nav-title">Guide</p>
+    <a href="index.html">はじめに</a><a href="start.html">はじめての方へ</a><a href="screen.html">画面の見かた</a><a href="operations.html" class="is-current">操作ガイド</a><a href="data.html">保存・バックアップ・同期</a><a href="apps.html">アプリの切り替え</a><a href="plan.html">無料版とPremium</a><a href="reference.html">設定・ショートカット・FAQ</a>
+  </nav>
+  <main class="g-main">
+    <p class="g-eyebrow">OPERATIONS</p>
+    <h1>操作ガイド</h1>
+    <p class="g-lead">各機能の使い方です。</p>
+
+<h2 id="play">再生とリピート</h2>
+<ul>
+  <li>再生・一時停止は <strong>Play</strong> ボタン、または <kbd>Space</kbd> キーです。<kbd>Enter</kbd> キーで曲の先頭に戻ります。</li>
+  <li><strong>−10s</strong> と <strong>+10s</strong> で、数秒ぶん戻る・進むことができます。秒数は Settings の「スキップボタン」で 5、10、15、30、60 秒から選べます。</li>
+  <li><strong>Track</strong> ボタンで前後の曲へ移動します。長押しすると、フォルダや曲の一覧から選んで移動できます。</li>
+  <li><strong>Repeat</strong> は、押すたびに 1曲、フォルダ、全曲、OFF と切り替わります。OFF のときは、Library を順に再生して、最後で止まります。</li>
+  <li>前・次のマーカーのボタンを<strong>長押し</strong>すると、前・次の曲へ移ります。スマートフォンでは、シークバーの上の曲名を<strong>上へスワイプ</strong>すると次の曲、<strong>下へスワイプ</strong>すると前の曲へ移ります。</li>
+  <li>Speed と Key のバーは、<strong>ダブルクリック</strong>（スマートフォンではダブルタップ）で、初期値（1.00x、0）に戻ります。</li>
+</ul>
+
+<h2 id="seekbar">波形シークバー</h2>
+<p>曲を 1 行ずつに区切って、縦に並べています。行の左には、その行の開始時刻が出ます。</p>
+<div class="g-fig-row"><figure class="g-fig"><img src="img/pc-seekpop.webp" alt="タップした位置の操作ポップアップ" loading="lazy"><figcaption>タップした位置の操作ポップアップ</figcaption></figure><figure class="g-fig"><img src="img/pc-markerpop.webp" alt="マーカーの線をタップしたポップアップ" loading="lazy"><figcaption>マーカーの線をタップしたポップアップ</figcaption></figure></div>
+<ul>
+  <li><strong>タップ</strong>：その位置から再生します。同時に、ポップアップが開きます。</li>
+  <li>ポップアップの <strong>A（Start）</strong>・<strong>B（End）</strong>：その位置を A 点・B 点にします。<strong>Marker</strong> はマーカーを置き、<strong>Loop</strong> はその位置の区間をくり返します。</li>
+  <li>時刻の左右の矢印で、位置を 0.1 秒ずつ微調整できます。</li>
+  <li>マーカーの線をタップすると、Start、End、Loop、Marker（削除）、Color、Skip、Hide のポップアップが開きます。</li>
+  <li>マーカーと A・B の旗は、ドラッグして動かせます。</li>
+  <li>スマートフォンでは、<strong>長押し</strong>でマーカーを追加、<strong>横スワイプ</strong>でスクラブ、再生中の<strong>ダブルタップ</strong>でその位置で停止します。</li>
+  <li>表示の調整は、Settings の「シークバー」で行います。バーの長さ（1 本の秒数）は 1 秒刻みのスライダーで、波形の形はミラーか下揃えから選びます。バーの長さの横の「Fit」を押すと、曲全体が画面の行数に収まる最小の長さになります。再生位置への追従を切ると、再生しても画面は自動でスクロールしません。自分でスクロールしたあとは、設定した秒数だけ追従を止めます。</li>
+</ul>
+
+<h2 id="markers">マーカー</h2>
+<h3>置く・移動する</h3>
+<ul>
+  <li>置く：<strong>Marker</strong>（＋）ボタン、<kbd>P</kbd> / <kbd>M</kbd> キー、ポップアップの Marker、スマートフォンの長押し。</li>
+  <li>移動する：<kbd>→</kbd> / <kbd>←</kbd> で次・前のマーカー、<kbd>↑</kbd> / <kbd>↓</kbd> で最初・最後のマーカーへ。<kbd>1</kbd>〜<kbd>9</kbd> で番号のマーカーへジャンプします。</li>
+</ul>
+<h3>メモと色</h3>
+<p>Markers の一覧で、色丸をタップするか、Edit から編集を押すと、メモの入力欄とプリセットが開きます。プリセットは Intro、Verse、Pre-chorus、Chorus、Last Chorus、Bridge、Solo、Outro です。選ぶとメモと一緒に、色が自動で付きます。</p>
+<figure class="g-fig"><img src="img/pc-memo-edit.webp" alt="メモの入力欄とプリセット。" loading="lazy"><figcaption>メモの入力欄とプリセット。</figcaption></figure>
+<ul>
+  <li>自分用のプリセットは、30 個まで登録できます。</li>
+  <li>プリセットの名前と、自動で付く色は、Settings の More にある「カラー」の「マーカーメモの色」で変えられます。</li>
+  <li>マーカー 1 つだけ色を変えたいときは、波形上のマーカーの線をタップして、Color を選びます。</li>
+</ul>
+<h3>Skip と Hide</h3>
+<ul>
+  <li><strong>Skip</strong>：そのマーカーから、次のマーカーまでの区間を、再生中に飛ばします。波形には斜線が出ます。前後のマーカーへの移動でも、Skip のマーカーは飛ばされます。</li>
+  <li><strong>Hide</strong>：マーカーを一時的に無効にします。区間やループの計算から外れます。もう一度押すと戻ります。<kbd>Ctrl</kbd> + <kbd>1</kbd>〜<kbd>9</kbd> でも切り替えられます。</li>
+</ul>
+<h3>削除する</h3>
+<ol>
+  <li>Markers の右下の <strong>Edit</strong> を押します。</li>
+  <li>消したい行の <strong>Delete</strong> タイルを押して、選びます（選ぶと赤くなります）。</li>
+  <li>右下のボタンが Delete に変わるので、押します。やめるときは Cancel です。</li>
+</ol>
+<figure class="g-fig"><img src="img/pc-markers-edit.webp" alt="Edit を押した Markers。各行に Skip、Hide、Edit、Delete が出ます。" loading="lazy"><figcaption>Edit を押した Markers。各行に Skip、Hide、Edit、Delete が出ます。</figcaption></figure>
+<p>スマートフォンでは、行を横にスワイプすると、編集と削除のボタンが出ます。</p>
+
+<h2 id="loop">ループ</h2>
+<div class="g-table-wrap"><table><thead><tr><th>モード</th><th>動き</th><th>使いどころ</th></tr></thead><tbody><tr><td class="wrap-first">A-B</td><td>A 点と B 点の間をくり返します。A・B は秒数だけを覚えていて、マーカーとは別に曲ごとに保存されます。</td><td>マーカーを置かずに、一時的にワンフレーズを練習するとき</td></tr><tr><td class="wrap-first">Section</td><td>マーカーから次のマーカーまでの区間をくり返します。マーカーが 2 個以上必要です。</td><td>Verse や Chorus など、曲の構成ごとに練習するとき</td></tr></tbody></table></div>
+<ul>
+  <li><strong>Loop</strong> ボタンを押すたびに、OFF → A-B → Section → OFF と切り替わります。A 点と B 点が未設定のときは、OFF から Section になります。<kbd>L</kbd> キーでも ON/OFF できます。</li>
+  <li>A・B ボタンは、押すと現在位置を A 点・B 点にし、もう一度押すと解除します。</li>
+  <li>ループの前後に足す余白（0〜5 秒）は、Loop ボタンを長押しするか、Settings の「ループの前後の余白」で変えます。ループの頭で、少し手前から聴きたいときに使います。</li>
+</ul>
+
+<h2 id="control">Control（音量・速度・キー・EQ）</h2>
+<figure class="g-fig"><img src="img/pc-control.webp" alt="Control パネル。" loading="lazy"><figcaption>Control パネル。</figcaption></figure>
+<ul>
+  <li><strong>速度</strong>：0.25〜1.5 倍です。0.25、0.50、0.75、1.00、1.25、1.50 の位置で、スライダーが吸い付きます。−・＋ ボタンの刻みは、Settings の「速度の刻み」で変えられます。リセットで 1.00 倍に戻ります。右のスイッチで ON/OFF できます。</li>
+  <li><strong>オートスピード</strong>：指定した回数のループごとに、速度を自動で上げる（または下げる）機能です。間隔（何ループごとか）、変化量（何 % ずつか）、上限を決めます。たとえば「5 ループごとに 5 % ずつ、150 % まで」と使います。</li>
+  <li><strong>キー</strong>：−12〜+12 半音です。0 の位置で吸い付きます。速度を変えても、音の高さは変わりません。</li>
+  <li><strong>イコライザー</strong>：31 Hz〜16 kHz の 10 バンドで、±15 dB です。バンドをなぞると、カーブを描けます。低音、ボーカル、高音、V字のプリセットと、「プリセットとして保存」で自分用の保存があります。</li>
+  <li>パソコンでは、<kbd>Ctrl</kbd> + <kbd>→</kbd> / <kbd>←</kbd> で速度、<kbd>Ctrl</kbd> + <kbd>↑</kbd> / <kbd>↓</kbd> でキーを変え、<kbd>Ctrl</kbd> + <kbd>R</kbd> で両方をリセットします。</li>
+</ul>
+
+<h2 id="library">Library</h2>
+<div class="g-fig-row"><figure class="g-fig"><img src="img/pc-library.webp" alt="Library" loading="lazy"><figcaption>Library</figcaption></figure><figure class="g-fig"><img src="img/pc-library-edit.webp" alt="Edit を押した Library" loading="lazy"><figcaption>Edit を押した Library</figcaption></figure></div>
+<ul>
+  <li><strong>Audio</strong>：曲を追加します。<strong>Folder</strong>：フォルダを作ります。曲名をタップすると再生します。</li>
+  <li>曲名とアーティストは、MP3 のタグから自動で読み取ります。編集して変えられます。</li>
+  <li><strong>Edit</strong> を押すと、名前の変更、曲の選択、Move（フォルダへ移動）、削除ができます。終わったら OK です。</li>
+  <li>行の左のつまみをドラッグして、曲を並び替えます。別のフォルダへドラッグすると、移動します。フォルダの見出しも、ドラッグで並び替えられます。</li>
+  <li>画鋲のアイコンでピン留めすると、フォルダの先頭に移ります。</li>
+  <li>右の <strong>Skip</strong> を押すと、その曲を自動送り（次の曲への連続再生）の対象から外します。</li>
+  <li>曲の行を長押しすると、ピン留め、Skip、フォルダへ移動、名前変更、削除のメニューが出ます。削除は、もう一度タップで確定します。スマートフォンでは、行を横にスワイプしても、編集と削除が出ます。</li>
+</ul>
+
+<h2 id="text">Text</h2>
+<figure class="g-fig"><img src="img/pc-text.webp" alt="Text パネル。" loading="lazy"><figcaption>Text パネル。</figcaption></figure>
+<ul>
+  <li>曲ごとに、歌詞やメモを書けます。<strong>Edit</strong> を押して入力し、<strong>OK</strong> で確定します。</li>
+  <li><strong>Full</strong> で全画面表示になり、文字の大きさを変えられます。</li>
+</ul>
+
+<h2 id="stem">Stem（パート分離・録音）</h2>
+<div class="g-note"><span class="g-note-title">お知らせ</span>Stem は、今のところパソコン専用です。スマートフォンの画面幅では使えません。QNVIDEO（YouTube）の動画にも使えません。</div>
+<p>再生中の曲を、ボーカルやドラムなどのパートに分けて、パートごとに音量を変えたり、消したりして練習できます。処理はブラウザの中で行い、音声は外部に送信されません。</p>
+<ul>
+  <li>サイドメニューの <strong>Stem</strong> を開き、Library で曲を選んでから、<strong>4 parts</strong> または <strong>6 parts</strong> を選んで分離を始めます。4 パートは Vocals・Drums・Bass・Other、6 パートはこれに Guitar と Piano が加わります。</li>
+  <li>初回だけ、分離に使うモデルのデータ（数百 MB 程度）をダウンロードします。ブラウザに保存されるので、2 回目以降は再ダウンロードしません。通信量にご注意ください。</li>
+  <li>処理時間は、お使いの端末によって大きく変わります。WebGPU に対応した環境では速く、対応していない環境では CPU で処理するため遅くなります。長い曲は処理できないことがあります（目安：4 パートは 12 分、6 パートは 10 分まで）。</li>
+  <li>分離した結果は、曲ごとにブラウザ内に保存されます。<strong>Delete saved parts</strong> で消せます。</li>
+  <li><strong>Stem mode</strong> をオンにすると、元の音源の代わりに、分離したパートが再生されます。パートごとに、<strong>Volume</strong>、<strong>Mute</strong>、<strong>Solo</strong> を使えます。パートごとの波形をクリックすると、その位置へ移動します。</li>
+  <li>Volume は 0〜100 で、70 が元の音量です。100 にすると、元の約 3 倍まで大きくできます。</li>
+  <li>Stem mode のあいだ、EQ と Key は効きません。Speed、シーク、ループ、マーカーは、いつもどおり使えます。</li>
+</ul>
+<h3>録音（Rec 1〜4）</h3>
+<ul>
+  <li>曲を再生しながら、マイクで録音できます。<strong>Record</strong> で始め、<strong>Stop</strong> で止めます。録音は 4 本まで残せます。初回はブラウザからマイクの許可を求められます。</li>
+  <li>スピーカーの音を拾わないよう、ヘッドホンを使ってください。</li>
+  <li>録音が曲より遅れる、または早いときは、トラックごとの <strong>Delay</strong>（−500〜+500 ms）で合わせます。録り直すときは <strong>Re-record</strong> です。</li>
+  <li>録音も、曲ごとにブラウザ内に保存されます。</li>
+</ul>
+
+    <div class="g-pager"><a class="prev" href="screen.html"><small>前のページ</small>画面の見かた</a><a class="next" href="data.html"><small>次のページ</small>保存・バックアップ・同期</a></div>
+  </main>
+</div>
+</body>
+</html>

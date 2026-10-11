@@ -4,6 +4,30 @@
   if (!window.QNI18N) return;
 
   QNI18N.addDict({
+    // PITCH Filters / TUNER Sensitivity の項目説明
+    "ノイズ除去": "Noise removal",
+    "検出": "Detection",
+    "スコア": "Score",
+    "マイク入力": "Mic input",
+    "表示": "Display",
+    "推奨": "Recommended",
+    "音が消えたあと、表示を残す時間。長いほどゆっくり消えます": "How long the reading stays after the sound stops. Longer fades more slowly",
+    "この時間内に急に跳んだ音程を、ノイズとして飛ばします": "Skips pitch that jumps suddenly within this time, treating it as noise",
+    "急な音程変化がこの大きさ以上なら、ノイズとみなします": "A sudden pitch change at least this large is treated as noise",
+    "一瞬だけ跳ねる音程を取り除きます": "Removes pitch that spikes for only an instant",
+    "この音量より小さい音は、音程として扱いません": "Sounds quieter than this level are not treated as pitch",
+    "音程がずれたままの区間を色で示します": "Marks stretches where the pitch stays off",
+    "ずれがこの時間続いた区間を対象にします": "Counts stretches where the drift lasts this long",
+    "区間内の平均のずれがこの値以上なら対象にします": "Counts stretches whose average drift is at least this value",
+    "ビブラートの区間を検出して示します": "Detects and marks vibrato sections",
+    "検出する揺れの速さの下限": "Lower limit of the vibrato rate to detect",
+    "検出する揺れの速さの上限": "Upper limit of the vibrato rate to detect",
+    "検出する揺れの大きさの下限": "Lower limit of the vibrato depth to detect",
+    "この範囲内のずれなら、正しい音程として数えます": "Pitch within this range counts as correct",
+    "フィルタの初期化": "Reset filters",
+    "すべてのフィルタを初期値に戻します": "Returns all filters to their defaults",
+    "小さい音をどこまで拾うか。上げるほど弱い音にも反応します": "How quiet a sound is picked up. Higher reacts to weaker sounds",
+    "表示の揺れをどこまでならすか。上げるほど滑らかに追従します": "How much the display is smoothed. Higher follows more smoothly",
     // 共通(マイク)
     "マイクを使えません（HTTPSで開いてください）": "Cannot use the microphone (open the page over HTTPS)",
     "マイクが見つかりません": "Microphone not found",
@@ -44,7 +68,8 @@
     "メイン表示の切り替え (D)": "Switch main display (D)",
     "マイク感度": "Mic sensitivity",
     "スムージング": "Smoothing",
-    "下のMicボタンを押すと、リアルタイムに音程を表示します": "Press Mic below to show pitch in real time",
+    "マイクをONにすると、リアルタイムに音程を表示します": "Turn the mic on to show pitch in real time",
+    "TUNERを開いたときに、マイクを自動でONにします": "Turns the mic on automatically when TUNER opens",
     "半円メーターの針で音程のズレを表示": "Shows pitch deviation with a semicircle needle",
     "左右のメモリでセント単位のズレを表示": "Shows deviation in cents on left/right scales",
     "1〜9は、Toneパネルで選んでいるプリセットの弦を上から順に鳴らします。": "Keys 1-9 play the strings of the preset selected in the Tone panel, from the top.",
@@ -141,6 +166,8 @@
     [/ 解除/g, " cleared"],
     [/Markerは既にあります /g, "Marker already exists at "],
     [/ ・ /g, " · "],
+    [/^(\d+) 半音$/g, "$1 semitones"],
+    [/^(\d+\.\d+) 秒$/g, "$1 s"],
     [/(\d+)秒戻る \(J\)/g, "Back $1s (J)"],
     [/(\d+)秒進む \(L\)/g, "Forward $1s (L)"]
   ]);

@@ -34,6 +34,10 @@
     // バックアップ/インポート
     "曲を選択": "Select tracks",
     "全選択": "Select all",
+    "送信": "Send",
+    "受信": "Receive",
+    "コード": "Code",
+    "進行状況": "Progress",
     "全解除": "Clear all",
     "含める項目": "Include",
     "音声データ": "Audio data",
@@ -183,7 +187,8 @@
     [/無料版はライブラリに(\d+)曲までしか保存できません。/g, "The Free plan can save up to $1 tracks in the library."],
     [/無料版はライブラリの(\d+)曲目までしか再生できません。/g, "The Free plan can play only the first $1 tracks in the library."],
     [/無料版のAB間ループは(\d+)回で自動停止します。/g, "On the Free plan, A-B loop stops automatically after $1 repeats."],
-    [/この端末にMP3がありません。「(.*)」を追加すると設定が適用されます/g, "No MP3 on this device. Add \"$1\" to apply its settings."],
+    [/この端末にMP3がありません。設定 > 転送 で他の端末から受信するか、「(.*)」を追加してください/g, "No MP3 on this device. Receive it from another device in Settings > Transfer, or add \"$1\"."],
+    [/この端末にMP3がない曲です。設定 > 転送 で他の端末から受信できます。/g, "These tracks have no MP3 on this device. Receive them from another device in Settings > Transfer."],
     [/「(.*)」の同期情報を削除します。\n他の端末のMP3は削除されません。/g, "Delete the sync data for \"$1\".\nMP3 files on other devices are not deleted."],
     [/送信側のコードを入力して、曲を受け取ります。/g, "Enter the sender's code to receive tracks. "],
     [/送信側の端末に表示されている6文字のコードを入力してください。選択した /g, "Enter the 6-character code shown on the sending device. Of the "],
@@ -191,6 +196,7 @@
     [/☁ 同期中…/g, "Syncing…"],
     [/☁ 同期できませんでした\(タップで再試行\)/g, "Sync failed (tap to retry)"],
     [/☁ 同期済み /g, "Synced "],
+    [/他の端末\((.*)\)にMP3が無い曲: (\d+)曲/g, "Tracks without MP3 on other devices ($1): $2"],
     [/未インポート\((\d+)\)/g, "Not imported ($1)"],
     [/未インポート/g, "Not imported"],
     [/(\d+)秒戻る/g, "Back $1s"],
@@ -259,7 +265,7 @@
 
   // 日本語表示でも英語のまま残す要素(アイコンボタンのラベル・パネル見出し)と、ユーザーデータ(曲名・マーカーメモ等)
   var KEEP_SEL = ".top-controls-btn-label, .pcv2-icon-item, #pcV2SpDock, .pcv2-panel-header-title, #pcV2PanelFab, .pcv2-fab-addgroup, .pcv2-fab, " +
-    ".playlist-act-btn, .pin-act-btn, .playlist-del-tile, .pin-del-tile, .qn-yt-bbtn, .qn-pt-bbtn, .qn-tn-bbtn, .qn-tn-bstep-mid, .qn-yt-seekpop-btn, " +
+    ".qn-set-fit, .qn-set-slider-val, .playlist-act-btn, .pin-act-btn, .playlist-del-tile, .pin-del-tile, .qn-yt-bbtn, .qn-pt-bbtn, .qn-tn-bbtn, .qn-tn-bstep-mid, .qn-yt-seekpop-btn, " +
     ".pcv2-anchor-tab, .mobile-tab-btn, .qn-flyout-item, .qn-yt-fab-folder, .panel-fab-btn, .qn-mic-pill, #splashLogo, .av-toggle-btn-label, " +
     "#noteTextFullscreenBtn, .pcv2-bar-page, .qn-yt-panel-header, .qn-tn-panel-header, .qn-pt-panel-header";
   var DATA_SEL = ".pin-memo-preset-chip:not(.qn-qp-act), .pin-memo, .pin-memo-text, .playlist-editable-display, .playlist-editable-field, " +

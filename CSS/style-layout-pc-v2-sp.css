@@ -99,16 +99,23 @@
     flex-shrink: 0;
   }
 
+  /* 設定帯(2列の格子)+ADD AUDIOを同じ左右端の縦並びに(右寄せの単独ボタンを作らない) */
   #pcV2WaveFabRow {
+    left: 14px;
     right: 14px;
     bottom: 14px;
     gap: 8px;
-    max-width: calc(100% - 28px);
+    max-width: none;
+    flex-direction: column;
+    align-items: stretch;
+    flex-wrap: nowrap;
   }
-
+  #pcV2WaveFabRow .pcv2-wave-fab-btns { display: grid; grid-template-columns: 1fr; gap: 8px; }
   #pcV2WaveFabRow .panel-fab-btn {
-    padding: 10px 16px;
+    height: 40px;
+    padding: 0 16px;
     font-size: 13px;
+    justify-content: center;
   }
 
   /* #pcV2TimeRow: v3.37.0〜 時刻表示は波形ヘッダー(歯車の左)へ移動したため常に非表示(空コンテナ) */
@@ -387,7 +394,7 @@ html {
   }
   #pcV2BottomBarAnchorTabs { display: none; }
   #pcV2Root:not(.qn-sp-more-open) #pcV2BottomBar { display: none; }
-  #pcV2WaveFabRow #pcV2WaveAddMarkerBtn, #pcV2WaveFabRow #pcV2WaveFabPlayBtn { display: none; }
+  #pcV2WaveFabRow #pcV2WaveAddMarkerBtn { display: none; }
   .pcv2-dock-btn {
     display: flex;
     flex-direction: column;
@@ -486,5 +493,119 @@ html {
 
 /* 【v3.59.0】Volume/Speed/KeyのミキサーはPC幅専用(SPの2ページバーには出さない) */
 @media (max-width: 900px) {
-  #pcV2BarMixer, .pcv2-mixer-divider { display: none !important; }
+  /* 下段バー側(非表示)の分は出さない。v4.11.1〜 SPのミキサーはMore(#pcV2MorePanel)内に移して表示する */
+  #pcV2BottomBar #pcV2BarMixer, .pcv2-mixer-divider { display: none !important; }
+}
+
+
+/* ---------- 【v4.11.0】SPの再配置: Moreはドックの上に開く(設定帯のみ)/ 前次トラック・リピートは波形ヘッダー右端 / AudioはA・Bと同じ行で小さく ---------- */
+#pcV2MorePanel, #pcV2WaveHeadBtns, #pcV2WaveFabRow .pcv2-fab-ab { display: none; } /* PC幅では出さない(.panel-fab-btnのdisplay:flexに勝つためidを付ける) */
+@media screen and (max-width: 900px) {
+  /* DOM順は波形→MorePanel→下段バー→ドック→アイコンバー(JS: syncBottomBarPosition)。orderも合わせる */
+  /* 【v4.21.1】Moreは波形を縮めず、ドックの上に重ねて開く(外枠は高さ0・中身を上方向へ張り出す) */
+  #pcV2MorePanel { order: 2; flex-shrink: 0; height: 0; padding: 0; position: relative; z-index: 105; }
+  #pcV2Root.qn-sp-more-open #pcV2MorePanel { display: block; }
+  #pcV2MorePanel .pcv2-more-inner { position: absolute; left: 0; right: 0; bottom: 0; background: #0a0a0c; border-top: 1px solid var(--border-subtle); padding: 8px 14px; }
+  #pcV2SpDock { order: 3; }
+  /* 下段バーの中身は全て他へ移した(再生/マーカー系はドック、トラック/リピートはヘッダー、A/BはAudioの隣、-10s/+10sは廃止)。操作元のボタンはDOMに残す(ドック等が.click()で中継するため) */
+  #pcV2BottomBar, #pcV2Root.qn-sp-more-open #pcV2BottomBar { display: none !important; }
+
+  /* 波形ヘッダー: 右端にボタン群(2行ぶち抜き) */
+  #pcV2WaveHead { grid-template-columns: minmax(0, 1fr) auto; }
+  #pcV2WaveHeadBtns { display: flex; align-items: center; gap: 2px; grid-column: 2; grid-row: 1 / span 2; }
+  .pcv2-head-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; background: none; border: none; border-radius: 10px; color: var(--icon-muted); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .pcv2-head-btn svg { width: 26px; height: 26px; fill: currentColor; display: block; }
+  .pcv2-head-btn:active { background: rgba(255, 255, 255, 0.08); }
+  .pcv2-head-btn.is-active { color: var(--accent-primary); }
+
+  /* Audioは小さく、空いた所にA/B */
+  #pcV2WaveFabRow .pcv2-wave-fab-btns { display: flex; gap: 8px; align-items: stretch; }
+  #pcV2WaveFabRow #pcV2WaveAddAudioBtn { flex: 0 0 auto; height: 36px; padding: 0 14px; font-size: 12px; gap: 6px; }
+  #pcV2WaveFabRow #pcV2WaveAddAudioBtn svg { width: 15px; height: 15px; }
+  #pcV2WaveFabRow .pcv2-fab-ab { display: flex; flex: 1 1 0; min-width: 0; height: 36px; padding: 0 8px; font-size: 13px; background: none; border: 1px solid var(--border-strong, rgba(255,255,255,0.2)); color: var(--icon-muted); box-shadow: none; white-space: nowrap; }
+  #pcV2WaveFabRow .pcv2-fab-ab.has-point { color: var(--accent-primary); border-color: var(--accent-primary); }
+  #pcV2WaveFabRow .pcv2-fab-ab:hover { background: none; }
+
+  /* More: 設定帯の下にミキサー(Volume=全幅、Speed/Key=2列)。PC下部バーのミキサーと同じ部品・同じ操作 */
+  #pcV2MorePanel .qn-wave-bar-strip { margin-bottom: 8px; }
+  #pcV2MorePanel #pcV2BarMixer { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; padding: 10px 16px 12px; background: #0e0e13; border: 1px solid var(--border-subtle); border-radius: var(--radius-popup); }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-item { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-item[data-mix="vol"] { grid-column: 1 / -1; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-label { font-size: 12px; color: var(--icon-muted); user-select: none; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-val { font-size: 13px; color: var(--text-bright, #fff); font-variant-numeric: tabular-nums; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-range { width: 100%; height: 32px; margin: 0; accent-color: var(--accent-primary, #3b82f6); }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-volrow { display: flex; align-items: center; gap: 8px; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-mute { flex: 0 0 auto; width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; border-radius: 8px; background: none; color: var(--icon-muted); }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-mute svg { width: 22px; height: 22px; fill: currentColor; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-mute .pcv2-mix-ico-off, #pcV2MorePanel #pcV2BarMixer .pcv2-mix-mute.is-muted .pcv2-mix-ico-on { display: none; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-mute.is-muted .pcv2-mix-ico-off { display: block; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-mute.is-muted { color: var(--accent-primary, #3b82f6); }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-keyval { min-width: 32px; text-align: center; font-size: 15px; }
+}
+
+/* Library: Audio/Folderはパネルタイトルの右(ヘッダー内)に横並びで小さく(PC/SP共通。v4.11.1) */
+#pcV2PanelHeader .pcv2-fab-addgroup { display: flex; flex-direction: row; align-items: center; gap: 6px; margin-left: auto; }
+#pcV2PanelHeader .pcv2-fab-addgroup .panel-fab-btn { height: 32px; padding: 0 12px; gap: 5px; font-size: 12px; box-shadow: none; }
+#pcV2PanelHeader .pcv2-fab-addgroup .panel-fab-btn svg { width: 15px; height: 15px; }
+
+/* v4.11.2: Moreミキサーの見た目調整(白枠線を消しBar lengthと同じスライダー外観に / Speedを長くKeyを狭く) + ヘッドのリピートバッジ */
+@media (max-width: 900px) {
+  #pcV2MorePanel #pcV2BarMixer { grid-template-columns: 1fr auto; gap: 8px 16px; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-range {
+    -webkit-appearance: none; appearance: none; height: 18px; background: transparent; outline: none; border: none; box-shadow: none; cursor: pointer; touch-action: pan-y; -webkit-tap-highlight-color: transparent;
+  }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-range:focus, #pcV2MorePanel #pcV2BarMixer .pcv2-mix-range:focus-visible { outline: none; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-range::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--accent-primary) var(--p, 0%), #2a2a34 var(--p, 0%)); border: none; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-range::-moz-range-track { height: 4px; border-radius: 2px; background: #2a2a34; border: none; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-range::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--accent-primary); }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; margin-top: -6px; border-radius: 50%; background: var(--text-bright, #fff); border: none; box-shadow: none; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--text-bright, #fff); border: none; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-item[data-mix="key"] { width: 112px; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-keyval { min-width: 28px; font-size: 14px; }
+  .pcv2-head-btn { position: relative; }
+  .pcv2-head-btn .repeat-one-badge { top: 4px; right: 4px; left: auto; transform: none; width: 13px; height: 13px; font-size: 9px; }
+  .pcv2-head-btn .repeat-folder-badge { font-size: 8px; }
+  #pcV2WaveHead #appTitle { cursor: pointer; }
+  /* 曲があるとき: ヘッダーはLibraryと同じ行(サムネ・曲名・アーティスト) | 時刻(2段) | ボタン群の1行。SKIP/PIN/EDITはPC幅だけ */
+  #pcV2WaveHead.has-track { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-rows: auto; }
+  #pcV2WaveHead.has-track #pcV2HeadRow { grid-column: 1; grid-row: 1; }
+  #pcV2WaveHead.has-track .time-controls-row { grid-column: 2; grid-row: 1; }
+  #pcV2WaveHead.has-track #pcV2WaveHeadBtns { grid-column: 3; grid-row: 1; }
+  #pcV2WaveHead.has-track #timeDisplay { flex-direction: column; align-items: flex-end; gap: 0; }
+  #pcV2WaveHead.has-track #timeDisplay .time-sep { display: none; }
+  #pcV2WaveHead #pcV2HeadRow .playlist-favorite-btn, #pcV2WaveHead #pcV2HeadRow .playlist-act-cell, #pcV2WaveHead #pcV2HeadRow .playlist-head-edit { display: none; }
+}
+
+/* v4.11.2: ミキサーのスライダーをBar length等(.qn-set-range)と同じ外観に統一(PC/SP共通) */
+#pcV2BarMixer .pcv2-mix-range {
+  -webkit-appearance: none; appearance: none; height: 18px; background: transparent; outline: none; border: none; box-shadow: none; cursor: pointer; touch-action: pan-y; -webkit-tap-highlight-color: transparent;
+}
+#pcV2BarMixer .pcv2-mix-range:focus, #pcV2BarMixer .pcv2-mix-range:focus-visible { outline: none; }
+#pcV2BarMixer .pcv2-mix-range::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--accent-primary) var(--p, 0%), #2a2a34 var(--p, 0%)); border: none; }
+#pcV2BarMixer .pcv2-mix-range::-moz-range-track { height: 4px; border-radius: 2px; background: #2a2a34; border: none; }
+#pcV2BarMixer .pcv2-mix-range::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--accent-primary); }
+#pcV2BarMixer .pcv2-mix-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; margin-top: -6px; border-radius: 50%; background: var(--text-bright, #fff); border: none; box-shadow: none; }
+#pcV2BarMixer .pcv2-mix-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--text-bright, #fff); border: none; }
+
+/* v4.11.3: ミキサーの見出し「ラベル 値」をBar length/Rows(.qn-set-inline)と同じ表示に統一(左寄せで密着・同サイズ・値は太字白。Keyの値も見出し側へ) */
+#pcV2Layout #pcV2BarMixer .pcv2-mix-head { display: flex; align-items: baseline; justify-content: flex-start; gap: 6px; }
+#pcV2Layout #pcV2BarMixer .pcv2-mix-label { font-size: var(--fs-small); color: var(--icon-muted); white-space: nowrap; }
+#pcV2Layout #pcV2BarMixer .pcv2-mix-val, #pcV2Layout #pcV2BarMixer .pcv2-mix-keyval { font-size: var(--fs-small); font-weight: 700; color: var(--text-bright); min-width: 0; text-align: left; font-variant-numeric: tabular-nums; }
+
+/* v4.11.3: Keyもスライダー(Volume/Speedと同一外観)。SPはSpeedと半分ずつ */
+#pcV2BarMixer .pcv2-mix-key .pcv2-mix-range { width: 100%; }
+@media (max-width: 900px) {
+  #pcV2MorePanel #pcV2BarMixer { grid-template-columns: 1fr 1fr; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-item[data-mix="key"] { width: auto; }
+}
+
+/* v4.11.5: SPのMoreでSpeed/Keyにもリセットボタン(Volumeのミュートボタンと同じ位置・サイズ)。PC下部バーでは非表示 */
+.pcv2-mix-reset { display: none; }
+@media (max-width: 900px) {
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-reset { flex: 0 0 auto; width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; border-radius: 8px; background: none; color: var(--icon-muted); -webkit-tap-highlight-color: transparent; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-reset svg { width: 22px; height: 22px; fill: currentColor; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-reset:active { background: rgba(255, 255, 255, 0.08); color: var(--accent-primary, #3b82f6); }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-volrow { gap: 4px; }
+  #pcV2MorePanel #pcV2BarMixer { grid-template-columns: 1fr 1fr; gap: 8px 12px; }
 }

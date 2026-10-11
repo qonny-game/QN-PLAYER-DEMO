@@ -24,12 +24,13 @@
   }
 
   // 自己相関法。corrは呼び出し側が持つ再利用バッファ(長さ>=buf.length)
-  function autoCorrelate(buf, sampleRate, corr) {
+  // minRms: 無音とみなす音量(省略時0.01)。minClarity: 指定時は周期性(0〜1)がそれ未満の音を雑音として捨てる(小さい音まで拾うために使う)
+  function autoCorrelate(buf, sampleRate, corr, minRms, minClarity) {
     var SIZE = buf.length, i, j;
     var rms = 0;
     for (i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
     rms = Math.sqrt(rms / SIZE);
-    if (rms < 0.01) return { freq: -1, rms: rms };
+    if (rms < (minRms || 0.01)) return { freq: -1, rms: rms };
 
     var r1 = 0, r2 = SIZE - 1, thres = 0.2;
     for (i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
@@ -50,6 +51,10 @@
     for (i = d; i < n; i++) if (corr[i] > maxVal) { maxVal = corr[i]; maxPos = i; }
     var T0 = maxPos;
     if (T0 <= 0) return { freq: -1, rms: rms };
+    if (minClarity) {
+      var clarity = corr[0] > 0 && T0 < n / 2 ? (maxVal / corr[0]) / ((n - T0) / n) : 0;
+      if (clarity < minClarity) return { freq: -1, rms: rms };
+    }
 
     var x1 = corr[T0 - 1] || corr[T0], x2 = corr[T0], x3 = corr[T0 + 1] || corr[T0];
     var a = (x1 + x3 - 2 * x2) / 2, b = (x3 - x1) / 2;
@@ -71,7 +76,7 @@
       if (document.hidden || now - lastAt < FRAME_MS) return;
       lastAt = now;
       analyser.getFloatTimeDomainData(dataBuf);
-      var r = autoCorrelate(dataBuf, ctx.sampleRate, corrBuf);
+      var r = autoCorrelate(dataBuf, ctx.sampleRate, corrBuf, typeof opts.getMinRms === "function" ? opts.getMinRms() : 0, opts.minClarity || 0);
       onFrame(r);
     }
 
@@ -99,6 +104,8 @@
       rafId = requestAnimationFrame(tick);
     }
 
+    function state() { return ctx ? ctx.state : "closed"; }
+
     function stop() {
       running = false;
       if (rafId) cancelAnimationFrame(rafId);
@@ -109,7 +116,7 @@
     }
 
     // streamは録音(MediaRecorder)と共有する用。getUserMediaを二重に開かない
-    return { startFromMic: startFromMic, stop: stop, get stream() { return stream; } };
+    return { startFromMic: startFromMic, stop: stop, state: state, get stream() { return stream; } };
   }
 
   window.QNPitchCore = {

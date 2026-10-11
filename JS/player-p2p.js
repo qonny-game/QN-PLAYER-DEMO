@@ -32,59 +32,48 @@
   function sigDel(code) { return auth().syncTx(async function (api) { api.del(sigId(code)); }).catch(function () {}); }
   function fmtMB(n) { return (n / 1048576).toFixed(n >= 10485760 ? 0 : 1) + "MB"; }
 
-  // ---------- 画面(既存のExportモーダルと同じ器・部品を使う: .export-modal*/.export-section*/.track-backup-row/.export-filename-input/.export-run-btn/.export-cancel-btn) ----------
+  // ---------- 画面(設定の下層パネル。Backup/Importと同じ器・部品: .export-modal-body/.export-section/.export-modal-footer/.export-run-btn/.export-cancel-btn/.track-backup-*。見た目はstyle-pcv2-panels.cssのBackup用ルールを共用) ----------
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
-  function ensureUi() {
-    if (ui) return;
-    var ov = el("div", "export-modal-overlay qn-p2p-overlay");
-    ov.setAttribute("role", "dialog");
-    var card = el("div", "export-modal qn-p2p-modal");
-    ov.appendChild(card);
-    ov.addEventListener("pointerdown", function (e) { if (e.target === ov && !busy()) close(); });
-    document.body.appendChild(ov);
-    ui = { overlay: ov, card: card };
-  }
+  var host = null;       // 表示先の入れ物(mountで作る。パネルを離れるとDOMから外れ、描画は何もしない)
+  var dismissFn = null;  // 戻り先(設定の一覧へ)
   function busy() { return !!(S && S.transferring); }
-  // 1画面を組み立てる: title / body=[node] / footer=[node]。statusは左側の状態表示(.export-status)
+  function dismiss() { if (typeof dismissFn === "function") dismissFn(); }
+  // 1画面を組み立てる: body=[node] / footer=[node]。statusは左側の状態表示(.export-status)。見出しはパネルのヘッダー(Transfer)が担う
   function show(o) {
-    ensureUi();
-    var c = ui.card;
-    c.innerHTML = "";
-    var h = el("div", "export-modal-header");
-    h.appendChild(el("span", "", o.title));
-    var x = el("button", "export-modal-close", "✕");
-    x.type = "button"; x.title = "Close";
-    x.addEventListener("click", close);
-    h.appendChild(x);
+    if (!host || !host.isConnected) return el("div", "export-status");
+    host.textContent = "";
     var body = el("div", "export-modal-body");
     (o.body || []).forEach(function (n) { if (n) body.appendChild(n); });
     var f = el("div", "export-modal-footer");
     var st = el("div", "export-status" + (o.error ? " error" : o.ok ? " success" : ""), o.status || "");
     f.appendChild(st);
     (o.footer || []).forEach(function (n) { f.appendChild(n); });
-    c.appendChild(h); c.appendChild(body); c.appendChild(f);
-    ui.overlay.classList.add("open");
+    host.appendChild(body); host.appendChild(f);
     return st;
-  }
-  function close() {
-    cleanup(true);
-    if (ui) ui.overlay.classList.remove("open");
   }
   function section(label, nodes) {
     var s = el("div", "export-section");
-    if (label) s.appendChild(el("div", "export-section-label", label));
+    if (label) s.appendChild(el("label", "export-section-label", label));
     nodes.forEach(function (n) { if (n) s.appendChild(n); });
     return s;
   }
   function text(t) { return el("div", "qn-p2p-text", t); }
   function runBtn(label, fn) { var b = el("button", "export-run-btn", label); b.type = "button"; b.addEventListener("click", fn); return b; }
   function cancelBtn(label, fn) { var b = el("button", "export-cancel-btn", label); b.type = "button"; b.addEventListener("click", fn); return b; }
+  function miniBtn(label, fn) { var b = el("button", "track-backup-mini-btn", label); b.type = "button"; b.addEventListener("click", fn); return b; }
+  // 進行中の送受信を止めて最初の画面へ
+  function stop() { cleanup(true); home(); }
 
-  function open() {
+  // 設定の下層パネル/アプリのSettingsから呼ぶ。hostElの中に入れ物を作って描画し、onDismissで一覧へ戻る。進行中なら今の画面を出し直す
+  function mount(hostEl, onDismiss) {
+    dismissFn = onDismiss;
     if (!window.QNLibSync || !window.QNLibSync.isActive() || !auth() || typeof auth().syncTx !== "function") {
       toast("転送には同期対象アカウントでのログインが必要です");
+      setTimeout(dismiss, 0);
       return;
     }
+    host = el("div", "qn-p2p-host");
+    hostEl.appendChild(host);
     if (S) { if (S.screen) S.screen(); return; }
     home();
   }
@@ -96,37 +85,47 @@
     if (!ghosts.length) rb.disabled = true;
     var sb = runBtn("Send", startSendWait);
     show({
-      title: "Transfer",
       body: [
         text("同じGoogleアカウントでログインしている端末どうしで、MP3を直接転送します。音声データはサーバーを経由せず、保存もされません。転送中は両方の端末でこの画面を開いたままにしてください。"),
-        section("SEND", [text("コードを表示して、受信側の接続を待ちます。先に送信側で開始してください。"), sb]),
-        section("RECEIVE", [text(ghosts.length ? "送信側のコードを入力して、曲を受け取ります。(未インポート: " + ghosts.length + "曲)" : "受け取れる曲(未インポート)はありません。"), rb])
+        section("送信", [text("コードを表示して、受信側の接続を待ちます。先に送信側で開始してください。"), sb]),
+        section("受信", [text(ghosts.length ? "送信側のコードを入力して、曲を受け取ります。(未インポート: " + ghosts.length + "曲)" : "受け取れる曲(未インポート)はありません。"), rb])
       ],
-      footer: [cancelBtn("Close", close)]
+      footer: []   // 戻るはパネルのヘッダーの矢印(Backup/Importと同じ)
     });
   }
 
   // ---------- 受け取る側(コードを入力して接続する側) ----------
   function pickReceive() {
     var ghosts = window.QNLibSync.ghosts();
-    var list = el("div", "track-backup-checklist"), checks = [];
+    var list = el("div", "track-backup-tracklist"), checks = [];
+    var countEl = el("span", "", ""), sizeEl = el("span", "", "");
+    function summary() {
+      var n = 0, s = 0;
+      checks.forEach(function (c) { if (c.cb.checked) { n++; s += c.g.s || 0; } });
+      countEl.textContent = n + "曲選択中"; sizeEl.textContent = fmtMB(s);
+    }
     ghosts.forEach(function (g) {
-      var row = el("label", "track-backup-row");
+      var row = el("label", "track-backup-track-row");
       var cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = true;
+      cb.addEventListener("change", summary);
       checks.push({ cb: cb, g: g });
       row.appendChild(cb);
-      row.appendChild(el("span", "qn-p2p-row-t", g.ti || g.n || "(無題)"));
-      row.appendChild(el("span", "qn-p2p-row-s", g.s ? fmtMB(g.s) : ""));
+      row.appendChild(el("span", "track-backup-track-name", g.ti || g.n || "(無題)"));
+      row.appendChild(el("span", "track-backup-track-size", g.s ? fmtMB(g.s) : ""));
       list.appendChild(row);
     });
-    var all = cancelBtn("Select all", function () {
-      var on = checks.some(function (c) { return !c.cb.checked; });
-      checks.forEach(function (c) { c.cb.checked = on; });
-    });
-    all.classList.add("qn-p2p-small");
+    function setAll(on) { checks.forEach(function (c) { c.cb.checked = on; }); summary(); }
+    var head = el("div", "track-backup-tracklist-header");
+    head.appendChild(el("label", "export-section-label", "曲を選択"));
+    var acts = el("div", "track-backup-tracklist-actions");
+    acts.appendChild(miniBtn("全選択", function () { setAll(true); }));
+    acts.appendChild(miniBtn("全解除", function () { setAll(false); }));
+    head.appendChild(acts);
+    var sizeRow = el("div", "track-backup-size-row");
+    sizeRow.appendChild(countEl); sizeRow.appendChild(sizeEl);
+    summary();
     show({
-      title: "Receive",
-      body: [section("TRACKS", [all, list])],
+      body: [section(null, [head, list, sizeRow])],
       footer: [
         cancelBtn("Back", home),
         runBtn("Next", function () {
@@ -139,14 +138,14 @@
   }
   function codeEntry(items) {
     var inp = document.createElement("input");
-    inp.type = "text"; inp.className = "export-filename-input qn-p2p-input"; inp.maxLength = 7; inp.placeholder = "ABC 123";
-    inp.autocapitalize = "characters"; inp.autocomplete = "off"; inp.spellcheck = false;
-    inp.addEventListener("input", function () { var c = normCode(inp.value); inp.value = c.length > 3 ? c.slice(0, 3) + " " + c.slice(3) : c; });
+    inp.type = "text"; inp.className = "export-filename-input qn-p2p-input"; inp.maxLength = 8; inp.placeholder = "ABC123";
+    inp.autocapitalize = "characters"; inp.autocomplete = "off"; inp.spellcheck = false; inp.setAttribute("autocorrect", "off"); inp.setAttribute("enterkeyhint", "go");
+    // 入力中にinp.valueを書き換えない(iOSのキーボードが同じ文字を二重に入れる)。整形・大文字化はフォーカスを外した時だけ。入力値の解釈はnormCode(Connect時)
+    inp.addEventListener("blur", function () { inp.value = normCode(inp.value); });
     var go = runBtn("Connect", function () { var c = normCode(inp.value); if (c.length !== CODE_LEN) { toast("6文字のコードを入力してください"); return; } startReceive(c, items); });
     inp.addEventListener("keydown", function (e) { if (e.key === "Enter") go.click(); });
     show({
-      title: "Receive",
-      body: [section("CODE", [inp, text("送信側の端末に表示されている6文字のコードを入力してください。選択した " + items.length + "曲のうち、送信側の端末にあるMP3だけが受信されます。")])],
+      body: [section("コード", [inp, text("送信側の端末に表示されている6文字のコードを入力してください。選択した " + items.length + "曲のうち、送信側の端末にあるMP3だけが受信されます。")])],
       footer: [cancelBtn("Back", pickReceive), go]
     });
     setTimeout(function () { try { inp.focus(); } catch (e) {} }, 50);
@@ -184,10 +183,9 @@
   }
   function screenRecv(sess) {
     var st = show({
-      title: "Receive",
-      body: [section("PROGRESS", [progressNode(sess)])],
+      body: [section("進行状況", [progressNode(sess)])],
       status: sess.statusText || "",
-      footer: [cancelBtn(sess.transferring ? "Stop" : "Cancel", close)]
+      footer: [cancelBtn(sess.transferring ? "Stop" : "Cancel", stop)]
     });
     sess.statusEl = st;
   }
@@ -259,13 +257,12 @@
   function screenSendWait(sess) {
     var codeEl = el("div", "qn-p2p-code", sess.code.slice(0, 3) + " " + sess.code.slice(3));
     var st = show({
-      title: "Send",
       body: [
-        section("CODE", [codeEl, text("受信側の端末で Receive を開き、曲を選択してからこのコードを入力してください。有効期限は5分です。")]),
-        sess.transferring ? section("PROGRESS", [progressNode(sess)]) : null
+        section("コード", [codeEl, text("受信側の端末で Receive を開き、曲を選択してからこのコードを入力してください。有効期限は5分です。")]),
+        sess.transferring ? section("進行状況", [progressNode(sess)]) : null
       ],
       status: sess.statusText || "待機中",
-      footer: [cancelBtn(sess.transferring ? "Stop" : "Cancel", close)]
+      footer: [cancelBtn(sess.transferring ? "Stop" : "Cancel", stop)]
     });
     sess.statusEl = st;
   }
@@ -359,7 +356,7 @@
       title: sess.role === "recv" ? "Receive" : "Send",
       body: [section("RESULT", [text(n + "曲を" + (sess.role === "recv" ? "受信しました。" : "送信しました。") + extra)])],
       status: "完了", ok: true,
-      footer: [runBtn("Close", close)]
+      footer: [runBtn("Close", dismiss)]
     });
     if (sess.role === "recv" && window.QNLibSync) setTimeout(function () { window.QNLibSync.syncNow(); }, 800);   // 取り込んだ曲に他端末の設定を適用
   }
@@ -371,7 +368,7 @@
       title: sess.role === "recv" ? "Receive" : "Send",
       body: [section("ERROR", [text(msg)])],
       status: "転送できませんでした", error: true,
-      footer: [runBtn("Close", close)]
+      footer: [runBtn("Close", dismiss)]
     });
     if (window.QNLibSync && sess.role === "recv" && sess.files) setTimeout(function () { window.QNLibSync.syncNow(); }, 800);
   }
@@ -387,5 +384,5 @@
     if (userCancel && s.files && s.role === "recv" && window.QNLibSync) setTimeout(function () { window.QNLibSync.syncNow(); }, 800);
   }
 
-  window.QNP2P = { open: open, _state: function () { return S; } };
+  window.QNP2P = { mount: mount, _state: function () { return S; } };
 })();

@@ -1,6 +1,6 @@
 # QNPLAYER 同期（Firebase）
 
-現状：**YouTubeのLibraryだけ・自分のUIDだけ**。QNPLAYER本体のデータ同期は未実装（`qnplayer-sync-plan.md`のステップ4）。
+現状：このファイル前半＝YouTubeのLibrary同期（`SYNC_UIDS`のUIDのみ）。本体のLibrary同期とP2P転送は後半の各節（v3.28.0〜、`player-sync.js` / `player-p2p.js`）。
 
 ## 構成
 - ログインは既存の`JS/player-auth.js`（Firebase Auth Googleログイン）。Firestoreも同じ`db`。
@@ -93,7 +93,7 @@ service cloud.firestore {
 ---
 
 # MP3のP2P転送（v3.29.0〜）
-実装: `JS/player-p2p.js`（WebRTC DataChannel）。サイドバー下段の「Transfer」(Backup/Importの隣。同期対象アカウントのログイン中だけ表示)から(画面は既存のExportモーダル部品を流用、文言は簡潔な丁寧語)。
+実装: `JS/player-p2p.js`（WebRTC DataChannel）。設定 → More の「Transfer」(同期対象アカウントのログイン中だけ表示。設定を開くたびに判定)から。画面はBackup/Importと同じ下層パネル(`QNP2P.mount(hostEl, onDismiss)`。PLAYERは`switchPanel("transfer")`、アプリは`qn-apps.js`のSettings下層)で、部品は`.export-*`/`.track-backup-*`を共用(モーダルは使わない)。文言は簡潔な丁寧語。
 
 ## 流れ（送る側が先）
 1. **送る側**: Transfer → Send。6文字コード(紛らわしいI/O/0/1除く)を発行して待機。
@@ -111,3 +111,9 @@ service cloud.firestore {
 
 ### YouTubeのフォルダ（v3.31.0）
 `yt_library`ドキュメントに`folders:[{id,n}]`・`foldersAt`を追加。フォルダ一覧は新しい方を丸ごと採用(同時刻はリモート)。動画の所属は各動画の`folder`(動画のLWWに乗る)。存在しないフォルダidを指す動画は未分類表示。開閉は同期しない。
+
+## 同名フォルダの統合（v4.9.3〜）
+同期の前後に`mergeDuplicateFolders()`が走り、前後の空白を除いて同名のフォルダを1つにする。残すのは**id昇順で先頭**（全端末で同じ結果になるので消し合わない）。曲とghostの所属を付け替え、他は`deletePlaylistFolder`で削除（tombstoneで伝わる）。
+
+## 他端末の未インポート(v4.10.0〜)
+`users/{uid}/sync/lib_devices`: `{d:{<devId>:{l:端末種別,u:更新時刻,m:[MP3が無い曲のhash]}}}`。各端末が同期の最後(`devicesStep`)に、自分のghost一覧が変わった時(または3日ごと)に書く。読む側は30日以内の端末だけ数え、自分がMP3を持っている曲を集計してLibraryに「他の端末にMP3が無い曲: N曲」+Sendボタンを出す。devIdは`qn_libsync_meta_v1.devId`。補助情報なので失敗しても同期は成功扱い。反映は相手端末が同期した後、自分の次の同期から。

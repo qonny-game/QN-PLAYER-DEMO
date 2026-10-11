@@ -5,7 +5,7 @@ QNPLAYER v3.60.0時点の実装メモ。第1段階(PLAYER本体)・第2段階(Yo
 ## 仕組み(`JS/qn-i18n.js`)
 - ソース内の文言は**日本語のまま**。英語表示の時だけDOMを英語へ差し替える(日本語文字列をキーにした辞書方式)。`data-i18n`やキー名は使わない。
 - 英語表示中のみ MutationObserver が動く(日本語表示中はobserverなし)。後から作られるDOM・トースト・ポップアップ・モーダルも自動で英語になる。
-- 対象はテキストノードと `title` / `aria-label` / `placeholder`。元の日本語はノード/要素(`__qnJa` / `__qnJaAttrs`)に保持し、日本語へ戻す時に復元する。
+- 対象はテキストノードと `title` / `aria-label` / `placeholder`。日本語へ戻す時は逆辞書(`DICT_JA` / `RULES_JA`。`addJaDict` / `addJaRules` で追加)で英語から日本語へ変換する。
 - 変換は `DICT`(完全一致) → `RULES`(数字入りの断片を順に置換)。**訳せない文字列は日本語のまま表示**(誤訳より安全)。結果に日本語が残る場合も元の日本語を表示。
 - `alert` / `confirm` の本文も英語化。JS側で文字列を組み立てて直接使う時は `QNI18N.t("日本語")`。
 - API: `QNI18N.getLang()`(実効: ja|en) / `getPref()`(auto|ja|en) / `setPref(v)` / `apply()` / `OPTIONS`。切替時に `qn-lang-change` イベント。

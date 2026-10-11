@@ -33,6 +33,11 @@ async function decodeWaveform(file, token) {
 
     if (token !== waveformDecodeToken) return;
 
+    // 自動ノーマライズ用の音量計測(player-normalize.js)。波形と同じデコード結果を使うので追加のデコードはない
+    if (window.QNNorm) QNNorm.measure(file.name, audioBuffer, () => token !== waveformDecodeToken);
+    // コード解析用に波形と同じデコード結果を渡す(コードモードの時だけ解析が走る。player-chords.js)
+    if (window.QNChords) QNChords.offer(file.name + "|" + audioBuffer.duration.toFixed(1), audioBuffer);
+
     const channelCount = audioBuffer.numberOfChannels;
     const rawLength = audioBuffer.length;
     // 【v3.58.0】5秒1本でも滑らかに見えるよう毎秒160ピーク(下限4000・上限480000=約50分)。QNBarsが1本あたりの区間で最大値を取って間引く
@@ -180,7 +185,9 @@ function loadFile(file) {
 
   waveformPeaks = null;
   waveformDecodeToken++;
+  if (window.QNChords) QNChords.reset();
   decodeWaveform(file, waveformDecodeToken);
+  if (window.QNNorm) QNNorm.onLoad(file.name);
 
   // 【v2.13.6】マーカー/テキストメモ読込は曲切替の瞬間に同期で行う(loadedmetadata待ちだと失敗時に曲名だけ新しく本文が前の曲のままになり、編集すると新しい曲名キーで保存される。GOTCHAS.md)
   loadTrackUserData(file.name);
@@ -320,7 +327,7 @@ audio.onended = () => {
     return;
   }
 
-  const wrapAround = repeatMode === "all";
+  const wrapAround = repeatMode === "all" || repeatMode === "folder";
   const nextIndex = findEnabledTrackIndex(currentPlaylistIndex, 1, wrapAround);
   if (nextIndex !== -1) {
     playTrackAt(nextIndex);
@@ -484,32 +491,9 @@ let lastVisualUpdateTime = 0;
 let lastCurrentTimeText = null;
 let lastDurationText = null;
 
-function updateBars() {
-  requestAnimationFrame(updateBars);
-  if (!audio.duration) return;
-
-  const dur = audio.duration;
-  const ct = audio.currentTime;
-  const now = performance.now();
-
-  if (now - lastVisualUpdateTime >= UPDATE_BARS_VISUAL_INTERVAL_MS) {
-    lastVisualUpdateTime = now;
-
-    if (updateBarsCurrentValEl && updateBarsDurationValEl) {
-      const ctText = formatTime(ct);
-      const durText = formatTime(dur);
-      if (ctText !== lastCurrentTimeText) {
-        updateBarsCurrentValEl.textContent = ctText;
-        lastCurrentTimeText = ctText;
-      }
-      if (durText !== lastDurationText) {
-        updateBarsDurationValEl.textContent = durText;
-        lastDurationText = durText;
-      }
-    }
-  }
-
-  // 折り返し判定は毎フレーム(間引かない)。loopEnabled判定を先に(OFFなら配列生成しない)。v3.7.0〜: A-Bループはloop WrapAB()
+// ループの折り返し判定(A-B/マーカー区間)。updateBars(rAF)から毎フレーム呼ぶ。画面が見えない間(別アプリ・ロック中)はrAFが止まるので、下のバックグラウンド用タイマーからも呼ぶ。prevTimeは呼び出し側が更新する
+function loopTick(ct) {
+  // 折り返し判定(間引かない)。loopEnabled判定を先に(OFFなら配列生成しない)。v3.7.0〜: A-Bループはloop WrapAB()
   if (loopEnabled && loopMode === "ab" && !isSeeking && !isJumping && !audio.paused) {
     const abr = getABRange();
     if (abr) loopWrapAB(abr, ct);
@@ -562,6 +546,43 @@ function updateBars() {
       }
     }
   }
+}
+
+// 【v4.10.1】画面が非表示の間はrAFが止まりループが効かなくなるため、タイマーとtimeupdateで折り返し判定だけ続ける(表示中は何もしない=二重処理なし)。バックグラウンドではブラウザがタイマーを間引くので精度は落ちる(最大で約1秒遅れ)
+function backgroundLoopTick() {
+  if (!document.hidden || !audio.duration || !loopEnabled || audio.paused) return;
+  loopTick(audio.currentTime);
+  prevTime = audio.currentTime;
+}
+setInterval(backgroundLoopTick, 100);
+audio.addEventListener("timeupdate", backgroundLoopTick);
+
+function updateBars() {
+  requestAnimationFrame(updateBars);
+  if (!audio.duration) return;
+
+  const dur = audio.duration;
+  const ct = audio.currentTime;
+  const now = performance.now();
+
+  if (now - lastVisualUpdateTime >= UPDATE_BARS_VISUAL_INTERVAL_MS) {
+    lastVisualUpdateTime = now;
+
+    if (updateBarsCurrentValEl && updateBarsDurationValEl) {
+      const ctText = formatTime(ct);
+      const durText = formatTime(dur);
+      if (ctText !== lastCurrentTimeText) {
+        updateBarsCurrentValEl.textContent = ctText;
+        lastCurrentTimeText = ctText;
+      }
+      if (durText !== lastDurationText) {
+        updateBarsDurationValEl.textContent = durText;
+        lastDurationText = durText;
+      }
+    }
+  }
+
+  loopTick(ct);
 
   // 【v3.46.0】スキップ区間: 再生が自然にスキップ開始マーカーを跨いだ時だけ、次の(スキップでない)マーカーへ飛ぶ。ループ中・シーク中・ジャンプ中は対象外(ユーザーがタップして入った区間はそのまま再生される)
   if (!loopEnabled && !isSeeking && !isJumping && !audio.paused && typeof getSkipRanges === "function") {
@@ -922,3 +943,21 @@ function hapticWarning() {
   }
   if (targets.length > 0) requestAnimationFrame(tick);
 })();
+
+// スライダーのダブルクリック/ダブルタップで初期値へ戻す(Speed=1.00x、Key=0)。PLAYER・YouTubeの両方が使う。
+// マウスはdblclick、タッチ/ペンは350ms以内・近い位置の2連続タップ(ドラッグ操作は数えない)。resetFnは各アプリの既存のリセット処理を渡す
+function bindDoubleReset(input, resetFn) {
+  if (!input || input._qnDblReset) return;
+  input._qnDblReset = true;
+  let lastT = 0, lastX = 0, lastY = 0, downX = 0, downY = 0, moved = false;
+  input.addEventListener("dblclick", (e) => { e.preventDefault(); lastT = 0; resetFn(); });
+  input.addEventListener("pointerdown", (e) => { downX = e.clientX; downY = e.clientY; moved = false; });
+  input.addEventListener("pointermove", (e) => { if (Math.abs(e.clientX - downX) > 8 || Math.abs(e.clientY - downY) > 8) moved = true; });
+  input.addEventListener("pointerup", (e) => {
+    if (e.pointerType === "mouse") return;
+    if (moved) { lastT = 0; return; }
+    const now = Date.now();
+    if (now - lastT < 350 && Math.hypot(e.clientX - lastX, e.clientY - lastY) < 24) { lastT = 0; resetFn(); }
+    else { lastT = now; lastX = e.clientX; lastY = e.clientY; }
+  });
+}

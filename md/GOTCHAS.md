@@ -34,7 +34,7 @@
 - 一覧の行の中に一時的なUI（プリセット・入力補助）を足して行の高さを変えない。ポップアップ（body直下・fixed）にする。
 - markers/playlist共通セレクタのCSSを変える時は、両パネルのタップ判定の違い（markers＝`.del-btn`、playlist＝`.playlist-del-zone`、`.pin-del-zone`）を壊していないか確認する。
 - 汎用セレクタ（`.playlistItem button`等）より優先させたい時は、親クラスを前置して詳細度を上げる。**既存ルールを`grep`で探してから足す**（CSSの別の場所の既存ルールが原因のことが多い）。
-- 共通の器`.export-modal-*`はExport/EQ/Backup/Import全部で流用。新しいモーダルはまずこれを使えないか確認する（名前は`export`だが用途はExportに限らない）。
+- 共通の器`.export-modal-*`はEQ/解約/Backup/Importで流用（Exportは撤去済み）。新しいモーダルはまずこれを使えないか確認する（名前は`export`だが用途はExportに限らない）。
 
 ## 5. PC v2の仕組み
 - **EDITモード中の削除・選択は`player-ui-pc-v2.js`の`attachSelectionHandlers()`がキャプチャ段階で先に奪う。** `player-playlist.js`等の`delBtn.onclick`を直しても発火しない。
@@ -87,7 +87,7 @@
 - 波形は1行1本のPath2Dを色の区間ごとにclipして塗る(マーカー色/再生済み)。バー個別のfillRectに戻さない。
 
 ## 設定パネルの部品ルール(v3.43.0)
-- 設定の選択肢は`.qn-stepper`(‹ 値 ›)だけを使う。ボタン列(セグメント)や別デザインの＋/−を新設しない。項目を足す時は`SETTING_DEFS`に{values,get,set,fmt}を足し、`settingsStepper(kind)`で置く。
+- 設定の選択肢は`.qn-stepper`(‹ 値 ›)だけを使う。ボタン列(セグメント)や別デザインの＋/−を新設しない。項目を足す時は`QNSettingsUI.build()`の行定義（type:"stepper"、{values,get,set,fmt}）で置く（`qn-settings-ui.js`冒頭に書式）。
 - `#loopPreRollControl`はindex.htmlで`.qn-stepper`のマークアップ。`#loopPreRollValue`は`textNode + .qn-stepper-unit`構造(player-controls.jsが`firstChild.textContent`を書き換える)なので構造を変えない。
 
 ## 設定UIの共通化(v3.44.0)
@@ -105,7 +105,7 @@
 - skipは`savePins`(localStorage)/トラックバックアップ(`skip`)/同期(`k`)に含める。新しいマーカー項目を足す時はこの3箇所とplayer-sync.jsの復元側を揃える。YouTubeアプリのマーカーは未対応。
 
 ## SPのアイコンバーとアプリ切替(v3.47.0)
-- アプリ切替はヘッダーのロゴ`#qnAppLogoBtn`(index.htmlにある。PC/SP共通。v3.50.0〜サイドバーのバッジ`#qnAppBadge`とSPの`#qnAppSwitchBtn`は撤去済み)。フライアウトはロゴの真下に出るドロップダウン(`positionFlyout()`がロゴの矩形基準。z-index 450=サイドバー400より上。幕は透明)。**開いている間は`shiftHostForFlyout()`が`#qnAppHost`をtransformで下へずらす**(YouTubeプレイヤーを覆わない規約対応。はみ出す下側はclip-pathで切る。空いた上側は`#qnAppShiftCover`で塞ぎ裏のPLAYERを見せない)。フライアウトの高さや位置を変えたらこのずらし量も確認。外側タップ判定の除外に`#qnAppLogoBtn`を含めること。表示名はqn-apps.jsの`BRAND`(YouTubeアプリは規約上グレーになりうるので名前に「YouTube」を入れない)。
+- アプリ切替はヘッダーのロゴ`#qnAppLogoBtn`(index.htmlにある。PC/SP共通。サイドバーのバッジやSP専用の切替ボタンは無い)。フライアウトはロゴの真下に出るドロップダウン(`positionFlyout()`がロゴの矩形基準。z-index 450=サイドバー400より上。幕は透明)。**開いている間は`shiftHostForFlyout()`が`#qnAppHost`をtransformで下へずらす**(YouTubeプレイヤーを覆わない規約対応。はみ出す下側はclip-pathで切る。空いた上側は`#qnAppShiftCover`で塞ぎ裏のPLAYERを見せない)。フライアウトの高さや位置を変えたらこのずらし量も確認。外側タップ判定の除外に`#qnAppLogoBtn`を含めること。表示名はqn-apps.jsの`BRAND`(YouTubeアプリは規約上グレーになりうるので名前に「YouTube」を入れない)。
 - SPのアイコンバーは`overflow-x:hidden`+各タブ`flex:1 1 0`(v3.48.0でSeekbarタブ撤去=5タブ)。ラベル(span)は`.active`/`.qn-app-active`以外を`visibility:hidden`(`display:none`にすると選択でバーの高さが変わる)。タブを増やす時は幅(6〜7個まで)を確認。
 - SPヘッダーのバージョン表記(`#appVersion`)はCSSで非表示。確認は設定の最下段(`QNSettingsUI.versionLine()`)。
 
@@ -119,26 +119,33 @@
 - 並びは`.pin-act-cell`内でSKIP→HIDE→編集、その右の`.pin-del-zone`が削除選択タイル(中に`.del-btn`+`.pin-del-tile`。`.del-btn`はEDIT中は非表示で`pcv2-selected`の持ち主、タイルは兄弟結合子`.del-btn.pcv2-selected + .pin-del-tile`で赤になる)。選択のクリックは従来通り`.pin-del-zone`をキャプチャで拾う。
 - SKIP/HIDEは背景なし+`border-left`の区切り線。ON(`.is-on`)はsvg/spanをopacity .35。編集/削除タイルだけ背景付き。
 - スワイプトレイ(player-swipe.jsのmarkers)は編集+削除のみ。`mskip`/`hide`のトレイ用スタイルは未使用(QN_ROW_ACT自体はボタン用に使用)。
-- FAB(Markers): `#pcV2DeleteSelectedBtn`は作らず、同じ位置に`#pcV2MarkersCancelBtn`。`#pcV2MarkersEditBtn`は編集中に選択0=OK/1以上=Delete(`syncMarkersEditBtn`、`syncSelectionButtons`から呼ぶ)。Playlist側のFABは従来通り。
+- FAB(Markers): `#pcV2DeleteSelectedBtn`は作らず、同じ位置に`#pcV2MarkersCancelBtn`。`#pcV2MarkersEditBtn`は編集中に選択0=OK/1以上=Delete(`syncSelectionButtons`が切り替える)。Playlist側のFABは従来通り。
 - v3.52.1: 行ボタンは50px正方形(行のmin-height 50px=ボタン高)。`.pinItem`のcolumn-gap 8pxは編集EDIT時に`.pin-act-cell{margin-right:-8px}`で打ち消し、タイル同士を密着。
 
 ## 文言ルールとLibraryの行(v3.53.0)
-- UI文言は「先頭大文字・以後小文字」(例: Skip / Drop audio file here)。例外=ロゴ、略語・形式名(MP3/WAV/ZIP/EQ/OK/BPM等)、音名。CSSで`text-transform: uppercase`を新設しない(ロゴ以外)。ラベルは元の文字列を直接その表記で書く。
+- UI文言は「先頭大文字・以後小文字」(例: Skip / Drop audio or video files here)。例外=ロゴ、略語・形式名(MP3/WAV/ZIP/EQ/OK/BPM等)、音名。CSSで`text-transform: uppercase`を新設しない(ロゴ以外)。ラベルは元の文字列を直接その表記で書く。
 - Libraryの行(`.playlistItem`)も`.playlist-act-cell`(Skip)+編集中の`.playlist-del-zone`(中に`.del-btn`+`.playlist-del-tile`)。通常/編集とも正方形57px・隙間0(編集中は`.playlist-act-cell{margin-right:-8px}`でgrid gapを打ち消し)。Skip中は行全体でなく子要素だけopacity .4。旧`.playlist-skip-toggle`はPLAYERでは使わない(YouTube側は従来)。
 - FAB(Markers/Library共通): `#pcV2MarkersCancelBtn`/`#pcV2PlaylistCancelBtn`がDeleteの位置、EditBtnは選択0=OK/1以上=Delete(`syncEditBtn`)。`#pcV2DeleteSelectedBtn`は廃止。
 - v3.53.1: メモ編集中は`window.qnPinMemoEditing`でrenderPinList()を止める(commit/cancel/applyPresetで解除)。`.playlist-editable-input`はfont-size/weight/line-height等をinheritする(入力欄の既定13.3pxで編集モードの見た目が変わるため)。Libraryの`.playlist-del-tile`は輪/チェックの2svg(`.sel-off`/`.sel-on`)をCSSで切替。
 
 ## 長押しクイック設定(v3.54.0)
 - `player-quickpop.js`が`document`のpointerdown(capture)委譲で拾う。対象は`TARGETS`(セレクタ→定義名)に1行足すだけ。行の定義は設定パネルと同じ`{label,hint,type,values,get,set,fmt}`で、見た目は`QNSettingsUI.build`の流用(新しい独自UIを作らない)。
+- 長押しの定義は`{title,rows|build}`(ポップアップ)か`{action}`(ポップアップ無しの即実行)を返す。前/次Markerは後者で前/次トラックへ(v4.23.0〜。◢は付けない=◢は「設定が開く」目印。Repeatは長押し無しなので◢無し)。
 - 長押し450ms/10px動いたら中止。成立後に指を離した時のclickは`swallow`で握りつぶす(ボタン本来の操作を発火させない)。対象には`user-select:none`と`contextmenu`抑止(iOSの選択/メニュー対策)。
 - 送り秒数は`window.QNSkip`(player-ui-pc-v2.jsのクロージャ内skipSecの公開口)。QNBarsはグローバルのconst(`window.QNBars`ではない)。
 - 再生中の見た目は停止中と同じ色(ドック/FAB/#playToggleとも緑のグラデ禁止)。
 
+- **A/B旗(`attachABDrag`)のドラッグは`setPointerCapture`を使わない。** 段をまたぐと旗を`appendChild`で付け替える=掴んだ要素が一度DOMから外れてキャプチャが切れ、以降の動きが止まる。ドラッグ中だけ`document`のpointermove/up/cancelで受ける(マーカーの`startDragPin`と同じ)。段をまたぐドラッグを持つ要素を足す時も同様。
 - **`#vbarRows .vbar`は`width:auto`必須**（style-core.cssの`.vbar{width:100%}`が`left/right`の指定を打ち消し、行が右へ約56px(ラベル幅+右余白)はみ出して右端のマーカー・波形が見切れた。JS側のバー幅`g.barW`は`clientWidth-labelW-padRight`で計算しているので、CSSの幅とずれると描画も歪む）。
 - 波形右下の帯(`QNSettingsUI.inline`、`#pcV2WaveFabRow`内)は設定パネルのSeek bar項目と同じ値。変更は`settingsSections.onChange`/`window.qnBarStripSync`/`syncSettingsBody`で相互に同期する。項目を足す時は両方に足す。
-- **設定パネルの「操作ガイド」**（`player-ui-pc-v2.js`の`rowsHold`/`rowsGesture`/`rowsSwipe`、日本語は`qn-i18n-ja.js`）は、長押し対象(`TARGETS`)・波形ジェスチャー・行スワイプを足す/変える時に**必ず文言も更新する**。アプリの売りなので、操作を追加したらここに書く。
+- **設定パネルの「Tips」**（`player-ui-pc-v2.js`の`rowsTips`。説明文だけで設定項目に見せない=`type:"note"`。日本語は`qn-i18n-ja.js`）は、長押し対象(`TARGETS`)・波形ジェスチャー・行スワイプを足す/変える時に**必ず文言も更新する**。アプリの売りなので、操作を追加したらここに書く。
+
+- **Transferはモーダルにしない。** Backup/Importと同じ下層パネル(`QNP2P.mount`)。見た目はstyle-pcv2-panels.cssのBackup用`:is()`リスト(`#pcV2PanelBody.pcv2-panel-transfer`/`.qn-pt-sec-backup`)を共用。入れ物`.qn-p2p-host`は`display:contents`で、パネルを離れるとDOMから外れる(進行中のセッションは続き、戻ると`S.screen()`で復元)。Transferの表示可否は`syncSettingsBody()`が開くたびに判定する(ログイン完了が設定の構築より後になることがあるため、構築時に決めない)。
 
 ## v3.55.0
+- シークバー上のタイトル(`#appTitle`/YouTubeの`.qn-yt-fetched-title`)は`QNApps.vSwipe`(qn-apps.js。タッチ/ペンのみ)で上スワイプ=次・下スワイプ=前のトラック。スワイプ後のclickは握りつぶす(タイトルタップ=Libraryを開くが誤動作しないように)。要素は`touch-action:none`になる。
+- Speed/Keyのバーのダブルクリック/ダブルタップ=初期値は`bindDoubleReset`(player-ui-shared.js、グローバル関数。YouTubeも使う)。バーを足したら同じ関数で束ねる。
+- 設定の連続値バーは`QNSettingsUI.build`の`type:"range"`(min/max/step/dec/unit/get/set)。「複数選択肢はstepper」の例外で、細かい調整が要る数値だけに使う。
 - 長押し対象には右下◢(style-quickpop.cssの::after)。`player-quickpop.js`のTARGETSとCSSセレクタを必ず揃える。(v4.0.2で時刻ラベル/時間表示の長押しは撤去。Bar length/Rows/Followは波形右下の帯`#pcV2WaveFabRow`に常時表示)
 - SPの下段バーは`#topControls`幅200%・各`.pcv2-ctrl-group`が50%(=1画面)のスナップ2ページ。矢印は`#topControls`直下のsticky(`.pcv2-bar-page`)。`is-page-1`クラスはscrollで付け替え。PC幅は矢印非表示・従来配置。
 - Marker Memoのデフォルト項目は`MARKER_LABEL_PRESETS`(id=元の名前)+上書き`qn_marker_preset_labels_v1`。色(`qn_marker_preset_colors_v1`)もidキー。表示名は`markerPresetDisplay(id)`を通す(直接MARKER_LABEL_PRESETSを表示に使わない)。
@@ -159,5 +166,52 @@
 - 英語のソース文言を足したら`qn-i18n-ja.js`に日本語を足す(辞書に無い英語はそのまま出る)。アイコンボタンのラベル/パネル見出しは足さない(KEEP_SEL)。
 - ユーザーデータと同じクラスのボタンを作る時は`DATA_SEL`に当たらないか注意(例: プリセットチップ)。
 - 【v3.61.0】設定のステッパー(`QNSettingsUI`)は端でループする(矢印は無効化しない)。Quickpopの連続値(±)はループさせない。
-- 【v3.61.0】Speedは0.50/0.75/1.00/1.25/1.50の±0.02で吸着(`handleSpeedRangeInput`が入口。PCバーミキサーも同じ関数を通す)。Controlパネルの効果ON/OFFは`.glow-switch`、OFF時のバーは`.is-effect-off`(無彩色)。KeyはレンジのみでKey用の自作フィルバーは廃止。
+- 【v3.61.0】Speedは0.25/0.50/0.75/1.00/1.25/1.50(下限0.25は4.24.3〜)の±0.02で吸着(`handleSpeedRangeInput`が入口。PCバーミキサーも同じ関数を通す)。Controlパネルの効果ON/OFFは`.glow-switch`、OFF時のバーは`.is-effect-off`(無彩色)。KeyはレンジのみでKey用の自作フィルバーは廃止。
 - 【v3.61.0】Backup: YouTubeは曲単位で選ばず「YouTube各種データ」(`#trackBackupIncludeYoutube`)で全件出力。ラベルは「PLAYER音声データ」「ユーザー設定データ」。
+- VIDEOのLibrary/Markersの行・選択タイル・FAB(Cancel/OK→Delete)はPLAYERの部品を共用。`style-markers.css`/`style-pcv2-panels.css`の`#pcV2PanelBody …`ルールは`:is(PLAYER側, .qn-yt側)`で両方に効く形。PLAYER側だけ直したつもりで消さない・VIDEO専用の行CSSを新設しない。
+- 波形の行(.vbar)に動的に付ける要素(線・A/B旗・区間ハイライト・スキップ斜線)を増やしたら、player-bars.jsのstripRow(行を回収する時の掃除)にもクラスを足す。足し忘れると、行が使い回された時に古い要素が別の時刻の行に残る(SKIP斜線で実際に発生)。
+
+## 自動ノーマライズ(player-normalize.js)
+- 補正はEQの後段 `normGainNode → normLimiterNode → destination`(player-core.jsのsetupAudioGraph)。ブーストにはWeb Audioが必須なので、ONの間は曲読込後の最初のplayでグラフを作る(通常再生でWeb Audio非接続の方針の例外。既定OFFで、iOS Safariの長時間再生は実機未確認)。
+- 音量計測は波形用デコード(8kHz)の結果を流用(追加デコードなし)。高域は見ない近似。補正後ピークは+6dBFSまでに制限しリミッタで受ける。
+- OFF/補正なしの時はリミッタを素通し(threshold=0, ratio=1)にする。ctxがrunning以外だと時間が進まずsetTargetAtTimeが効かないので直接代入する。
+- VIDEOには適用しない。
+
+## FAB帯のスライダー(v4.6.0)
+- `QNSettingsUI.inline`の`type:"slider"`はFAB帯専用(つまみ=values()の添字)。設定パネルの行は従来どおり「‹ 値 ›」(stepper)のまま。スライダーを設定行に使わない。
+
+## 見た目の統一ルール(v4.7.0。新しい部品を足す前に確認)
+- 入力欄(input/select/textarea)=角丸は必ず`--radius-field`、背景`#1c1c24`、枠`--border-subtle`。ピル型の入力欄を作らない(ピルはボタン/スイッチ/チップだけ)。
+- ボタン=ピル型(`--radius-pill`)。欄の隣に置くボタンは欄と同じ高さ(Library=38px、ステージ帯=40px)。
+- FAB帯などの設定の並び: 同じ設定の「ラベル+値+操作部」は密着(近接)、別の設定とは区切り線+余白で離す。値を操作部の反対側に離して置かない。
+- スクロールする行の窓: バーの外に縦スクロール専用の余白を残し、押した瞬間にシークしない(`attachTrackSeek`のscrub判定)。
+- SPのFAB帯(`.qn-set-inline`)は2列の格子: スライダー=上段、スイッチ=下段(CSSのorder)。単独で右寄せになるボタンを作らず、帯・入力・ボタンは同じ左右端に揃える。PLの`--pcv2-wave-fab-space`はResizeObserverで帯の高さから設定する(固定値にしない)。
+- `QNSettingsUI.inline`の行に`spHide:true`を付けるとスマホ幅(≤900px)の帯から外れる(Settingsパネルの行には影響しない)。
+
+- **iOS: `input`イベント内で`<input>`の`value`を書き換えない**(スペース挿入・大文字化・桁区切りなど)。同じ文字が二重に入る(Transferのコード入力で発生)。整形は`blur`/`change`/送信時にし、入力値の解釈は読む側(normCode等)で行う。
+
+- **`requestAnimationFrame`は画面が見えない間(別アプリ・ロック中)止まる。** 再生中に必ず動くべき処理(ループの折り返し等)はrAFだけに置かず、`document.hidden`中はsetInterval/timeupdateでも回す(`backgroundLoopTick`)。バックグラウンドのタイマーは間引かれる(約1秒)。
+
+- **SP(v4.11.0〜): 下段バー`#pcV2BottomBar`は常に非表示(display:none)だが、操作元のボタン(#prevTrackBtn/#setABtn等)はDOMに残す。** ドック・波形ヘッダー(`#pcV2WaveHeadBtns`)・A/B(`#pcV2FabSetA/B`)は`.click()`で中継するミラー。ボタンの新設/撤去はミラー側と`player-quickpop.js`のTARGETSも見ること。設定帯(`.qn-wave-bar-strip`)はSPで`#pcV2MorePanel`、PCで`#pcV2WaveFabRow`(syncMoreExtras)。
+
+- repeatMode は "off"|"one"|"folder"|"all" の4値(v4.11.2〜)。Auto Next範囲の別設定は無い(範囲はrepeatModeで決まる。旧キー`qn_autonext_scope`は読まない)。folder=今の曲と同じフォルダ内を折り返し、all=全体を折り返し、off=全体を順送りで端で停止。SPヘッドのミラーボタンは本体ボタンの`svg`に加え`.repeat-one-badge`もコピーすること(でないと"1"/"F"が出ない)。
+
+- **Speedの時間伸縮はSoundTouchに任せる**(v4.14.1〜 `updatePlaybackRate`)。audio要素は`preservesPitch=false`で速度だけ変え、SoundTouchは`pitch=1`+`playbackRate=速度`(ライブラリ本来の使い方)。以前は`preservesPitch=true`+`pitch=速度`で相殺していたが、iOS(WebKit)はWeb Audio経由だとブラウザ側の伸縮が効かず、遅くした分の音が足りない=隙間(スライサーのようなプツプツ)になった。Chromeでは再現しないので実機確認。戻す手段は`?stretch=native`。
+
+- **Stem(v4.16.0)**: 分離はmodule worker(`player-stem-worker.js`)で実行しメインスレッドを止めない。ONNX Runtimeはシングルスレッドのみ(マルチスレッドにはSharedArrayBuffer=COOP/COEPが必要でYouTube埋め込み等が壊れる)。Stemモード中はマスター`audio`をmutedにして4本の別`<audio>`をcurrentTime/playbackRate/再生状態へ追従させる(EQ/Key=SoundTouch経路は効かない)。YouTube(音声取得不可)・SP幅は非対応。モデルURL/ORT配布元は`window.QN_STEM_MODEL_URL`/`QN_STEM_ORT_BASE`で差し替え可(既定はHugging Face/jsDelivr)。
+
+- **録音トラック(v4.17.0)**: 録音はMediaRecorder→デコード→16bit mono WAV化して保持(MediaRecorderのwebmはduration/シークが不安定なため)。再生位置=(曲位置−startPos)/録音時rate+offset(ms)、再生rate=マスターrate/録音時rate。Stem/録音の保存キーは`名前|サイズ`(File.lastModifiedはライブラリ復元のたびに変わるので使わない)。
+
+- **Bar length(v4.18.0)**: 値は1秒刻みの整数で、候補配列は固定せず`QNBars.secValues()`/`rowSecValues()`が曲長から作る(上限=曲長÷現在の行数(Rows指定ならその本数、AutoならCSS既定寸法で数える`autoVis`)。Rowsを変えたら上限が変わるので現在値を丸めて再同期)。曲/ウィンドウ/Rowsが変わったらスライダーの再同期(`qnBarStripSync`/`segStrip.sync`)が必要。短い曲では現在値を上限へ丸める(保存値は書き換えない)。
+
+- **Stem 6パート(v4.19.0)**: モデルは`StemSplitio/htdemucs-6s-onnx`のfp16重み版(`window.QN_STEM_MODEL_URL_6`で差替可)。入力mix[1,2,343980]→出力stems[1,6,2,N]でSTFT内蔵、分離ループはワーカー内`separate6`。WASMはgraphOptimizationLevelが"basic"以上だとメモリ確保に失敗するため"disabled"必須(WebGPUは"basic"で試し、失敗したらWASMへ)。6パートの保存キーは`名前|サイズ|6`。上限は10分(出力6本でメモリを食う)。
+
+- **Stem音量(v4.20.0)**: スライダー値は位置(0〜1)で、70%=ゲイン1.0、100%=3倍(`VOL_UNITY`/`BOOST`)。各`<audio>`は`createMediaElementSource`→GainNode→ソフトリミッター(WaveShaper)→出力のバス(player-stem.js専用のAudioContext)を通す。`<audio>.volume`は使わない(1.0上限)。AudioContextはplayイベントでresumeする。録音トラックの保存音量は`v2:true`付き(無い旧データは70%に戻す)。Stemモード中はマスターaudioをmutedにするため、本体のVolume表示が「Mute」になる。
+
+- **Stem 6パートのモデル(v4.20.1)**: WebGPU用=`kramp/htdemucs-6s-webgpu-onnx`(fp32 約285MB、WebGPUで動かない演算を除去済み)、CPU用=`StemSplitio/htdemucs-6s-onnx`のfp16重み版(約136MB)。StemSplit版はWebGPUで動かなかったため分けた(`window.QN_STEM_MODEL_URL_6_GPU`/`_6`で差替可)。WebGPU失敗時はワーカーがCPU用を取り直してWASMで続行し、理由を`status.note`でパネルに出す。
+
+## TUNERの無音判定(v4.25.1)
+`autoCorrelate(buf,sr,corr,minRms,minClarity)`。minRmsだけを下げると雑音を音程として拾うので、TUNERは周期性チェック(minClarity)とセットで使う。PITCHは従来どおり引数なし(RMS0.01・周期性チェックなし)。Holdは「検出できなくなってから表示を残す時間」で、検出できている間は常に追従する。
+
+## シークバー上の曲名行(v4.24.0)
+`#pcV2HeadRow`は`renderHeadRow()`がLibraryの`buildPlaylistRow`を再利用して描く。`renderPlaylist()`と`renderNowPlaying()`の後で再描画される。見た目はlibraryのCSS(`.playlistItem`等)を流用し、PCのみSKIP/PIN/EDIT表示、SP(≤900px)は`#pcV2WaveHead #pcV2HeadRow`配下のボタンを非表示。時間は現在/総時間のライブ表示を残している。

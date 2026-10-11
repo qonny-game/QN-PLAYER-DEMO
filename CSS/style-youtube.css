@@ -55,6 +55,7 @@
 .qn-yt[data-panel="playlists"] .qn-yt-sec-playlists,
 .qn-yt[data-panel="backup"] .qn-yt-sec-backup,
 .qn-yt[data-panel="import"] .qn-yt-sec-import,
+.qn-yt[data-panel="text"] .qn-yt-sec-text,
 .qn-yt[data-panel="keyboard"] .qn-yt-sec-keyboard {
   display: block;
 }
@@ -93,11 +94,12 @@
 .qn-yt-input {
   flex: 1;
   min-width: 0;
-  height: 36px;
+  box-sizing: border-box;
+  height: 38px;
   padding: 0 12px;
   border-radius: var(--radius-field);
-  border: 1px solid var(--border-strong);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  background: #1c1c24; /* 入力欄はPLAYERのexport-filename-input等と同じ(角丸=--radius-field, 背景#1c1c24) */
   color: var(--text-bright);
   font-family: inherit;
   font-size: var(--fs-body);
@@ -111,7 +113,7 @@
 
 .qn-yt-input:focus {
   border-color: var(--accent-primary);
-  background: rgba(255, 255, 255, 0.06);
+  background: #22222c;
 }
 
 .qn-yt-btn {
@@ -343,15 +345,16 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 26px;
+  gap: 24px;
   padding-top: 24px;
+  padding-left: var(--qn-yt-tpad, 46px); /* 行左の開始時刻の置き場 */
   margin: 4px 0 16px;
 }
 
 .qn-yt-track.vbar {
   position: relative;
   flex: none;
-  height: 40px;
+  height: 20px;
   background: #111;
   border: none;
   border-radius: 0;
@@ -362,6 +365,8 @@
 
 .qn-yt-track.vbar:hover { border-color: transparent; }
 
+/* バーが細くなった分、押せる範囲を上下に少し広げる(見た目は変えない。行の間隔24pxの内側) */
+.qn-yt-track.vbar::after { content: ""; position: absolute; left: 0; right: 0; top: -6px; bottom: -6px; }
 .qn-yt-fill.vfill {
   position: absolute;
   left: 0;
@@ -422,9 +427,18 @@
   display: none;
 }
 
+/* 行の開始時刻(PLの#vbarRows .vbar-timeと同じ) */
+.qn-yt-track-time {
+  position: absolute; right: calc(100% + 8px); top: 50%; transform: translateY(-50%);
+  font-size: var(--fs-micro, 10px); font-weight: 600; color: var(--icon-muted); font-variant-numeric: tabular-nums;
+  white-space: nowrap; cursor: pointer; user-select: none; -webkit-touch-callout: none;
+}
+.qn-yt-track.is-current .qn-yt-track-time { color: var(--text-bright); }
+
 .qn-yt-marker-layer {
   position: absolute;
   inset: 0;
+  left: var(--qn-yt-tpad, 46px);
   pointer-events: none;
 }
 
@@ -630,7 +644,7 @@
   }
 
   .qn-yt-track.vbar {
-    height: 36px;
+    height: 18px;
   }
 }
 
@@ -649,39 +663,6 @@
 .qn-yt-libbox .playlistItem.drop-before { box-shadow: inset 0 2px 0 var(--accent-primary); }
 .qn-yt-libbox .playlistItem.drop-after { box-shadow: inset 0 -2px 0 var(--accent-primary); }
 
-.qn-yt-libbox .playlist-del-zone,
-.qn-yt-pinbox .pin-del-zone { display: none; }
-.qn-yt[data-edit="library"] .qn-yt-libbox .playlist-del-zone,
-.qn-yt[data-edit="markers"] .qn-yt-pinbox .pin-del-zone { display: flex; }
-
-.qn-yt[data-edit="library"] .qn-yt-libbox .playlist-del-zone {
-  align-items: center; justify-content: center; flex-shrink: 0;
-  margin: -9px -12px -9px 0; padding: 9px 16px 9px 8px; cursor: pointer;
-}
-.qn-yt[data-edit="markers"] .qn-yt-pinbox .pin-del-zone {
-  align-items: center; justify-content: center; align-self: stretch; flex-shrink: 0;
-  margin: -10px -12px -10px 0; padding: 10px 16px 10px 8px; cursor: pointer;
-}
-.qn-yt[data-edit] .del-btn {
-  display: flex; width: 20px; height: 20px; align-items: center; justify-content: center;
-  border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.24);
-  background: none; color: transparent; font-size: 0; padding: 0; flex-shrink: 0;
-  pointer-events: none;
-}
-.qn-yt[data-edit] .del-btn.pcv2-selected { background: var(--danger); border-color: var(--danger); }
-.qn-yt[data-edit] .del-btn.pcv2-selected::after {
-  content: ""; display: block; width: 5px; height: 9px;
-  border-right: 2px solid var(--text-pure-white); border-bottom: 2px solid var(--text-pure-white);
-  transform: rotate(45deg) translate(-1px, -1px);
-}
-.qn-yt[data-edit="markers"] .qn-yt-pinbox .toggle-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-
-.qn-yt-pinbox .pinItem { grid-template-columns: auto 1fr auto auto auto; }
-.qn-yt[data-edit="markers"] .qn-yt-ab-cell { display: none; }
-.qn-yt[data-edit="markers"] .qn-yt-pinbox .pinItem { grid-template-columns: auto 1fr auto auto; }
-@media (hover: none), (pointer: coarse) {
-  .qn-yt[data-edit="markers"] .qn-yt-pinbox .pin-edit-btn { display: flex; }
-}
 .qn-yt-libbox .playlistItem.playing .playlist-title { color: var(--accent-primary); }
 
 .qn-yt-fab {
@@ -690,14 +671,25 @@
   pointer-events: none;
 }
 .qn-yt[data-panel="library"] .qn-yt-fab,
-.qn-yt[data-panel="markers"] .qn-yt-fab { display: flex; }
+.qn-yt[data-panel="markers"] .qn-yt-fab,
+.qn-yt[data-panel="text"] .qn-yt-fab { display: flex; }
+/* Text: FABはFullだけ(PLAYERのTextタブと同じ) */
+.qn-yt-fab-text { display: none; }
+.qn-yt[data-panel="text"] .qn-yt-fab-text { display: flex; }
+.qn-yt[data-panel="text"] .qn-yt-fab > .panel-edit-btn { display: none; }
+.qn-yt-sec-text { padding-bottom: 84px; }
+.qn-yt-text-for { margin: 0 0 8px; font-size: var(--fs-small); color: var(--icon-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qn-yt-text-for:empty { display: none; }
+.qn-yt-sec-text .note-textarea { min-height: 320px; }
+.qn-yt-sec-text .note-textarea:disabled { opacity: 0.5; }
 .qn-yt-fab-add { display: none; flex-direction: column; align-items: flex-end; gap: 10px; }
 .qn-yt[data-panel="markers"]:not([data-edit]) .qn-yt-fab-add { display: flex; }
-.qn-yt[data-edit] .panel-fab-delete-btn { display: flex; }
+.qn-yt[data-edit] .panel-fab-cancel-btn { display: flex; }
 /* FOLDER: Libraryパネルの通常時のみ。MOVE: Library EDIT時のみ(選択した動画をフォルダへ) */
 .qn-yt-fab-folder { display: none; }
 .qn-yt[data-panel="library"]:not([data-edit]) .qn-yt-fab-folder { display: flex; }
 .qn-yt[data-edit="library"] .panel-fab-move-btn { display: flex; }
+.qn-yt .playlistFolderHeader.drop-before { box-shadow: inset 0 2px 0 var(--accent-primary); }
 .qn-yt .playlistFolderHeader.drop-after { box-shadow: inset 0 -2px 0 var(--accent-primary); }
 
 .qn-yt-chapter { padding: 16px 16px 8px 20px; }
@@ -1054,6 +1046,8 @@
 .vbar-ab-pt.is-b .vbar-ab-flag { transform: translateX(calc(-100% - 3px)); }
 #pcV2BottomBar .ab-set-btn.has-point { color: var(--accent-primary); }
 .qn-yt-seekpop-btn.is-set { background: color-mix(in srgb, var(--accent-primary) 20%, transparent); border-radius: 0; }
+/* ON表示: アイコンのSVG(Loop等)は上のルールで灰色固定なので、is-setの時はアクセント色にする(PLAYERのシークバーポップアップのLoop ON) */
+.qn-yt-seekpop-btn.is-set b svg, .qn-yt-seekpop-btn.is-set span { color: var(--accent-primary); }
 
 /* ---------- ポップアップColor: ラベル入力+プリセット+色(v3.9.0・PLAYER/YouTube共通) ---------- */
 .qn-style-pop {
@@ -1157,13 +1151,26 @@
 /* v3.30.2: ステージ右下のMARKERボタン(PLの#pcV2WaveFabRowと同位置。プレイヤーの外・通常フローで重ねない) */
 .qn-yt-stage-fab {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
   flex-shrink: 0;
   margin-top: 12px;
 }
+/* ステージ帯の1行: [設定帯] [URL欄+Save] [Marker]。入力欄は他と同じ角丸(--radius-field)、ボタンは同じ高さ(40px)・ピル型 */
+.qn-yt-urlgrp { display: flex; align-items: center; gap: 8px; flex: 1 1 280px; min-width: 220px; max-width: 520px; margin-right: auto; }
+.qn-yt-stage-url { flex: 1 1 auto; min-width: 0; width: auto; height: 40px; }
+.qn-yt-stage-fab .panel-fab-btn { height: 40px; padding: 0 18px; }
+.qn-yt-row > .qn-yt-btn, .qn-yt-urlgrp > .qn-yt-btn { height: 38px; }
+/* シークバーの行数が窓(Rows)より多い時: 窓の高さはJS(layoutSeek)。縦スクロール・行頭にスナップ。タッチは縦スクロールを許可(横なぞりはシーク) */
+.qn-yt-seek.is-scroll { box-sizing: border-box; margin-left: -14px; margin-right: -14px; padding-left: calc(var(--qn-yt-tpad, 46px) + 14px); padding-right: 14px; /* 端のマーカー番号が欠けないよう左右に余白 */ overflow-y: auto; overflow-x: hidden; scroll-snap-type: y proximity; overscroll-behavior: contain; scrollbar-width: thin; }
+.qn-yt-seek.is-scroll .qn-yt-marker-layer { left: calc(var(--qn-yt-tpad, 46px) + 14px); right: 14px; } /* paddingぶん内側=バーと同じ幅(マーカー位置は幅の%) */
+.qn-yt-seek.is-scroll .qn-yt-track.vbar { scroll-snap-align: start; scroll-margin-top: 28px; touch-action: pan-y; }
+/* スマホ: 右側に縦スクロール専用の余白(バーより外。ここをなぞると必ずスクロール) */
+@media screen and (max-width: 900px) { .qn-yt-seek.is-scroll { padding-right: 34px; margin-right: -20px; } .qn-yt-seek.is-scroll .qn-yt-marker-layer { right: 34px; } }
+.qn-yt-noseek .qn-yt-seek { display: none; }
 @media screen and (max-width: 900px) {
-  .qn-yt-stage-fab { margin-top: 12px; }
-  .qn-yt-stage-fab .panel-fab-btn { padding: 10px 16px; font-size: 13px; }
   .qn-yt:not([data-panel="none"]) .qn-yt-stage-fab { display: none; }
 }
 
@@ -1223,4 +1230,123 @@
 .qn-yt-sec-library.is-empty.has-url .qn-yt-btn.primary[data-yt="saveBtn"] { animation: qn-yt-pulse 1.8s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
   .qn-yt-sec-library.is-empty .qn-yt-input[data-yt="urlInput"], .qn-yt-sec-library.is-empty .qn-yt-btn.primary[data-yt="saveBtn"] { animation: none !important; }
+}
+
+.qn-yt-marker.is-skip { opacity: 0.75; }
+
+/* ---------- SPメインドック(v4.3.0): PLAYERの#pcV2SpDockと同寸法。ボタンは共通の.pcv2-dock-btn。PC幅は非表示。Moreで下段バーを開閉(.qn-yt-more-open)。バーとドックは.qn-yt-controlsに入れて1つのstickyにする(PC幅はdisplay:contentsでgridにそのまま参加) ---------- */
+.qn-yt-controls { display: contents; }
+.qn-yt-dock { display: none; }
+@media screen and (max-width: 900px) {
+  .qn-yt-controls {
+    display: flex;
+    flex-direction: column;
+    order: 4;
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    margin-top: auto;
+    flex-shrink: 0;
+  }
+  .qn-yt-controls .qn-yt-bar { position: static; margin-top: 0; order: 0; }
+  .qn-yt-controls .qn-yt-dock { order: 1; }
+  .qn-yt-dock {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1.7fr 1.2fr 1fr 0.9fr;
+    align-items: center;
+    background: #0a0a0c;
+    border-top: 1px solid var(--border-subtle);
+    padding: 6px 6px 4px;
+    gap: 2px;
+  }
+  .qn-yt:not(.qn-yt-more-open) .qn-yt-bar { display: none; }
+  .qn-yt:not(.qn-yt-more-open) .qn-yt-stage-fab { display: none; } /* URL欄+設定帯もMoreの中(閉じるとシークバーが広く使える) */
+  .qn-yt:not([data-panel="none"]) .qn-yt-dock { display: none; }
+  .qn-yt-dock .pcv2-dock-btn { position: relative; }
+  .qn-yt-dock [data-dock]::after {
+    content: ""; position: absolute; right: 3px; bottom: 3px; width: 0; height: 0;
+    border-style: solid; border-width: 0 0 6px 6px; border-color: transparent transparent var(--icon-muted) transparent;
+    opacity: 0.7; pointer-events: none;
+  }
+  .qn-yt-dock .pcv2-dock-play::after, .qn-yt-dock .pcv2-dock-more::after { display: none; }
+  .qn-yt[data-panel="none"] .qn-yt-stage { flex: 1 0 auto; } /* 余った高さはステージに回し、帯(margin-top:auto)を下段バーの直上へ。パネルを開いている間は対象外(パネルが動画の下辺まで上がる) */
+  /* ステージ帯(SP): 設定帯 / URL欄+Save / Marker を同じ左右端で縦に並べる(右寄せの単独ボタンを作らない) */
+  .qn-yt-stage-fab { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 0; padding: 8px 16px 8px; background: var(--bg-base, #0a0a0c); order: -1; } /* controls(sticky)の先頭=下段バー/ドックの直上に固定 */ /* margin-top:auto = 余白は帯の上(シークバー側)に回し、帯は下段バーの直上に固定 */
+  .qn-yt-urlgrp { max-width: none; min-width: 0; margin-right: 0; }
+  .qn-yt-stage-fab .panel-fab-btn { padding: 0 16px; font-size: 13px; }
+  .qn-yt-stage-fab > [data-yt="stageAddMarker"] { display: none; } /* SPはドックにMarkerがあるので重複させない */
+}
+
+/* ---------- PC幅: 下段バーをPLAYER(v3.59.0 #pcV2BottomBar)に寄せてゆったり(クリック領域を拡大、中央寄せ、グループ間を広げる)。寸法はウィンドウ幅に応じて縮み、広い窓でPLAYERと同じ(ボタン最小幅68/左右16/区切り余白28)になる ---------- */
+@media screen and (min-width: 901px) {
+  .qn-yt .qn-yt-bar { padding: 12px 24px; }
+  /* auto marginなら、幅が足りない時は左端から横スクロール(左が切れない) */
+  .qn-yt .qn-yt-bar > :first-child { margin-left: auto; }
+  .qn-yt .qn-yt-bar > :last-child { margin-right: auto; }
+  .qn-yt .qn-yt-bbtn { padding: 10px clamp(3px, 0.4vw, 16px); min-width: clamp(40px, 3.2vw, 68px); min-height: 64px; border-radius: 10px; }
+  .qn-yt .qn-yt-bbtn.center { min-width: clamp(50px, 4vw, 76px); }
+  .qn-yt .qn-yt-bbtn:not(.center) svg { width: 22px; height: 22px; }
+  .qn-yt .qn-yt-bbtn:hover { background: rgba(255, 255, 255, 0.05); }
+  .qn-yt .qn-yt-bdiv { margin: 0 clamp(8px, 1.2vw, 28px); height: 32px; }
+  .qn-yt .qn-yt-bspacer { flex: 0 0 1px; height: 32px; margin: 0 clamp(8px, 1.2vw, 28px); background: var(--border-subtle); min-width: 0; }
+  .qn-yt .qn-yt-bstep-btn { width: clamp(30px, 2.6vw, 40px); height: 56px; font-size: 22px; border-radius: 10px; }
+  .qn-yt .qn-yt-bstep-mid { padding: 10px 6px; }
+}
+/* 広い窓(1500px〜)はPLAYERと同じ寸法 */
+@media screen and (min-width: 1500px) {
+  .qn-yt .qn-yt-bbtn { padding: 10px 16px; min-width: 68px; }
+  .qn-yt .qn-yt-bbtn.center { min-width: 76px; }
+  .qn-yt .qn-yt-bdiv, .qn-yt .qn-yt-bspacer { margin: 0 28px; }
+  .qn-yt .qn-yt-bstep-btn { width: 40px; }
+}
+
+/* ---------- v4.14.0: MOREの中身をPLAYERと同じ配置に ----------
+   PC幅: 見た目は従来どおり(タイトル行/ミックスカードは display:contents、A/B・ヘッドボタン・Speedスライダーは非表示)。Auto Nextを廃止しRepeat(Off/One/Folder/All)に置換
+   SP幅: 下段バーは出さない(中継元としてDOMにだけ残す。-10s/+10sは廃止)。Track前/次・Repeatはタイトル行の右、A/Bはシークバー直下、Moreは Bar length/Rows帯 + URL+Save/Speedのカード */
+.qn-yt-bbtn .repeat-one-badge {
+  position: absolute; top: 8px; right: 50%; left: auto; transform: translateX(14px);
+  width: 13px; height: 13px; padding: 0; margin: 0; font-size: 9px; font-weight: 700; letter-spacing: 0; line-height: 1;
+  color: var(--accent-primary); background: #0d0d0f;
+}
+.qn-yt-bbtn .repeat-folder-badge { font-size: 8px; }
+.qn-yt-titlerow { display: contents; }
+.qn-yt-headbtns, .qn-yt-abrow, .qn-yt-mix-speed { display: none; }
+.qn-yt-mixcard { display: contents; }
+
+@media screen and (max-width: 900px) {
+  .qn-yt .qn-yt-controls .qn-yt-bar { display: none; }
+
+  .qn-yt-custom { margin-top: 6px; }
+  .qn-yt-titlerow { display: flex; align-items: center; gap: 4px; margin: 0 0 2px; }
+  .qn-yt-titlerow .qn-yt-fetched-title { flex: 1 1 auto; min-width: 0; margin: 0; font-size: var(--fs-body); font-weight: 700; color: var(--accent-primary); } /* LibraryのPLAYING行と同じ曲名の見た目 */
+  .qn-yt-headbtns { display: flex; align-items: center; gap: 2px; margin-left: auto; flex: 0 0 auto; }
+  .qn-yt-headbtns .pcv2-head-btn { position: relative; }
+
+  .qn-yt-abrow { display: flex; gap: 8px; margin-top: 6px; }
+  .qn-yt-ab {
+    display: flex; align-items: center; justify-content: center; flex: 1 1 0; min-width: 0; height: 36px; padding: 0 8px;
+    font-family: var(--font-display, 'Instrument Sans'), sans-serif; font-size: 13px; font-weight: 600; white-space: nowrap;
+    background: none; border: 1px solid var(--border-strong, rgba(255,255,255,0.2)); border-radius: var(--radius-popup, 10px);
+    color: var(--icon-muted); cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .qn-yt-ab:active { transform: scale(0.97); }
+  .qn-yt-ab.has-point { color: var(--accent-primary); border-color: var(--accent-primary); }
+
+  .qn-yt-mixcard {
+    display: grid; grid-template-columns: 1fr; gap: 6px; padding: 8px 16px 8px;
+    background: #0e0e13; border: 1px solid var(--border-subtle); border-radius: var(--radius-popup, 10px);
+  }
+  .qn-yt-mix-speed { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .qn-yt-mix-val { flex: 0 0 auto; min-width: 34px; text-align: right; font-size: 13px; color: var(--text-bright, #fff); font-variant-numeric: tabular-nums; cursor: pointer; }
+  .qn-yt-mix-row { display: flex; align-items: center; gap: 8px; }
+  .qn-yt-mix-reset { flex: 0 0 auto; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; border-radius: 8px; background: none; color: var(--icon-muted); -webkit-tap-highlight-color: transparent; cursor: pointer; }
+  .qn-yt-mix-reset svg { width: 22px; height: 22px; fill: currentColor; }
+  .qn-yt-mix-reset:active { background: rgba(255, 255, 255, 0.08); color: var(--accent-primary, #3b82f6); }
+  .qn-yt-mix-range { flex: 1 1 auto; min-width: 0; width: 100%; height: 28px; margin: 0; background: transparent; -webkit-appearance: none; appearance: none; accent-color: var(--accent-primary, #3b82f6); }
+  .qn-yt-mix-range:focus, .qn-yt-mix-range:focus-visible { outline: none; }
+  .qn-yt-mix-range::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--accent-primary) var(--p, 0%), #2a2a34 var(--p, 0%)); border: none; }
+  .qn-yt-mix-range::-moz-range-track { height: 4px; border-radius: 2px; background: #2a2a34; border: none; }
+  .qn-yt-mix-range::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--accent-primary); }
+  .qn-yt-mix-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; margin-top: -6px; border-radius: 50%; background: var(--text-bright, #fff); border: none; box-shadow: none; }
+  .qn-yt-mix-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--text-bright, #fff); border: none; }
 }

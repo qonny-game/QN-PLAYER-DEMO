@@ -20,9 +20,10 @@
   user-select: none;
 }
 
-/* 長押しで設定が出る対象の目印: 右下の小さな直角三角(◢)。対象を増やす時はplayer-quickpop.jsのTARGETSとここのセレクタを揃える */
-#playToggle, #pcV2DockPlay, #prevMarkerBtn, #nextMarkerBtn, #pcV2DockPrevMarker, #pcV2DockNextMarker, #setABtn, #setBBtn, #addPinBtn, #pcV2DockAdd, #prevTrackBtn, #nextTrackBtn, #loopToggleBtn, #pcV2DockLoop, #pcV2SkipBackBtn, #pcV2SkipFwdBtn, #allRepeatToggleBtn { position: relative; }
-#playToggle::after, #pcV2DockPlay::after, #prevMarkerBtn::after, #nextMarkerBtn::after, #pcV2DockPrevMarker::after, #pcV2DockNextMarker::after, #setABtn::after, #setBBtn::after, #addPinBtn::after, #pcV2DockAdd::after, #prevTrackBtn::after, #nextTrackBtn::after, #loopToggleBtn::after, #pcV2DockLoop::after, #pcV2SkipBackBtn::after, #pcV2SkipFwdBtn::after, #allRepeatToggleBtn::after {
+/* 長押しで設定が出る対象の目印: 右下の小さな直角三角(◢)。長押しが別の操作(前/次マーカー=前/次トラック)や無し(Repeat)のボタンには付けない。対象を増やす時はplayer-quickpop.jsのTARGETSとここのセレクタを揃える */
+#playToggle, #pcV2DockPlay, #setABtn, #setBBtn, #addPinBtn, #pcV2DockAdd, #prevTrackBtn, #nextTrackBtn, #loopToggleBtn, #pcV2DockLoop, #pcV2SkipBackBtn, #pcV2SkipFwdBtn { position: relative; }
+#playToggle::after, #pcV2DockPlay::after, #setABtn::after, #setBBtn::after, #addPinBtn::after, #pcV2DockAdd::after, #prevTrackBtn::after, #nextTrackBtn::after, #loopToggleBtn::after, #pcV2DockLoop::after, #pcV2SkipBackBtn::after, #pcV2SkipFwdBtn::after,
+.qn-yt-bbtn[data-yt="playBtn"]::after, .qn-yt-bbtn[data-yt="setABtn"]::after, .qn-yt-bbtn[data-yt="setBBtn"]::after, .qn-yt-bbtn[data-yt="addMarkerBtn"]::after, .qn-yt-bbtn[data-yt="prevVideoBtn"]::after, .qn-yt-bbtn[data-yt="nextVideoBtn"]::after, .qn-yt-bbtn[data-yt="loopToggleBtn"]::after, .qn-yt-bbtn[data-yt="skipBackBtn"]::after, .qn-yt-bbtn[data-yt="skipFwdBtn"]::after {
   content: "";
   position: absolute;
   right: 3px;

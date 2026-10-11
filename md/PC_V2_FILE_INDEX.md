@@ -5,7 +5,7 @@
 
 ---
 
-## JS/player-ui-pc-v2.js（約2300行。IIFE 2つ：本体 ＋ 末尾の旧PC用処理）
+## JS/player-ui-pc-v2.js（約1600行。IIFE 2つ：本体 ＋ 末尾の旧PC用処理）
 
 ### 骨組み・初期化（起動時に1回）
 - `build()` — DOM骨組み全体（アイコンバー`ICON_ITEMS`・パネル・波形エリア・下段バー・PLAY/MARKERアンカータブ）を組み立て、`.app-container`直後に挿入。**新しいサイドメニュー項目・下段バーのボタンを足す起点。**
@@ -21,7 +21,7 @@
 ### パネル開閉・切替
 - `handleIconClick(item)` — アイコン押下の分岐（`"action"`=Add File、`"close"`、他は`openPanelOverlay`）。
 - `openPanelOverlay(panelId)` / `closePanelOverlay()` — パネルの開閉（SP幅はオーバーレイ）。
-- `switchPanel(panelId)` — **最大の関数。** パネル中身をControl/Markers/Library/Text/Export/Backup/Import/Keyboard/Colorへ切替。新しいパネル種別はここに分岐を足す。Backup/Importは`qnBackupMount`で借りる（`build()`は部品を`qnBackupParts()`で取得）。
+- `switchPanel(panelId)` — **最大の関数。** パネル中身をControl/Markers/Library/Text/Stem/Backup/Import/Transfer/Settings/Keyboard/Colorへ切替。新しいパネル種別はここに分岐を足す。Backup/Importは`qnBackupMount`で借りる（`build()`は部品を`qnBackupParts()`で取得）。
 - `getPanelStash()` / `stashPanelContents(panelBody)` — 切替時、使い回す実体を`#pcV2PanelStash`へ退避（パネルに新しい実体を足したら対象に加える）。
 - `buildPanelFab(panelId)` — 右下FAB（ADD AUDIO/ADD MARKER/EDIT/Delete）。
 
@@ -31,7 +31,7 @@
 - `clearSelectionVisuals` / `deleteSelectedItems`（フェード演出）/ `performDelete`（実データ削除。IndexedDBも消す）
 
 ### 下段バーのエフェクトボタン・その他連携
-- `appendEqDivider` / `toggleBottomBarEffect` / `syncBottomBarEffectButton` / `syncAllBottomBarEffectButtons` / `setupControlPanelEffectSync` — Controlパネルのトグルと下段バーのSpeed/Key/EQボタンの同期。
+- `appendEqDivider` — 下段バーのEQ区切り。
 - `setupTextPanelHeaderControls()` — Textパネルのヘッダー操作。
 - `qnSectionSelector` / `tryClaimQnSections` / `renderQnMenuSectionPanel` — `player-theme.js`のKeyboard/Colorセクションをパネルとして表示。
 - `activate()` — PC v2構築(`build()`)＋`body.pc-v2-active`付与。常時有効で、旧レイアウトへ戻す処理は無い。
@@ -76,6 +76,8 @@
 - ショートカット：`SHORTCUTS`配列＋`onSpaceKey`（`QNApps.register`の`shortcuts`にも渡す）
 
 ## その他
+- `guide/` — アプリ内ガイド(v4.12.0〜)。静的HTML8枚(index/start/screen/operations/data/apps/plan/reference)＋`guide.css`/`guide.js`＋`img/*.webp`(スクショ)。入口は設定の「More」一覧のGuide行(Transferの下。`qn-settings-ui.js`の`list()`が`window.open`で別タブに開く。PLAYERもアプリも共通。サイドバーのアイコンはv4.12.2で廃止)。アプリ本体のJS/CSSには依存せず、`qn_theme`だけ読む。画面や仕様を変えたら該当ページと画像を直す。
+- `terms.html` / `privacy.html` — 利用規約・プライバシーポリシー(v4.13.0〜。ルート直下の静的ページ。pricing.htmlと同じ見た目)。入口は設定(PLAYER/アプリ共通)の最下段のリンク(`qn-settings-ui.js`の`legalLinks()`)、pricing/ガイドのフッター。**取得する情報・外部サービス・決済・YouTube利用が変わったら必ず直す**(特にプライバシーポリシー第2・4条)。qnaudio.stream側(サービス紹介サイト)にも同名ページがあるので、更新したら両方そろえる。
 - `JS/qn-wakelock.js` — `QNWake.set(key,on)`。audio再生/停止/終了をフックし、visibilitychangeで再取得。
 - `JS/qn-marker-core.js` — `QNMarkerCore`：区間の決め方・プリロール込みの許容範囲・前後マーカー移動・A-B範囲外判定（PLAYER/YouTube共通）。
 - `JS/player-marker-presets.js` — プリセット/自動カラー/カスタムプリセット、`startPinMemoEdit`（メモ編集のプリセットポップアップ）。
@@ -101,6 +103,7 @@
 
 ## JS/player-bars.js（QNBars）
 `grep -n "// ----------"`で見出し。`measure/ensureRows/addRow/releaseRow`（寸法・仮想スクロール・行の再利用）、`rowOf/pctInRow/timeFromPoint/timeInRow`（時刻⇔行。行番号は0始まり）、`rowPeaks/paintRow/draw`（波形、行ごとの署名で再描画を最小化）、`followTick/ensureVisible`（再生位置追従）、`setSec/createGearButton/openPop`（秒数設定）、`startEdgeScroll`（ドラッグ中の端スクロール）。行ができたら`decorateBarRow`（player-markers.js）が線・A/B・区間を付ける。
+- 【v4.27.0】表示モード(`getViewMode/setViewMode`、`qn_bar_view`)。`paintRow`はコードモードで解析済みなら`paintChordRow`(コード区間の角丸ブロック＋コード名)、解析待ちは波形を薄く表示。色塗りは`fillPath`(再生済み/未再生/マーカー色。波形と共通)。線・ラベル・A/B・区間ハイライトは行DOMなのでモードに関係なく同じ。仕様はCHORD_MODE.md。
 
 - v3.37.0: `ICON_ITEMS`に`settings`(hidden、歯車から`openPanelOverlay("settings")`)。`ensureSettingsBody()/syncSettingsBody()`が設定パネルを作る(stashPanelContentsの退避対象に`settingsBody`)。Backup/Import/Transferの`ICON_ITEMS`はhidden:true(switchPanel/handleIconClickの参照用に残す)。`syncTimeRowPosition()`は常に波形ヘッダーの歯車の左へ。
 

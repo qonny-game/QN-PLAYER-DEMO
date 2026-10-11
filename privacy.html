@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>プライバシーポリシー - QNPLAYER</title>
+    <meta name="description" content="QNPLAYERのプライバシーポリシーです。取得する情報、利用目的、外部サービスの利用、保存期間などについて定めています。">
+    
+    <!-- Instrument Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+
+    <!-- Favicon / App Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
+    <link rel="shortcut icon" href="/favicon/favicon.ico">
+
+  <style>
+    :root {
+      --accent-primary: #38bdf8;
+      --accent-secondary: #818cf8;
+      --accent-tertiary: #c084fc;
+      --font-body: 'Instrument Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Hiragino Kaku Gothic ProN", "メイリオ", sans-serif;
+      --bg-main: #090a0f;
+      --card-bg: rgba(18, 20, 29, 0.65);
+      --text-main: #f0f0f3;
+      --text-muted: #94a3b8;
+      --border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      background-image: 
+        radial-gradient(circle at 15% 0%, color-mix(in srgb, var(--accent-primary) 15%, transparent), transparent 50%),
+        radial-gradient(circle at 85% 30%, color-mix(in srgb, var(--accent-tertiary) 12%, transparent), transparent 45%),
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+      background-attachment: fixed;
+      color: var(--text-main);
+      font-family: var(--font-body);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: var(--accent-primary);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    header {
+      padding: 40px 0;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 50px;
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #ffffff;
+    }
+
+    .logo span {
+      background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .back-link {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .back-link:hover {
+      color: var(--accent-primary);
+    }
+
+    main {
+      padding-bottom: 80px;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      margin-bottom: 12px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .effective-date {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 40px;
+    }
+
+    section {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 28px;
+      backdrop-filter: blur(12px);
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      color: #ffffff;
+      margin-bottom: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 18px;
+      background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+      border-radius: 3px;
+    }
+
+    p {
+      margin-bottom: 16px;
+      color: #cbd5e1;
+      font-size: 0.98rem;
+    }
+
+    p:last-child {
+      margin-bottom: 0;
+    }
+
+    ul {
+      margin: 12px 0 16px 20px;
+      color: #cbd5e1;
+      font-size: 0.98rem;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    footer {
+      padding: 40px 0;
+      text-align: center;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border-color);
+      font-size: 0.875rem;
+      background: rgba(9, 10, 15, 0.9);
+    }
+
+    .footer-links {
+      margin-top: 10px;
+    }
+
+    .footer-links a {
+      color: var(--text-muted);
+      margin: 0 10px;
+    }
+
+    .footer-links a:hover {
+      color: var(--accent-primary);
+    }
+
+    .effective-date { line-height: 1.8; }
+    h3 { font-size: 1.02rem; color: #ffffff; margin: 20px 0 10px; font-weight: 700; }
+    h3:first-of-type { margin-top: 4px; }
+    ol { margin: 12px 0 16px 22px; color: #cbd5e1; font-size: 0.98rem; }
+    .note { border-left: 3px solid var(--accent-primary); padding: 4px 0 4px 14px; margin: 16px 0; color: #cbd5e1; font-size: 0.93rem; }
+    @media (max-width: 600px) {
+      section { padding: 22px 18px; }
+      h1 { font-size: 1.7rem; }
+      .header-content { flex-direction: column; align-items: flex-start; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="container header-content">
+      <a href="https://player.qnaudio.stream/" class="logo">QN<span>PLAYER</span></a>
+      <a href="https://player.qnaudio.stream/" class="back-link">&larr; QNPLAYERに戻る</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1>プライバシーポリシー</h1>
+    <div class="effective-date">制定日：2026年9月16日<br>最終改定日：2026年10月10日</div>
+
+    <section>
+      <h2>第1条（適用範囲）</h2>
+      <p>QNAUDIO（以下、「当方」といいます。）は、当方が提供するWebオーディオプレイヤーサービス「QNPLAYER」（PLAYER、QNVIDEO、QNTUNER、QNPITCH を含みます。以下、「本サービス」といいます。）における、ユーザーの情報の取扱いについて、本プライバシーポリシー（以下、「本ポリシー」といいます。）を定めます。</p>
+      <p>当方は、個人情報の保護に関する法律その他の関係法令を遵守します。</p>
+    </section>
+
+    <section>
+      <h2>第2条（取得する情報）</h2>
+      <p>当方は、本サービスの提供にあたり、次の情報を取得または保存します。</p>
+      <h3>1. アカウント情報</h3>
+      <p>Googleアカウントでログインしたとき、認証サービス（Firebase Authentication）を通じて、Googleアカウントの識別子（UID）、メールアドレス、表示名、プロフィール画像のURLを取得します。表示名とプロフィール画像は、画面上のログイン表示に使います。</p>
+      <h3>2. プランと購入に関する情報</h3>
+      <p>プランの種類、有効期限、購入日時、解約予定かどうかを、UIDに紐づけてデータベース（Cloud Firestore）に保存します。クレジットカード番号などの決済情報は、決済サービス（Stripe）が取得・管理し、当方は取得しません。</p>
+      <h3>3. 同期データ</h3>
+      <p>同期機能（現在は一部のアカウントで先行提供）を使うと、次の情報をアカウントに紐づけて保存します。</p>
+      <ul>
+        <li>曲名、アーティスト名、ON/OFF、お気に入り、フォルダ、並び順</li>
+        <li>マーカー（位置・メモ・色）、A-B ループの位置、テキストメモ</li>
+        <li>QNVIDEO に保存した動画のURLと、ユーザーが入力したタイトル、マーカー、A-B 点</li>
+        <li>曲の同一判定に使う識別子（ファイル名とファイルサイズから作る値）</li>
+      </ul>
+      <p>音声ファイル本体、再生位置、アプリの設定（音量・テーマなど）は、同期されません。</p>
+      <h3>4. 端末内に保存される情報</h3>
+      <p>読み込んだ音声ファイル、Library、マーカー、設定、パート分離（Stem）の結果、録音した音声（Stem、QNPITCH）などは、ユーザーの端末のブラウザ内（IndexedDB、localStorage）に保存されます。これらは当方のサーバーには送信されません。ブラウザのデータを消去すると失われます。</p>
+      <h3>5. マイクの音声</h3>
+      <p>QNTUNER、QNPITCH、Stem の録音では、ブラウザの許可を得て、端末のマイクを使います。マイクの音声は、端末内で処理・保存され、当方のサーバーには送信されません。許可は、ブラウザの設定から、いつでも取り消せます。</p>
+      <h3>6. 転送（Transfer）機能の情報</h3>
+      <p>端末どうしで音声ファイルを送受信する機能です。音声ファイルは、ブラウザの通信機能（WebRTC）で端末間を直接送られ、当方のサーバーを通らず、保存もされません。接続のために、一時的なコードと接続情報をデータベースに書き込みます。これらは接続が完了するとすぐに削除し、接続されなかった場合も5分で無効になります。接続の仕組み上、通信相手の端末には、ユーザーのIPアドレスが伝わることがあります。</p>
+      <h3>7. お問い合わせの情報</h3>
+      <p>お問い合わせをいただいたときの、メールアドレスと内容です。</p>
+      <h3>8. アクセスに関する情報</h3>
+      <p>本サービスを配信するサーバーや、利用する外部サービスには、IPアドレス、ブラウザの種類などのアクセス記録が残ることがあります。</p>
+    </section>
+
+    <section>
+      <h2>第3条（利用目的）</h2>
+      <p>当方は、取得した情報を次の目的で利用します。</p>
+      <ul>
+        <li>本サービスの提供・運営のため（ログイン、プランの判定、同期、転送を含みます）</li>
+        <li>料金のお支払い、契約の更新・解約の手続きのため</li>
+        <li>ユーザーからのお問い合わせに回答するため（本人確認を行うことを含みます）</li>
+        <li>メンテナンス、重要なお知らせなど必要に応じたご連絡のため</li>
+        <li>不具合の調査と、サービスの改善のため</li>
+        <li>利用規約に違反したユーザーや、不正・不当な目的でサービスを利用しようとするユーザーを特定し、ご利用をお断りするため</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>第4条（外部サービスの利用と情報の送信）</h2>
+      <p>本サービスは、次の外部サービスを利用します。利用にあたり、ユーザーの情報がそれぞれの事業者に送信されることがあります。</p>
+      <h3>Google（Firebase、Google Fonts ほか）</h3>
+      <p>ログイン認証（Firebase Authentication）、データの保存（Cloud Firestore）、解約手続きの処理（Cloud Functions）、フォントの配信（Google Fonts）、転送機能の接続補助（STUNサーバー）に使います。Googleによる情報の取扱いは、<a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Googleプライバシーポリシー</a>に従います。</p>
+      <h3>Stripe（決済）</h3>
+      <p>有料プランのお支払いと、解約手続き（カスタマーポータル）に使います。決済の際、ユーザーを識別するためにUIDをStripeに渡します。Stripeによる情報の取扱いは、<a href="https://stripe.com/jp/privacy" target="_blank" rel="noopener noreferrer">Stripeのプライバシーポリシー</a>に従います。</p>
+      <h3>Hugging Face（Stem のモデル配信）</h3>
+      <p>Stem（パート分離）を初めて使うとき、学習済みモデルのデータを Hugging Face から取得します。取得の際、IPアドレス、ブラウザの種類などのアクセス情報が同社に送信されることがあります。音声データは送信されません。取得したモデルは、ブラウザの保存領域に保存され、次回以降は再取得しません。</p>
+      <h3>jsDelivr（ソフトウェア部品の配信）</h3>
+      <p>速度の変更（SoundTouch）と Stem（ONNX Runtime Web）に使う公開のソフトウェア部品を、jsDelivr から取得します。取得の際、IPアドレス、ブラウザの種類などのアクセス情報が送信されることがあります。音声データは送信されません。</p>
+      <h3>YouTube API Services（QNVIDEO）</h3>
+      <p>QNVIDEO は、YouTube API Services（埋め込みプレイヤー、動画タイトルの取得、再生リストの取得）を利用します。QNVIDEO を使うことで、ユーザーは <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener noreferrer">YouTube利用規約</a> に同意したものとみなされます。YouTubeの埋め込みプレイヤーや、サムネイル画像の表示にあたり、YouTube（Google）が、Cookieなどでユーザーの情報を取得することがあります。取扱いは <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Googleプライバシーポリシー</a> に従います。</p>
+      <ul>
+        <li>当方は、YouTubeの映像・音声をダウンロード、保存、加工しません。</li>
+        <li>当方が保存するのは、動画のURL、ユーザーが入力したタイトル、マーカーなどの、ユーザーが作成した情報です。YouTubeから取得したタイトルは、ユーザーの端末に最大28日間だけ一時保存します。</li>
+        <li>再生リストの取得では、ユーザーが操作したときに限り、Googleの確認画面を表示して、YouTube の読み取り権限（youtube.readonly）を求めます。取得したアクセストークンはメモリ上でのみ使い、保存しません。取得した再生リストの情報も保存しません。ユーザーが Library に追加した動画のURLなどだけが保存されます。</li>
+        <li>ユーザーが自分の YouTube Data API キーを入力した場合、そのキーは端末内にのみ保存し、再生リストの取得で Google に送るときだけ使います。当方のサーバーには送信しません。</li>
+        <li>ユーザーは、<a href="https://security.google.com/settings/security/permissions" target="_blank" rel="noopener noreferrer">Googleのセキュリティ設定ページ</a>から、いつでも当方のアクセス権限を取り消せます。</li>
+      </ul>
+      <p>当方による、Google APIから受け取った情報の使用および他のアプリへの転送は、限定的な使用の要件を含む、<a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer">Google API Services User Data Policy</a> に準拠します。</p>
+      <h3>広告配信サービス</h3>
+      <p>現在、本サービスは広告配信サービスを使用していません。今後、広告の表示（動画広告の視聴による機能の一時解放を含みます）のために広告配信サービスを導入する場合は、Cookieなどの識別情報が、広告事業者に送信されることがあります。導入するときは、事前に本ポリシーを改定し、利用する事業者と、無効にする方法をお知らせします。</p>
+    </section>
+
+    <section>
+      <h2>第5条（Cookie・ローカルストレージ等の利用）</h2>
+      <p>本サービスは、ログイン状態の保持、設定やデータの端末内への保存のために、ブラウザの保存領域（Cookie、localStorage、IndexedDB、Cache）を使います。これらは、サービスの動作に必要なものです。ブラウザの設定で削除、または無効にできますが、その場合、ログイン状態や保存したデータが失われたり、一部の機能が使えなくなったりすることがあります。</p>
+      <p>現在、本サービスはアクセス解析ツールを使用していません。導入する場合は、第4条の広告配信サービスと同様に、事前に本ポリシーを改定してお知らせします。</p>
+    </section>
+
+    <section>
+      <h2>第6条（第三者への提供）</h2>
+      <p>1. 当方は、次に掲げる場合を除いて、あらかじめユーザーの同意を得ることなく、第三者に個人情報を提供することはありません。</p>
+      <ul>
+        <li>法令に基づく場合</li>
+        <li>人の生命、身体または財産の保護のために必要がある場合であって、本人の同意を得ることが困難であるとき</li>
+        <li>国の機関もしくは地方公共団体またはその委託を受けた者が法令の定める事務を遂行することに対して協力する必要がある場合であって、本人の同意を得ることにより当該事務の遂行に支障を及ぼすおそれがあるとき</li>
+      </ul>
+      <p>2. 第4条の外部サービスへの情報の送信は、本サービスの提供に必要な範囲で行うものであり、本条の第三者提供には当たりません（利用目的の達成に必要な範囲での業務の委託にあたります）。</p>
+    </section>
+
+    <section>
+      <h2>第7条（保存期間と削除）</h2>
+      <p>1. アカウント情報、プランに関する情報、同期データは、ユーザーが本サービスを利用している間、保存します。</p>
+      <p>2. Library から曲や動画を削除すると、同期されている情報も削除されます。ほかの端末にある音声ファイルは削除されません。同期の削除記録は、端末間で削除を伝えるために、一定期間（最長180日程度）保存することがあります。</p>
+      <p>3. アカウントに紐づく情報の削除をご希望の場合は、第10条の窓口にご連絡ください。本人確認のうえ、合理的な期間内に対応します。ただし、法令により保存が必要な情報や、決済事業者が保存する情報は、この限りではありません。</p>
+      <p>4. 端末内に保存されたデータは、ログアウトしても消えません。ユーザー自身で、ブラウザの設定などから削除してください。</p>
+    </section>
+
+    <section>
+      <h2>第8条（安全管理）</h2>
+      <p>当方は、取得した情報の漏えい、滅失、毀損を防ぐため、通信の暗号化（HTTPS）と、データベースのアクセス制御（アカウント本人だけが自分のデータを読み書きできる設定）などの、合理的な安全管理措置を講じます。ただし、インターネット上の通信やサービスの安全性を、完全に保証するものではありません。</p>
+    </section>
+
+    <section>
+      <h2>第9条（開示・訂正・削除等のご請求）</h2>
+      <p>ユーザーは、当方が保有する自己の個人情報について、法令に基づき、開示、訂正、利用停止、削除などを請求できます。第10条の窓口までご連絡ください。本人確認のうえ、法令に従い対応します。</p>
+    </section>
+
+    <section>
+      <h2>第10条（お問い合わせ窓口）</h2>
+      <p>本ポリシーに関するお問い合わせは、下記の窓口までお願いいたします。</p>
+      <p><strong>メールアドレス：</strong> contact@qnaudio.stream</p>
+    </section>
+
+    <section>
+      <h2>第11条（本ポリシーの変更）</h2>
+      <p>1. 当方は、法令の変更やサービス内容の変更などに応じて、本ポリシーの内容を変更することがあります。</p>
+      <p>2. 利用目的の変更や、取得する情報の追加など、ユーザーに影響する重要な変更を行うときは、本サービス上でお知らせします。</p>
+      <p>3. 変更後のプライバシーポリシーは、本ページに掲載したときから効力を生じます。</p>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 QNAUDIO. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="https://player.qnaudio.stream/">QNPLAYERを起動</a> |
+        <a href="terms.html">利用規約</a> |
+        <a href="privacy.html">プライバシーポリシー</a> |
+        <a href="https://qnaudio.stream/">サービス紹介トップへ</a> |
+        <a href="mailto:contact@qnaudio.stream">お問い合わせ</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

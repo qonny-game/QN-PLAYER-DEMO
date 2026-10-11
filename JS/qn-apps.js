@@ -454,15 +454,15 @@
       if (typeof secs === "function") secs = secs();
       setUI = QNSettingsUI.build(secs || []);
       var host = setUI.el;
-      var ids = ["backup", "import", "color", "keyboard", "transfer"].filter(function (id) {
+      var ids = ["backup", "import", "color", "keyboard", "transfer", "guide"].filter(function (id) {
         if (id === "transfer") return !!(window.QNLibSync && window.QNLibSync.isActive());
         if (id === "color") return !!findColorSection();
         return true;
       });
       host.appendChild(QNSettingsUI.list(ids, function (id) {
-        if (id === "transfer") { if (window.QNP2P) window.QNP2P.open(); return; }
         showSetView(id);
       }));
+      host.appendChild(QNSettingsUI.legalLinks());
       host.appendChild(QNSettingsUI.versionLine());
       body.appendChild(host);
     } else if (name === "color") {
@@ -475,6 +475,11 @@
       var box = document.createElement("div");
       body.appendChild(box);
       renderShortcuts(box, current ? current.id : null);
+    } else if (name === "transfer") {
+      var trEl = document.createElement("div");
+      trEl.className = "qn-pt-sec-backup"; // Backup/Importと同じ見た目(style-pcv2-panels.cssの共用ルール)
+      body.appendChild(trEl);
+      if (window.QNP2P) window.QNP2P.mount(trEl, function () { showSetView("root", true); });
     } else if (name === "backup" || name === "import") {
       var hostEl = document.createElement("div");
       hostEl.className = name === "backup" ? "qn-pt-sec-backup" : "qn-pt-sec-import";
@@ -670,6 +675,30 @@
   // SP幅のリスト行: 横にスワイプすると右に□アイコンボタン(編集/SKIP(HIDE)/削除)が出る。opts={rowSel, disabled():bool, actions(row):[{kind:"edit|skip|hide|del", on:bool(skip/hide: 今の状態=無効か), run(row)}]}。削除は2タップ確認。行が再描画されると自然に閉じる
   // アイコン・ラベルはplayer-markers.jsのwindow.QN_ROW_ACT(PLAYERのマーカー行のボタンと共通)
   var SW_ICON = window.QN_ROW_ACT.icons;
+  // 縦スワイプ(タッチ/ペンのみ): 上へ=onUp、下へ=onDown。スワイプ後に出るclickは無効にする(タイトルのタップ動作が誤って動かないように)。
+  // 例: シークバーのタイトルを上下にスワイプ=前/次のトラック。要素はtouch-action:noneにする(縦スクロールに奪われない)
+  function vSwipe(el, onUp, onDown) {
+    if (!el || el._qnVSwipe) return;
+    el._qnVSwipe = true;
+    el.style.touchAction = "none";
+    var sx = 0, sy = 0, id = null, done = false, swallowClick = false;
+    el.addEventListener("pointerdown", function (e) {
+      if (e.pointerType === "mouse") return;
+      id = e.pointerId; sx = e.clientX; sy = e.clientY; done = false;
+    });
+    el.addEventListener("pointermove", function (e) {
+      if (e.pointerId !== id || done) return;
+      var dx = e.clientX - sx, dy = e.clientY - sy;
+      if (Math.abs(dy) < 28 || Math.abs(dy) < Math.abs(dx) * 1.5) return;
+      done = true; swallowClick = true;
+      setTimeout(function () { swallowClick = false; }, 400);
+      if (typeof hapticTap === "function") { try { hapticTap(); } catch (x) {} }
+      if (dy < 0) { if (onUp) onUp(); } else if (onDown) onDown();
+    });
+    ["pointerup", "pointercancel"].forEach(function (n) { el.addEventListener(n, function (e) { if (e.pointerId === id) id = null; }); });
+    el.addEventListener("click", function (e) { if (swallowClick) { e.stopImmediatePropagation(); e.preventDefault(); swallowClick = false; } }, true);
+  }
+
   function swipeRows(container, opts) {
     if (!container || container._qnSwipe) return;
     container._qnSwipe = true;
@@ -774,6 +803,7 @@
 
   window.QNApps = {
     swipeRows: swipeRows,
+    vSwipe: vSwipe,
     sheetDrag: sheetDrag,
     register: register,
     open: open,

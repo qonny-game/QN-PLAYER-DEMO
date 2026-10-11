@@ -20,6 +20,19 @@
 .qn-set-label span { font-size: var(--fs-body); color: var(--text-bright); }
 .qn-set-label small { font-size: var(--fs-micro); color: var(--icon-muted); }
 .qn-set-ctl { display: flex; align-items: center; flex-shrink: 0; }
+/* 連続値バーの行(type:"range"): 項目名と説明を上段、バーと値を下段に置く。上段との間に余白を取り、つまみが文字に触れないようにする */
+.qn-set-row.is-range { flex-wrap: wrap; align-items: stretch; row-gap: 12px; }
+.qn-set-row.is-range .qn-set-label { flex: 1 1 100%; }
+.qn-set-range-wrap { display: flex; align-items: center; gap: 14px; flex: 1 1 100%; min-width: 0; padding-bottom: 4px; }
+.qn-set-range-box { flex: 1; min-width: 0; position: relative; padding-bottom: 0; }
+.qn-set-range-wrap .qn-set-range { display: block; width: 100%; }
+.qn-set-range-box:has(.qn-set-range-mark) { padding-bottom: 16px; }
+.qn-set-range-mark { position: absolute; top: 0; left: calc(8px + (100% - 16px) * var(--m, 0)); width: 0; height: 100%; pointer-events: none; }
+.qn-set-range-mark i { position: absolute; top: 2px; left: -1px; width: 2px; height: 14px; border-radius: 1px; background: var(--text-muted, #8a8a99); opacity: .9; }
+.qn-set-range-mark b { position: absolute; bottom: 0; left: 0; transform: translateX(-50%); font-size: var(--fs-micro, 10px); font-weight: 600; color: var(--text-muted, #8a8a99); white-space: nowrap; }
+.qn-set-range-mark.is-on i, .qn-set-range-mark.is-on b { color: var(--accent-primary); background: var(--accent-primary); }
+.qn-set-range-mark.is-on b { background: none; }
+.qn-set-range-val { width: 88px; flex: none; text-align: right; font-size: var(--fs-small); font-weight: 700; color: var(--text-bright); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .qn-set-switch {
   position: relative;
   width: 46px;
@@ -52,7 +65,7 @@
   justify-content: flex-end;
   gap: 6px 14px;
   padding: 4px 10px;
-  background: rgba(12, 12, 16, 0.86);
+  background: #0e0e13;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-popup);
   pointer-events: auto;
@@ -66,6 +79,25 @@
 .qn-set-inline .qn-set-switch { width: 42px; height: 26px; }
 .qn-set-inline .qn-set-switch span { width: 18px; height: 18px; }
 .qn-set-inline .qn-set-switch.is-on span { transform: translateX(16px); }
+/* FAB帯のスライダー(inline専用)。「ラベル 値」を1つの語として上段に並べ、つまみは下段(近接の法則: 同じ設定の要素は密着、別の設定とは区切り線と余白で離す)。つまみ=段階(values()の添字) */
+.qn-set-inline { gap: 8px 0; padding: 6px 4px; }
+.qn-set-inline-item { padding: 0 14px; }
+.qn-set-inline-item + .qn-set-inline-item { border-left: 1px solid var(--border-subtle); }
+.qn-set-inline-item.is-slider { display: grid; grid-template-columns: auto 1fr; column-gap: 6px; row-gap: 3px; align-items: baseline; min-width: 118px; }
+.qn-set-inline-item.is-slider > .qn-set-inline-label { grid-area: 1 / 1; }
+.qn-set-slider { display: contents; }
+.qn-set-slider-val { grid-area: 1 / 2; text-align: left; min-width: 0; font-size: var(--fs-small); font-weight: 700; color: var(--text-bright); font-variant-numeric: tabular-nums; }
+.qn-set-range {
+  grid-area: 2 / 1 / 3 / 3; align-self: center;
+  -webkit-appearance: none; appearance: none; width: 100%; height: 18px; margin: 0; background: transparent; cursor: pointer; touch-action: pan-y;
+  --p: 0%;
+}
+.qn-set-range::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--accent-primary) var(--p), #2a2a34 var(--p)); }
+.qn-set-range::-moz-range-track { height: 4px; border-radius: 2px; background: #2a2a34; }
+.qn-set-range::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--accent-primary); }
+.qn-set-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; margin-top: -6px; border-radius: 50%; background: var(--text-bright, #fff); border: none; }
+.qn-set-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--text-bright, #fff); border: none; }
+.qn-set-note { padding: 4px 0 10px; font-size: var(--fs-small); line-height: 1.7; color: var(--icon-muted); }
 .qn-set-list { display: flex; flex-direction: column; padding: 2px 0 8px; }
 .qn-set-list-item {
   display: flex;
@@ -161,7 +193,40 @@
 .qn-stepper-unit { font-size: inherit; font-weight: inherit; }
 .qn-set-row { min-height: 56px; padding: 8px 0; }
 .qn-set-list-item { min-height: 56px; padding-top: 0; padding-bottom: 0; }
+.qn-set-legal { display: flex; flex-wrap: wrap; gap: 4px 20px; padding: 16px 0 0; font-size: var(--fs-micro); letter-spacing: 0.4px; }
+.qn-set-legal a { color: var(--icon-muted); text-decoration: none; padding: 6px 0; }
+.qn-set-legal a:hover, .qn-set-legal a:focus-visible { color: var(--text-pure-white); text-decoration: underline; }
+.qn-set-legal + .qn-set-version { padding-top: 4px; }
 .qn-set-version { padding: 16px 0 8px; font-size: var(--fs-micro); color: var(--icon-muted); letter-spacing: 0.4px; }
 @media screen and (max-width: 900px) {
   body.pc-v2-active #appHeader #appVersion { display: none; }
+}
+/* スマホ: 帯は2列の格子。上段=スライダー(ラベル+値/つまみ)、下段=スイッチ(ラベル左・スイッチ右)。折り返しで形が崩れない。スイッチが奇数個なら最後を全幅に */
+@media screen and (max-width: 900px) {
+  .qn-set-inline { display: grid; grid-template-columns: 1fr 1fr; gap: 0; padding: 0; width: 100%; box-sizing: border-box; overflow: hidden; }
+  .qn-set-inline-item { padding: 10px 16px; border-left: 0; min-width: 0; box-sizing: border-box; }
+  .qn-set-inline .qn-set-inline-item.qn-sp-hide { display: none !important; }
+  .qn-set-inline-item.is-slider { order: 1; min-width: 0; }
+  .qn-set-inline-item:not(.is-slider) { order: 2; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-subtle); }
+  .qn-set-inline-item:not(.is-slider):last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .qn-set-inline-item + .qn-set-inline-item { border-left: 0; }
+  .qn-set-inline-item:not(.is-slider) + .qn-set-inline-item:not(.is-slider) { border-left: 1px solid var(--border-subtle); }
+}
+
+/* v4.15.0: スライダー横の小ボタン(Fit)。値の行の右、スライダーと同じ段 */
+.qn-set-inline-item.has-fit { grid-template-columns: auto 1fr auto; }
+.qn-set-fit {
+  grid-area: 2 / 3 / 3 / 4; align-self: center; height: 24px; padding: 0 10px; margin-left: 6px;
+  font-family: inherit; font-size: 11px; font-weight: 600; letter-spacing: 0.2px; color: var(--icon-muted);
+  background: none; border: 1px solid var(--border-strong, rgba(255,255,255,0.2)); border-radius: 12px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.qn-set-fit:active { color: var(--accent-primary); border-color: var(--accent-primary); }
+@media (hover: hover) and (pointer: fine) { .qn-set-fit:hover { color: var(--text-bright, #fff); } }
+
+/* 【v4.27.0】シークバー表示切替(View: Wave/Chord)。PC幅は値(Wave/Chord)だけで足りるのでラベルを隠して帯を広げない。SP幅は1行まるごと使う */
+@media screen and (min-width: 901px) {
+  .qn-set-inline-item.qn-view-item .qn-set-inline-label { display: none; }
+}
+@media screen and (max-width: 900px) {
+  .qn-set-inline-item.qn-view-item { grid-column: 1 / -1; }
 }

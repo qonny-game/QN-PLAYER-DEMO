@@ -1,4 +1,4 @@
-/* style-export.css — Exportモーダル(開閉アニメ/範囲/フォーマット/エフェクト/ファイル名/実行)。.eq-modalも共通デザイン(.export-modal-overlay等)を土台にここに含む。Backup/Import/解約モーダルの固有スタイルも同居 */
+/* style-export.css — 共通モーダルの器(.export-modal*。名前はExport由来だが、EQ・解約・Backup/Importが共用。固有スタイルも同居) */
 
 .export-modal-overlay {
   position: fixed;
@@ -110,118 +110,20 @@
   color: #6b6b7b;
 }
 
-.export-range-options,
-.export-format-options {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
 
-.export-format-detail {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 10px;
-}
 
-.export-effect-options {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
 
-.export-radio-row,
-.export-checkbox-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  background: #1c1c24;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
-  font-size: var(--fs-body);
-  font-weight: 500;
-  color: #c8c8d0;
-  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
-  flex: 1;
-  justify-content: center;
-  min-width: 0;
-}
 
-.export-radio-row:hover,
-.export-checkbox-row:hover {
-  background: #22222c;
-  border-color: rgba(255, 255, 255, 0.16);
-}
 
-.export-radio-row:has(input:checked),
-.export-checkbox-row:has(input:checked) {
-  background: var(--accent-glow);
-  border-color: var(--accent-primary);
-  color: var(--text-pure-white);
-}
 
-.export-radio-row input,
-.export-checkbox-row input {
-  accent-color: var(--accent-primary);
-  cursor: pointer;
-}
 
-.export-marker-select {
-  width: 100%;
-  padding: 10px 12px;
-  background: #1c1c24;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-field);
-  color: var(--text-bright);
-  font-family: var(--font-body, 'Instrument Sans'), sans-serif;
-  font-size: var(--fs-body);
-  cursor: pointer;
-  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
-}
 
-.export-marker-select:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
 
-.export-marker-select:not(:disabled):hover {
-  border-color: var(--accent-primary);
-}
 
-.export-marker-select option {
-  background: #1c1c24;
-  color: var(--text-bright);
-}
 
-.export-marker-select option:checked {
-  background: var(--accent-primary);
-  color: var(--text-pure-white);
-}
 
-.export-marker-range-selects {
-  display: flex;
-  gap: 12px;
-}
 
-.export-marker-select-group {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
 
-.export-marker-select-label {
-  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
-  font-size: var(--fs-small);
-  font-weight: 500;
-  letter-spacing: 0.5px;
-  color: var(--icon-muted);
-  text-transform: none;
-}
 
 .export-filename-input {
   width: 100%;

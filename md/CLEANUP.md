@@ -22,7 +22,8 @@
 | 無効・重複のCSSルール | 削除（例：重複していた`.tripleNavBtn`） |
 | 検証用・デバッグ用コード | 削除（例：swDebug） |
 | コメント | 規約外のものを削除・圧縮（§4） |
-| md | 現状と食い違う記述を直す／消す。目次・保存キー・ID表・ファイルマップの更新漏れを埋める |
+| md | 現状と食い違う記述を直す／消す。目次・保存キー・ID表・ファイルマップの更新漏れを埋める（`md/tools/md_audit.py`で、mdが挙げるファイル名・関数名・idがコードに残っているかを機械的に確認できる） |
+| ガイド・利用規約・プライバシー・料金ページ | 実装と食い違う記述を直す。手順と確認項目は`USER_DOCS.md` |
 | 大きくなりすぎたファイル | 分割できるものだけ分割（§3の例外に注意） |
 
 ## 2.5 洗い出しのコツ（4.0.2で確立）
@@ -31,9 +32,11 @@
 - 要素が無いのにCSSだけ残っている、が一番多い（旧下段バーの`.pcv2-ctrl-btn`、旧ヘッダーナビ、`#eqToggleBtn`等）。
 - 消したあとにもう一度洗い出す（消した関数だけが使っていた変数・関数が新たに孤立する。例：`keyStepperFill`を消したら`pct`/`left`が残った）。
 
+- 道具（`md/tools/`。いずれも`python3 -I <script> <プロジェクトのルート>`で実行）：`css_audit.py`＝CSSのクラス/idでHTML・JSに参照が無いもの（`is-`＋種別、`pcv2-panel-*`は動的なので候補から外す）／`js_unused.py`＝宣言のみで参照が無い関数／`md_audit.py`＝mdが挙げる名前の存在確認／`snap.py`＝PC幅・SP幅で全要素の計算済みスタイルを書き出し（前後2回出力してJSONを比較）／`smoke.py`＝曲追加・フォルダ作成・パネル切替のスモークテスト。Playwright(Python)とChromiumが要る。外部ドメインは遮断して動かすので、ネットワーク由来のエラーは出ない前提。ほかの道具（`release.py`・`compare_snap.py`・`i18n_check.py`・`qnbrowser.py`）は`TOOLS.md`。
+
 ## 3. 消してはいけないもの・触らないもの
 - **動的に組み立てられるクラス名・idは、単純な文字列検索で未使用と決めない。** 例：`"is-" + kind`（`.is-a/.is-b`）、`"pcv2-panel-" + panelId`（`.pcv2-panel-*`）、`eqBand0〜9`。
-- `JS/jszip.min.js`・`JS/lame_min.js`（外部ライブラリ。触らない）。
+- `JS/jszip.min.js`（外部ライブラリ。触らない）。
 - **分割しないファイル**：`player-ui-pc-v2.js`・`qn-app-youtube.js`（1つのIIFE内で多数の変数を共有。分割すると作り直しになる）。
 - **読み込み順**（`index.html`のCSS/JS。順序で上書き・グローバル参照が決まる）。並べ替えない。
 - 他アプリ・他端末から参照される保存キー・IndexedDB名（互換性が壊れる）。
@@ -46,12 +49,13 @@
 
 ## 5. 残置リスト（消さずに残している既知のもの）
 お掃除の候補になりやすいが、理由があって残しているもの。判断が変わったら更新する。
-- 各アプリ（YouTube/PITCH/TUNER）内の旧backup/import/keyboardセクション：未使用のまま残置（v3.42.0）。**削除候補。** 消す場合は参照元（`qn-apps.js`の設定一覧）を先に確認する。
+- 各アプリ（YouTube/PITCH/TUNER）内の旧backup/import/keyboardセクション：未使用のまま残置。**削除候補。** 消す場合は参照元（`qn-apps.js`の設定一覧）を先に確認する。
 - 旧「SP専用UI」（`.app-container`直下の要素）：実質死んでいるが、削除の影響範囲が大きいため未着手。**削除候補。** 着手時は`style-layout-sp.css`との関係も確認する。
 - `style-layout-sp.css`：SP幅の少量の上書き（ヘッダー・ロゴ・`.export-modal`）のみ。
-- Auto Nextスコープボタン一式（`#playlistScopeBtn`はHTML/JSのどこにも生成されず、`syncAutoNextScopeButton`・`setupAutoNextScopeButton`・`player-ui-pc-v2.js`の退避処理・`.playlist-scope-btn`が空振り）：**削除候補。** 設定パネルの「Library repeat range」で代替済みか確認してから消す。
+- `openEqModal()`（`player-control-eq.js`）：どこからも呼ばれない。ただし`#eqModalOverlay`内の`#eqInlineSection`がEQ UIの定位置（`player-ui-shared.js`が元の位置を覚え、PC v2が`#eqModalOverlay`を参照する）なので、オーバーレイごとは消せない。消すなら先にEQ UIの置き場所を決める。
+- `.export-modal*`・`.export-section*`・`.export-run-btn`などの`export-`接頭辞：Export撤去後は共通モーダルの器になっている。名前だけが実態と合わない。変える場合はCSS・index.html・JS（`player-track-backup.js`ほか）を一括で置換し、計算済みスタイルの前後比較で差分0を確認する。`CSS/style-export.css`のファイル名も同時に変える。
 - `swUnlockPremium()`（`player-shareware.js`。どこからも呼ばれないが、テスト用にコンソールから使う可能性があるため残置）。
-- `.playlist-scope-btn`・`#keyDisplay`（JS側は要素がnullでも動く保護付き）など、要素が無いのに参照だけ残る箇所は、機能の有無を確認してから消す。
+- `#keyDisplay`など、JS側は要素がnullでも動く保護付きで、要素だけが無い箇所は、機能の有無を確認してから消す。
 
 ## 6. 手順
 1. **現在地の確認**：`index.html`の`window.QN_APP_VERSION`と`md/CHANGELOG.md`末尾。添付が全体ZIPか部分ファイルかを確認（部分なら必要なファイル名を挙げて送付を依頼）。
@@ -75,3 +79,5 @@
 - 3.20.3：コメントを規約の範囲に圧縮、検証用コードと無効CSSの削除。
 - 4.0.1：お掃除ルールをこのファイルに集約。
 - 4.0.2：未使用JS関数3つ(`clearAB`/`openMarkerColorPicker`/`canHover`)、`keyStepperFill`関連、死んでいたCSS(旧下段バー`.pcv2-ctrl-btn`・旧ヘッダーナビ・`.key-stepper*`・旧トグル系id・`.qn-yt-btn.danger`等)、未使用id2つを削除。見た目の差分0を確認(同版で追加した「操作ガイド」「波形右下のバー設定の帯」「`.vbar`の幅修正」は見た目が変わる別件)。
+- 4.0.3：旧Transferモーダルの専用CSS(`.qn-p2p-modal`系)を削除(パネル化に伴う)。
+- 4.22.1：旧Export機能の残りCSS(`.export-format-*`/`.export-marker-*`/`.export-checkbox-row`ほか)、旧ミキサーの`.pcv2-mix-btn`/`.pcv2-mix-keyrow`、`.av-toggle-btn`、`.qn-yt-mix-head/-label`、`.skip-off`、Auto Nextスコープボタン一式(JS・CSS)を削除。計算済みスタイルの前後比較は差分0（PC1280/SP390、初期表示＋全パネル）。ガイド・利用規約・プライバシーを実装に合わせて更新し、md全体の食い違いを修正、`USER_DOCS.md`と`md/tools/`を追加。

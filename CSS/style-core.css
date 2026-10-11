@@ -528,9 +528,6 @@ body {
   border: none;
 }
 
-.basic-panel-box > .adjust-controls-row:nth-child(2) .av-toggle-btn {
-  border-top-width: 0 !important;
-}
 
 .time-controls-row {
   display: flex;
@@ -566,71 +563,14 @@ body {
   gap: 0;
 }
 
-.adjust-controls-row #exportToggleBtn{
-  flex-grow: 1;
-  flex-shrink: 1;
-  flex-basis: 0%;
-  width: 100%;
-  min-width: 0;
-}
 
 
-.adjust-controls-row .time-controls-buttons .av-toggle-btn {
-  border-radius: 0 !important;
-  border-left-width: 0 !important;
-  justify-content: center;
-}
 
-.adjust-controls-row .time-controls-buttons > *:first-child .av-toggle-btn {
-  border-left-width: 1px !important;
-}
 
-.av-toggle-btn {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 54px;
-  box-sizing: border-box;
-  padding: 10px 18px;
-  background: #1c1c24;
-  border: 1px solid color-mix(in srgb, var(--accent-primary) 22%, var(--border-subtle));
-  border-radius: 0;
-  cursor: pointer;
-  color: var(--text-bright);
-  font-family: var(--font-display, 'Instrument Sans'), sans-serif;
-  transition: background var(--dur-hover) var(--ease-snap), border-color var(--dur-hover) var(--ease-snap), color var(--dur-hover) var(--ease-snap), transform var(--dur-press) var(--ease-snap);
-}
 
-.av-toggle-btn:active {
-  transform: scale(0.97);
-}
 
-.av-toggle-btn:hover {
-  background: #252530;
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-}
 
-.av-toggle-btn.active {
-  color: var(--accent-primary);
-  border-color: var(--accent-primary);
-  background: var(--accent-glow);
-}
 
-.av-toggle-btn svg {
-  width: 18px;
-  height: 18px;
-  fill: currentColor;
-  flex-shrink: 0;
-}
-
-.av-toggle-btn-text {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  line-height: 1.2;
-}
 
 
 .av-toggle-btn-label {
@@ -642,17 +582,7 @@ body {
   opacity: 0.65;
 }
 
-.av-toggle-btn.key-disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  pointer-events: auto;
-}
 
-.av-toggle-btn.key-disabled:hover {
-  background: #1c1c24;
-  border-color: var(--border-subtle);
-  color: var(--text-bright);
-}
 
 
 #loopInfo,
@@ -911,20 +841,20 @@ body {
 .control-card input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 14px;
-  height: 14px;
-  margin-top: -5px;
+  width: 16px;
+  height: 16px;
+  margin-top: -6px;
   border-radius: 50%;
-  background: var(--accent-primary);
+  background: var(--text-bright, #fff);
   border: none;
   cursor: pointer;
 }
 
 .control-card input[type="range"]::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  background: var(--accent-primary);
+  background: var(--text-bright, #fff);
   border: none;
   cursor: pointer;
 }

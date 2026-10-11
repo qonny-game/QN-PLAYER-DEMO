@@ -6,7 +6,7 @@
   "use strict";
 
   var core = window.QNPitchCore;
-  var KEY_DISPLAY = "qn_tuner_display", KEY_SENS = "qn_tuner_sens", KEY_SMOOTH = "qn_tuner_smooth", COLLAPSE_KEY = "qn_tuner_panel_collapsed";
+  var KEY_DISPLAY = "qn_tuner_display", KEY_SENS = "qn_tuner_sens", KEY_SMOOTH = "qn_tuner_smooth", KEY_HOLD = "qn_tuner_hold", COLLAPSE_KEY = "qn_tuner_panel_collapsed";
 
   var TUNER_ICON = '<path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>';
   var ICON = {
@@ -61,6 +61,12 @@
   var shown = false;
   var preset = "guitar", tuning = "regular";
   var sens = loadNum(KEY_SENS, 100), smooth = loadNum(KEY_SMOOTH, 100);
+  var HOLD_DEFAULT = 0.3, HOLD_MIN = 0.1, HOLD_MAX = 1, hold = loadHold();
+  var KEY_AUTO = "qn_tuner_autostart", autoStart = loadAuto();
+  function loadAuto() { try { return localStorage.getItem(KEY_AUTO) !== "0"; } catch (e) { return true; } }
+  function loadHold() {
+    try { var v = parseFloat(localStorage.getItem(KEY_HOLD)); return isNaN(v) || v < HOLD_MIN || v > HOLD_MAX ? HOLD_DEFAULT : v; } catch (e) { return HOLD_DEFAULT; }
+  }
   var displayId = loadStr(KEY_DISPLAY, "gauge");
   var micSession = null, micRunning = false, micStarting = false;
   var silenceFrames = 0, smoothedFreq = null;
@@ -83,10 +89,6 @@
     if (!el || el._s === s) return;
     el._s = s;
     if (s) el.setAttribute("data-state", s); else el.removeAttribute("data-state");
-  }
-  function setRangeProgress(input) {
-    var min = parseFloat(input.min) || 0, max = parseFloat(input.max) || 100;
-    input.style.setProperty("--range-progress", String(max > min ? ((input.value - min) / (max - min)) * 100 : 0));
   }
 
   // ---------- 下段バー(PLAYERの#pcV2BottomBarと同デザイン) ----------
@@ -138,12 +140,7 @@
               '<div class="qn-tn-strings" data-tn="stringList"></div>' +
             '</div>' +
           '</div></section>' +
-          '<section class="qn-tn-sec qn-tn-sec-sens"><div class="control-list">' +
-            '<div class="control-card"><label>Sensitivity <span class="qn-tn-white" data-tn="sensLabel">100</span>%</label>' +
-              '<input type="range" data-tn="sensRange" min="0" max="100" step="1" value="100"></div>' +
-            '<div class="control-card"><label>Smoothing <span class="qn-tn-white" data-tn="smoothLabel">100</span>%</label>' +
-              '<input type="range" data-tn="smoothRange" min="0" max="100" step="1" value="100"></div>' +
-          '</div></section>' +
+          '<section class="qn-tn-sec qn-tn-sec-sens"><div data-tn="sensBox"></div></section>' +
           '<section class="qn-tn-sec qn-tn-sec-display"><div class="qn-tn-dchoices" data-tn="displayChoices"></div></section>' +
           '<section class="qn-tn-sec qn-tn-sec-keyboard"><div data-tn="kbdBox"></div></section>' +
         '</div>' +
@@ -151,10 +148,11 @@
       '<section class="qn-tn-stage">' +
         '<div class="qn-mic-pill" data-tn="micPill" hidden><i class="qn-mic-dot"></i><span>Mic on</span><span class="qn-mic-lv"><b></b><b></b><b></b><b></b><b></b></span></div>' +
         '<div class="qn-tn-prompt" data-tn="prompt">' +
-          '<p>下のMicボタンを押すと、リアルタイムに音程を表示します</p>' +
+          '<p>マイクをONにすると、リアルタイムに音程を表示します</p>' +
           '<p class="qn-tn-error" data-tn="micError" role="status"></p>' +
         '</div>' +
         '<div class="qn-tn-display" data-tn="display" hidden></div>' +
+        '<button type="button" class="qn-tn-bigmic" data-tn="bigMic" aria-pressed="false"><svg viewBox="0 0 24 24">' + ICON.mic + '</svg><span data-tn="bigMicLabel">MIC OFF</span></button>' +
       '</section>' +
       BAR_HTML +
     '</div>';
@@ -166,18 +164,19 @@
   }
 
   var GAUGE_TICKS = [];
-  for (var tc = -50; tc <= 50; tc += 10) GAUGE_TICKS.push(tc);
+  for (var tc = -50; tc <= 50; tc += 2.5) GAUGE_TICKS.push(tc); // ±50¢を2.5¢刻み(41本)。20¢ごと=major、10¢ごと=mid、他=minor
   function gaugeTicksSvg() {
     return GAUGE_TICKS.map(function (c) {
       var rad = ((c / 50) * 90 - 90) * Math.PI / 180;
-      var major = c % 20 === 0, rIn = major ? 108 : 116;
-      var cls = c === 0 ? "qn-tn-tick zero" : (major ? "qn-tn-tick major" : "qn-tn-tick");
+      var major = c % 20 === 0, mid = c % 10 === 0, rIn = major ? 108 : (mid ? 114 : 120);
+      var cls = c === 0 ? "qn-tn-tick zero" : (major ? "qn-tn-tick major" : (mid ? "qn-tn-tick" : "qn-tn-tick minor"));
       return '<line class="' + cls + '" x1="' + (150 + 130 * Math.cos(rad)).toFixed(1) + '" y1="' + (150 + 130 * Math.sin(rad)).toFixed(1) +
         '" x2="' + (150 + rIn * Math.cos(rad)).toFixed(1) + '" y2="' + (150 + rIn * Math.sin(rad)).toFixed(1) + '"/>';
     }).join("");
   }
 
-  var GM_STEP_CENTS = 5, GM_STEPS = 10;
+  // Guitar Meter: ±50¢を1.25¢刻み(片側40・計81本)。5¢ごとの本は背が高い(.q)、10¢ごと(.m)はさらに高い
+  var GM_STEP_CENTS = 1.25, GM_STEPS = 40;
   var displayStyles = {
     gauge: {
       label: "Gauge", barLabel: "Gauge",
@@ -223,7 +222,7 @@
       label: "Guitar Meter", barLabel: "Meter",
       render: function (box) {
         var dots = "";
-        for (var i = -GM_STEPS; i <= GM_STEPS; i++) dots += '<div class="qn-tn-dot' + (i === 0 ? " center" : "") + '" data-step="' + i + '"></div>';
+        for (var i = -GM_STEPS; i <= GM_STEPS; i++) dots += '<div class="qn-tn-dot' + (i === 0 ? " center" : (i % 8 === 0 ? " m" : (i % 4 === 0 ? " q" : ""))) + '" data-step="' + i + '"></div>';
         box.innerHTML =
           '<div class="qn-tn-gm" data-d="wrap">' +
             '<div class="qn-tn-gm-note" data-d="note">—</div>' +
@@ -275,14 +274,18 @@
   }
 
   // ---------- マイク ----------
-  function holdFrames() { return Math.round(3 + (100 - sens) / 100 * 12); }
+  // 表示を残す時間はHold設定(既定1.5秒。33msフレーム換算)。感度は「拾う最小音量」だけを決める
+  function holdFrames() { return Math.round(hold * 1000 / 33); }
+  // 感度0%:RMS0.01 → 100%:0.0004(対数で補間)。小さい音は周期性チェック(MIN_CLARITY)で雑音を弾く
+  var MIN_CLARITY = 0.6;
+  function minRms() { return 0.01 * Math.pow(0.04, sens / 100); }
   function smoothFactor() {
     var f = 0.1 + (smooth / 100) * 0.5;
     return 1 - (1 - f) * (1 - f);
   }
   function onMicFrame(res) {
     var freq = res.freq;
-    window.QNApps.setMicLevel(refs.micPill, res.rms < 0.005 ? 0 : Math.min(5, 1 + Math.floor(res.rms * 15)));
+    window.QNApps.setMicLevel(refs.micPill, res.rms < 0.0006 ? 0 : Math.min(5, 1 + Math.floor(res.rms * 15)));
     if (freq === -1 || freq < 30 || freq > 2000) {
       silenceFrames++;
       if (silenceFrames === holdFrames()) resetReadout();
@@ -298,6 +301,11 @@
   function updateMicUi() {
     if (!refs.micBtn) return;
     refs.micBtn.classList.toggle("is-active", micRunning);
+    if (refs.bigMic) {
+      refs.bigMic.classList.toggle("is-active", micRunning);
+      refs.bigMic.setAttribute("aria-pressed", micRunning ? "true" : "false");
+      setText(refs.bigMicLabel, micRunning ? "MIC ON" : "MIC OFF");
+    }
     refs.display.hidden = !micRunning;
     refs.prompt.hidden = micRunning;
     refs.micPill.hidden = !micRunning;
@@ -306,18 +314,22 @@
     try { if (window.QNWake) window.QNWake.set("tuner", micRunning); } catch (e) {}
   }
 
-  async function startMic() {
+  // auto=true: 開いた直後の自動ON。ブラウザが音声開始を許さない(AudioContextが止まったまま)なら静かに諦め、OFFのまま大きなMICボタンに任せる
+  async function startMic(auto) {
     if (micRunning || micStarting) return;
     micStarting = true;
     refs.micError.textContent = "";
-    var session = core.createAnalysisSession({ fftSize: 2048, onFrame: onMicFrame });
+    var session = core.createAnalysisSession({ fftSize: 2048, onFrame: onMicFrame, getMinRms: minRms, minClarity: MIN_CLARITY });
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error("nomedia");
       await session.startFromMic();
+      if (session.state() !== "running") await new Promise(function (r) { setTimeout(r, 400); });
+      if (auto && session.state() !== "running") throw new Error("suspended");
     } catch (err) {
       micStarting = false;
       session.stop();
       var name = err && err.name;
+      if (err && err.message === "suspended") { updateMicUi(); return; }
       refs.micError.textContent = (err && err.message === "nomedia") ? "マイクを使えません（HTTPSで開いてください）"
         : (name === "NotFoundError" ? "マイクが見つかりません" : "マイクへのアクセスが許可されませんでした");
       updateMicUi();
@@ -447,13 +459,29 @@
   }
 
   // ---------- 感度・スムージング ----------
+  // 項目名と説明は設定パネル(QNSettingsUI)と同じ表示。値は「‹ 値 ›」(10%刻み。下段バーの−/+と同じ刻み)
+  var sensUI = null;
+  function buildSensPanel() {
+    if (!window.QNSettingsUI || !refs.sensBox) return;
+    sensUI = QNSettingsUI.build([{ title: "マイク入力", rows: [
+      { label: "Sensitivity", hint: "小さい音をどこまで拾うか。上げるほど弱い音にも反応します", type: "range", min: 0, max: 100, step: 5, unit: "%",
+        get: function () { return sens; }, set: function (v) { setSens(v); } },
+      { label: "Smoothing", hint: "表示の揺れをどこまでならすか。上げるほど滑らかに追従します", type: "range", min: 0, max: 100, step: 5, unit: "%",
+        get: function () { return smooth; }, set: function (v) { setSmooth(v); } },
+      { label: "Auto start", hint: "TUNERを開いたときに、マイクを自動でONにします", type: "switch",
+        get: function () { return autoStart; }, set: function (on) { autoStart = !!on; try { localStorage.setItem(KEY_AUTO, on ? "1" : "0"); } catch (e) {} } }
+    ] }, { title: "表示", rows: [
+      { label: "Hold", hint: "音が消えたあと、表示を残す時間。長いほどゆっくり消えます", type: "range", min: HOLD_MIN, max: HOLD_MAX, step: 0.05, dec: 2, unit: " 秒",
+        mark: HOLD_DEFAULT, markLabel: "推奨", get: function () { return hold; }, set: function (v) { setHold(v); } }
+    ] }]);
+    refs.sensBox.appendChild(sensUI.el);
+  }
   function syncSliders() {
-    refs.sensRange.value = sens; refs.smoothRange.value = smooth;
-    setRangeProgress(refs.sensRange); setRangeProgress(refs.smoothRange);
-    refs.sensLabel.textContent = sens; refs.smoothLabel.textContent = smooth;
     setText(refs.sensVal, sens + "%"); setText(refs.smoothVal, smooth + "%");
+    if (sensUI) sensUI.sync();
   }
   function setSens(v) { sens = Math.max(0, Math.min(100, v)); saveVal(KEY_SENS, sens); syncSliders(); }
+  function setHold(v) { hold = Math.max(HOLD_MIN, Math.min(HOLD_MAX, Math.round(v * 20) / 20)); try { localStorage.setItem(KEY_HOLD, String(hold)); } catch (e) {} syncSliders(); }
   function setSmooth(v) { smooth = Math.max(0, Math.min(100, v)); saveVal(KEY_SMOOTH, smooth); syncSliders(); }
 
   // ---------- Displayパネル(プレビュー付き選択カード) ----------
@@ -578,6 +606,7 @@
   // ---------- マウント・表示/非表示 ----------
   function bindEvents() {
     refs.micBtn.addEventListener("click", function () { haptic(); toggleMic(); });
+    refs.bigMic.addEventListener("click", function () { haptic(); toggleMic(); });
     refs.toneStopBtn.addEventListener("click", function () { haptic(); stopTone(); });
     refs.toneNowStop.addEventListener("click", function () { haptic(); stopTone(); });
     refs.displayBtn.addEventListener("click", function () { haptic(); cycleDisplay(); });
@@ -605,8 +634,6 @@
       haptic();
       setDisplay(b.getAttribute("data-style"));
     });
-    refs.sensRange.addEventListener("input", function () { setSens(parseInt(refs.sensRange.value, 10)); });
-    refs.smoothRange.addEventListener("input", function () { setSmooth(parseInt(refs.smoothRange.value, 10)); });
     refs.sensDown.addEventListener("click", function () { haptic(); setSens(sens - 10); });
     refs.sensUp.addEventListener("click", function () { haptic(); setSens(sens + 10); });
     refs.smoothDown.addEventListener("click", function () { haptic(); setSmooth(smooth - 10); });
@@ -622,6 +649,7 @@
     bindEvents();
     renderPresetTabs(); renderTuningTabs(); renderStringList();
     renderDisplayChoices();
+    buildSensPanel();
     syncSliders();
     renderMainDisplay();
     showToneNow(null, 0);
@@ -632,6 +660,7 @@
     bindKeys(true);
     setPanel(panelState || (isSp() ? "none" : "tone"));
     applyCollapse();
+    if (autoStart && !micRunning && !micStarting) startMic(true);
   }
 
   function onHide() {

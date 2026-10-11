@@ -1,13 +1,15 @@
-// player-bars.js — 可変長シークバー。1本=BAR_SEC秒(5/10/15/30/60)を曲末まで縦に並べ、見えている行だけDOM化する(仮想スクロール)。スクロール入れ物=#vbarScroll、行の親=#vbarRows。
+// player-bars.js — 可変長シークバー。1本=BAR_SEC秒(1秒刻みの整数)を曲末まで縦に並べ、見えている行だけDOM化する(仮想スクロール)。スクロール入れ物=#vbarScroll、行の親=#vbarRows。
 // 規約: 行番号は0始まり。行内の横位置は「行の開始からBAR_SEC秒=0〜100%」(最終行は途中まで)。他ファイルは行DOMを直接探さず QNBars.* を使う。
 // 描画はpcv2WaveLoop(player-ui-pc-v2.js、100ms間引き)から draw() を呼ぶ。rAFループを新設しない。依存: player-core.js(audio, pins, waveformPeaks, hexToRgba, MARKER_COLOR_PALETTE)。
 // 行が作られたら decorateBarRow(el,row)(player-markers.js)が線/A-B/区間ハイライトを付ける。
 
 const QNBars = (function () {
-  const OPTIONS = [5, 10, 15, 30, 60];
+  // バー長は1秒刻みの整数。上限=曲長/「Rows Autoで画面に収まる行数」(=一番俯瞰で見られる秒数)。曲が決まるまでは240
+  const SEC_MAX_LIMIT = 3600;
+  const fmtSec = (v) => v >= 60 ? (v % 60 ? Math.floor(v / 60) + "m" + (v % 60) + "s" : (v / 60) + "min") : v + "s"; // 60s以上は分表記(保存値は秒)
   const STORE_KEY = "qn_bar_sec";
   const ROWS_KEY = "qn_bar_rows";
-  const ROWS_OPTIONS = [0, 3, 4, 5, 6, 8];   // 0=自動(CSSの既定寸法)。1画面に並べる本数
+  const ROWS_OPTIONS = [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];   // 0=自動(CSSの既定寸法)。1画面に並べる本数
   const GAP_RATIO = 28 / 44;
   const DEFAULT_SEC = 5;
   const BUFFER_ROWS = 2;
@@ -16,6 +18,11 @@ const QNBars = (function () {
   const WAVE_KEY = "qn_bar_wave";
   let waveShape = "mirror";
   try { if (localStorage.getItem(WAVE_KEY) === "bottom") waveShape = "bottom"; } catch (e) {}
+  // 【v4.27.0 プロトタイプ】表示モード: wave=波形 / chord=コード(和音)。コードは QNChords(player-chords.js)の区間を波形の代わりに描く
+  const VIEW_KEY = "qn_bar_view";
+  let viewMode = "wave";
+  try { if (localStorage.getItem(VIEW_KEY) === "chord") viewMode = "chord"; } catch (e) {}
+  let fontCache = null;
   const PAUSE_KEY = "qn_bar_follow_pause";
   const PAUSE_DEFAULT = 6;
   const PAUSE_MIN = 1;
@@ -59,7 +66,7 @@ const QNBars = (function () {
   function readSec() {
     try {
       const v = parseInt(localStorage.getItem(STORE_KEY), 10);
-      if (OPTIONS.indexOf(v) >= 0) return v;
+      if (v >= 1 && v <= SEC_MAX_LIMIT) return v;
     } catch (e) {}
     return DEFAULT_SEC;
   }
@@ -187,7 +194,7 @@ const QNBars = (function () {
   }
 
   function stripRow(el) {
-    el.querySelectorAll(".vbar-line, .vbar-ab-pt, .segmentHighlight, .segmentHighlight-preroll").forEach(n => n.remove());
+    el.querySelectorAll(".vbar-line, .vbar-ab-pt, .segmentHighlight, .segmentHighlight-preroll, .segmentSkip").forEach(n => n.remove());
   }
 
   function releaseRow(r) {
@@ -262,7 +269,9 @@ const QNBars = (function () {
     const v = (isFinite(d) && d > 0) ? d : 0;
     if (v !== dur) {
       dur = v;
+      if (dur) { const mx = Math.max(1, maxSec()); if (sec > mx) sec = mx; } // 短い曲では俯瞰上限を超えない(保存値は書き換えない)
       rebuild();
+      notifyRange();
     }
   }
 
@@ -330,6 +339,10 @@ const QNBars = (function () {
     const W = cv.width;
     const H = cv.height;
     cx.clearRect(0, 0, W, H);
+    if (viewMode === "chord") {
+      const segs = chordSegs();
+      if (segs) { paintChordRow(el, r, played, accent, segs); return; }
+    }
     const vals = rowPeaks(r);
     if (!vals) return;
     const n = vals.length;
@@ -356,6 +369,18 @@ const QNBars = (function () {
       path.closePath();
     }
 
+    // コードモードの解析待ち中は波形を薄く出しておく
+    if (viewMode === "chord") cx.globalAlpha = 0.3;
+    fillPath(el, r, played, accent, path, n);
+    cx.globalAlpha = 1;
+  }
+
+  // 行の輪郭(path)を、色が変わる区間(再生済み/未再生/マーカー色)ごとにclipして塗る。波形・コードで共通
+  function fillPath(el, r, played, accent, path, n) {
+    const cx = el._cx;
+    const H = el._cv.height;
+    const W = el._cv.width;
+    const step = W / g.nBars;
     const barDur = sec / g.nBars;
     const t0 = r * sec;
     const ms = markersList;
@@ -387,6 +412,104 @@ const QNBars = (function () {
       }
     }
     flush(n);
+  }
+
+  // ---------- コードモードの描画 ----------
+  function chordSegs() {
+    if (typeof QNChords === "undefined") return null;
+    const s = QNChords.segments();
+    return s && s.length ? s : null;
+  }
+
+  // 左右の丸み(rl/rr)を別々に指定できる角丸四角。行の端で切れている側は丸めない
+  function blockPath(path, x, y, w, h, rl, rr) {
+    rl = Math.min(rl, w / 2, h / 2);
+    rr = Math.min(rr, w / 2, h / 2);
+    path.moveTo(x + rl, y);
+    path.lineTo(x + w - rr, y);
+    if (rr) path.arcTo(x + w, y, x + w, y + rr, rr); else path.lineTo(x + w, y);
+    path.lineTo(x + w, y + h - rr);
+    if (rr) path.arcTo(x + w, y + h, x + w - rr, y + h, rr); else path.lineTo(x + w, y + h);
+    path.lineTo(x + rl, y + h);
+    if (rl) path.arcTo(x, y + h, x, y + h - rl, rl); else path.lineTo(x, y + h);
+    path.lineTo(x, y + rl);
+    if (rl) path.arcTo(x, y, x + rl, y, rl); else path.lineTo(x, y);
+    path.closePath();
+  }
+
+  function markerColorAt(t) {
+    let hex = null;
+    for (let i = 0; i < markersList.length && markersList[i].t <= t; i++) hex = (markersList[i].color && MARKER_COLOR_PALETTE[markersList[i].color]) || null;
+    return hex;
+  }
+
+  // 塗りの色が明るい時は黒、それ以外は白の文字にする(#rrggbbのみ判定。他の書式は白)
+  function textOn(fill) {
+    const m = /^#([0-9a-f]{6})$/i.exec(fill || "");
+    if (!m) return "#fff";
+    const v = parseInt(m[1], 16);
+    const lum = (0.299 * (v >> 16) + 0.587 * ((v >> 8) & 255) + 0.114 * (v & 255)) / 255;
+    return lum > 0.62 ? "#111" : "#fff";
+  }
+
+  function paintChordRow(el, r, played, accent, segs) {
+    const cx = el._cx;
+    const W = el._cv.width;
+    const H = el._cv.height;
+    const t0 = r * sec;
+    const t1 = t0 + sec;
+    const barDur = sec / g.nBars;
+    const n = Math.max(1, Math.min(g.nBars, Math.ceil((dur - t0) / barDur - 1e-9)));
+    const xOf = t => (t - t0) / sec * W;
+    const xEnd = Math.min(W, xOf(Math.min(dur, t1)));
+    const gap = Math.max(1, 1.5 * g.dpr);
+    const by = H * 0.14;
+    const bh = H * 0.72;
+    const rad = Math.min(6 * g.dpr, bh / 3);
+    let lo = 0;
+    let hi = segs.length;
+    while (lo < hi) { const m = (lo + hi) >> 1; if (segs[m].t1 <= t0) lo = m + 1; else hi = m; }
+    const path = new Path2D();
+    const vis = [];
+    for (let i = lo; i < segs.length && segs[i].t0 < t1; i++) {
+      const s = segs[i];
+      const startsHere = s.t0 >= t0 - 1e-6;
+      const endsHere = s.t1 <= t1 + 1e-6;
+      const x0 = Math.max(0, xOf(s.t0)) + (startsHere ? gap / 2 : 0);
+      const x1 = Math.min(xEnd, xOf(s.t1)) - (endsHere ? gap / 2 : 0);
+      if (x1 - x0 < 1) continue;
+      if (s.name === "N") {                       // コード無し/無音は細い線だけ
+        const lh = Math.max(1, g.dpr);
+        path.rect(x0, H / 2 - lh / 2, x1 - x0, lh);
+        continue;
+      }
+      blockPath(path, x0, by, x1 - x0, bh, startsHere ? rad : 0, endsHere ? rad : 0);
+      vis.push({ s: s, x0: x0, x1: x1 });
+    }
+    cx.globalAlpha = 1;
+    fillPath(el, r, played, accent, path, n);
+
+    // コード名。ブロックの塗り(再生済み=アクセント/マーカー色、未再生=薄い白)に合わせて文字色を決める
+    const fs = Math.min(bh * 0.52, 20 * g.dpr);
+    if (fs < 9 * g.dpr) return;
+    if (!fontCache) fontCache = getComputedStyle(document.body).fontFamily || "sans-serif";
+    cx.font = "600 " + fs + "px " + fontCache;
+    cx.textAlign = "center";
+    cx.textBaseline = "middle";
+    for (let i = 0; i < vis.length; i++) {
+      const v = vis[i];
+      const avail = v.x1 - v.x0 - 8 * g.dpr;
+      let label = v.s.name;
+      if (cx.measureText(label).width > avail) {
+        label = label.match(/^[A-G][#b]?/)[0];     // 入りきらない時は根音だけ
+        if (cx.measureText(label).width > avail) continue;
+      }
+      const tm = (Math.max(v.s.t0, t0) + Math.min(v.s.t1, t1)) / 2;
+      const bi = Math.min(n - 1, Math.floor((tm - t0) / barDur));
+      const mc = markerColorAt(tm);
+      cx.fillStyle = bi < played ? textOn(mc || accent) : "rgba(255,255,255,0.88)";
+      cx.fillText(label, (v.x0 + v.x1) / 2, by + bh / 2 + g.dpr * 0.5);
+    }
   }
 
   function playedBars(r, ct) {
@@ -434,7 +557,7 @@ const QNBars = (function () {
       markersList = pins.filter(p => p.enabled).sort((a, b) => a.t - b.t);
     }
 
-    const sig = accent + "|" + ms + "|" + peaksVer + "|" + g.nBars + "|" + g.barW + "|" + g.barH + "|" + g.dpr + "|" + sec + "|" + waveShape + "|" + (window.__qnWaveformDrawCount || 0);
+    const sig = accent + "|" + ms + "|" + peaksVer + "|" + g.nBars + "|" + g.barW + "|" + g.barH + "|" + g.dpr + "|" + sec + "|" + waveShape + "|" + (window.__qnWaveformDrawCount || 0) + "|" + viewMode + "|" + (typeof QNChords !== "undefined" ? QNChords.version() : 0);
     rows.forEach((el, r) => {
       const played = playedBars(r, ct);
       const rs = sig + "|" + played;
@@ -500,13 +623,16 @@ const QNBars = (function () {
     rowsVisible = n;
     try { localStorage.setItem(ROWS_KEY, String(n)); } catch (e) {}
     geomDirty = true;
+    if (dur) { const mx = Math.max(1, maxSec()); if (sec > mx) setSec(mx); } // 行数が増えて上限が縮んだら、今のバー長を上限へ丸める
+    notifyRange();
     draw(true);
     if (dur && scrollEl.clientHeight) scrollEl.scrollTop = Math.max(0, playheadScrollTarget(audio.currentTime || 0));
     resumeFollow();
   }
 
   function setSec(n) {
-    if (OPTIONS.indexOf(n) < 0 || n === sec) return;
+    n = Math.round(n);
+    if (!(n >= 1) || n > Math.max(1, maxSec()) || n === sec) return;
     sec = n;
     try { localStorage.setItem(STORE_KEY, String(n)); } catch (e) {}
     syncDur();
@@ -521,6 +647,43 @@ const QNBars = (function () {
     }
   }
 
+  // Rows=Auto(CSS既定の寸法)で画面に入る行数。Rows指定中でも既定寸法で数える
+  function autoVis() {
+    if (!scrollEl || !scrollEl.clientHeight) return 0;
+    const h0 = containerEl.style.getPropertyValue("--qn-bar-h"), g0 = containerEl.style.getPropertyValue("--qn-bar-gap");
+    containerEl.style.removeProperty("--qn-bar-h");
+    containerEl.style.removeProperty("--qn-bar-gap");
+    const cs = getComputedStyle(containerEl);
+    const num = (name, def) => { const v = parseFloat(cs.getPropertyValue(name)); return isFinite(v) ? v : def; };
+    const bh = num("--qn-bar-h", 44), gp = num("--qn-bar-gap", 28), pt = num("--qn-bar-pad-top", 26), pb = num("--qn-bar-pad-bottom", 12);
+    if (h0) containerEl.style.setProperty("--qn-bar-h", h0);
+    if (g0) containerEl.style.setProperty("--qn-bar-gap", g0);
+    return Math.max(1, Math.floor((scrollEl.clientHeight - pt - pb + gp) / (bh + gp)));
+  }
+  function maxSec() {
+    if (!dur) return 240;
+    const v = rowsVisible > 0 ? rowsVisible : autoVis(); // Rows指定ならその本数、Autoなら画面に入る本数
+    return v ? Math.max(2, Math.ceil(dur / v - 1e-6)) : 240;
+  }
+  // スライダー/ステッパーの値(1秒刻み、1〜maxSec)。現在値が範囲外なら末尾に足して表示を崩さない
+  function secValues() {
+    const mx = Math.max(1, maxSec()), a = [];
+    for (let i = 1; i <= mx; i++) a.push(i);
+    if (sec > mx) a.push(sec);
+    return a;
+  }
+  function notifyRange() { if (typeof window.qnBarStripSync === "function") window.qnBarStripSync(); }
+
+  // Fit: 曲全体が今の画面に収まる最小のバー長(Rows指定があればその本数、Autoなら画面に入る本数)
+  function fit() {
+    syncDur();
+    if (!dur) return;
+    if (geomDirty) measure();
+    const vis = rowsVisible > 0 ? rowsVisible : Math.max(1, Math.floor((g.viewH - g.padTop - g.padBottom + g.gap) / g.pitch));
+    setSec(Math.max(1, Math.min(maxSec(), Math.ceil(dur / vis - 1e-6))));
+    scrollEl.scrollTop = 0;
+  }
+
   function getWaveShape() { return waveShape; }
   function setWaveShape(v) {
     waveShape = v === "bottom" ? "bottom" : "mirror";
@@ -528,6 +691,18 @@ const QNBars = (function () {
     peakCache.clear(); geomDirty = true;
   }
   function getFollow() { return followOn; }
+
+  // 表示モード(wave/chord)。chordにした時だけコード解析を始める。選択は端末に保存
+  function getViewMode() { return viewMode; }
+  function setViewMode(v) {
+    v = v === "chord" ? "chord" : "wave";
+    if (v === viewMode) return;
+    viewMode = v;
+    try { localStorage.setItem(VIEW_KEY, v); } catch (e) {}
+    if (v === "chord" && typeof QNChords !== "undefined") QNChords.ensure();
+    draw(true);
+    if (typeof window.qnBarViewSync === "function") window.qnBarViewSync();
+  }
 
   function setFollow(on) {
     followOn = !!on;
@@ -602,7 +777,7 @@ const QNBars = (function () {
       new ResizeObserver(() => {
         geomDirty = true;
         if (roRaf) return;
-        roRaf = requestAnimationFrame(() => { roRaf = 0; draw(true); });
+        roRaf = requestAnimationFrame(() => { roRaf = 0; draw(true); notifyRange(); });
       }).observe(scrollEl);
     }
     window.addEventListener("resize", () => { geomDirty = true; });
@@ -613,7 +788,9 @@ const QNBars = (function () {
   }
 
   return {
-    OPTIONS,
+    secValues,
+    fmtSec,
+    fit,
     getSec,
     setSec,
     ROWS_OPTIONS,
@@ -626,7 +803,7 @@ const QNBars = (function () {
     onTrackLoaded,
     createGearButton,
     setOpenSettings(fn) { openSettingsFn = fn; },
-    getFollow, setFollow, getPause, setPause, getWaveShape, setWaveShape,
+    getFollow, setFollow, getPause, setPause, getWaveShape, setWaveShape, getViewMode, setViewMode,
     PAUSE_MIN, PAUSE_MAX,
     rowOf,
     pctInRow,

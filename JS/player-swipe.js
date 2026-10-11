@@ -1,9 +1,12 @@
-// player-swipe.js — PLAYERのLibrary/Markers一覧(SP幅)の横スワイプボタン。実体は qn-apps.js の QNApps.swipeRows。YouTube側は qn-app-youtube.js で同じ仕組みを使う
+// player-swipe.js — PLAYERのLibrary/Markers一覧(SP幅)の横スワイプボタン + シークバー上のタイトルの縦スワイプ(前/次トラック)。実体は qn-apps.js の QNApps.swipeRows。YouTube側は qn-app-youtube.js で同じ仕組みを使う
 (function () {
   "use strict";
 
   function bind() {
     if (!window.QNApps || typeof window.QNApps.swipeRows !== "function") return;
+    // シークバー上のタイトル: 上へスワイプ=次のトラック、下へ=前のトラック(タッチのみ)
+    window.QNApps.vSwipe(document.getElementById("pcV2HeadRow"), function () { playNextTrack(); }, function () { playPrevTrack(); });
+    window.QNApps.vSwipe(document.getElementById("appTitle"), function () { playNextTrack(); }, function () { playPrevTrack(); });
     var box = document.getElementById("playlistBox");
     var pinListEl = document.getElementById("pinList");
     function inEdit(cls) {

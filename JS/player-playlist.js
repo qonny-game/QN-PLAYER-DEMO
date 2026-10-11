@@ -1,8 +1,13 @@
 // player-playlist.js — ファイル追加/一覧描画/削除/ドラッグ並び替え/playTrackAt/前後送り。関数宣言のみなので読込順は実行時に影響しない(推奨: core→playlist→ui-shared)。
 // 依存: hapticTap,hapticWarning,loadFile,updatePlayButtonState(ui-shared)、savePlaylistTrack,deletePlaylistTrack,persistPlaylistOrder,setAppTitle(core)
 
+// 取り込み可能な形式。動画(mp4等)は音声トラックだけを再生に使う(audio要素で再生できる形式のみ。実際に鳴るかはブラウザ依存)。index.htmlの#fileInput acceptも同じ拡張子に揃えること
+function isSupportedMediaFile(f) {
+  return /^(audio|video)\//.test(f.type || "") || /\.(mp3|wav|ogg|oga|m4a|aac|flac|webm|opus|mp4|m4v|mov|3gp|3g2|mkv|mka|weba|ogv|aif|aiff|aifc|caf|mp2|mpga|amr)$/i.test(f.name);
+}
+
 function addFilesToPlaylist(files) {
-  const audioFiles = files.filter(f => f.type.startsWith("audio/") || /\.(mp3|wav|ogg|oga|m4a|aac|flac|webm|opus)$/i.test(f.name));
+  const audioFiles = files.filter(isSupportedMediaFile);
   if (audioFiles.length === 0) return;
 
   // 無料版: ライブラリ3曲まで。超過時はアンロックモーダルでブロック(既存は消さない)
@@ -325,10 +330,44 @@ function renderNowPlaying() {
   if (track) host.appendChild(buildPlaylistRow(track, currentPlaylistIndex, false, true));
 }
 
+// シークバー上(#pcV2WaveHead)の「再生中の曲」: Libraryと全く同じ行(サムネ・曲名・アーティスト)を出す。曲が無い時は従来の#appTitle("No file loaded")。
+// PC幅だけ SKIP / PIN / EDIT のボタンも並べる(SP幅はCSSで非表示)。時刻は#timeDisplay(同じ行の右に並べる)。再描画はrenderPlaylistから(曲の変更・曲名編集・ピン・SKIPの後)
+function renderHeadRow() {
+  const host = document.getElementById("pcV2HeadRow");
+  if (!host) return;
+  const track = currentPlaylistIndex >= 0 ? playlist[currentPlaylistIndex] : null;
+  const head = document.getElementById("pcV2WaveHead");
+  if (head) head.classList.toggle("has-track", !!track);
+  host.innerHTML = "";
+  if (!track) return;
+  const idx = currentPlaylistIndex;
+  const row = buildPlaylistRow(track, idx, false, true);
+  // PC幅: SKIP(Libraryの行と同じ部品) / PIN(行のピンボタンをそのまま表示) / EDIT(曲名の編集を開始)
+  const actCell = document.createElement("div");
+  actCell.className = "playlist-act-cell";
+  const skipBtn = document.createElement("button");
+  skipBtn.type = "button";
+  skipBtn.className = "playlist-act-btn is-mskip" + (track.enabled ? "" : " is-on");
+  skipBtn.innerHTML = window.QN_ROW_ACT.html("mskip", !track.enabled);
+  skipBtn.title = track.enabled ? "Included in auto-advance (click to skip)" : "Skipped during auto-advance (click to include)";
+  skipBtn.onclick = (e) => { e.stopPropagation(); track.enabled = !track.enabled; renderPlaylist(); persistPlaylistOrder(); };
+  actCell.appendChild(skipBtn);
+  row.appendChild(actCell);
+  const editBtn = document.createElement("button");
+  editBtn.type = "button";
+  editBtn.className = "playlist-favorite-btn playlist-head-edit";
+  editBtn.title = "Edit title";
+  editBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>';
+  editBtn.onclick = (e) => { e.stopPropagation(); const f = row.querySelector(".playlist-title"); if (f && f.startEdit) f.startEdit(); };
+  row.appendChild(editBtn);
+  host.appendChild(row);
+}
+
 function renderPlaylist() {
   const box = document.getElementById("playlistBox");
   const info = document.getElementById("playlistInfo");
   if (info) info.textContent = `${playlist.length} track${playlist.length === 1 ? "" : "s"}`;
+  renderHeadRow();
   if (!box) return;
 
   const editMode = typeof isPlaylistEditMode === "function" && isPlaylistEditMode();
@@ -360,8 +399,8 @@ function renderPlaylist() {
   // 本体Library同期(player-sync.js): 「未インポート」セクションと同期ステータス行
   if (window.QNLibSync) window.QNLibSync.decorateLibrary(box, editMode);
   renderNowPlaying();
+  renderHeadRow();
 
-  syncAutoNextScopeButton();
   setupPlaylistDragReorder(box);
   setupFolderDragReorder(box);
   if (typeof window.playlistReapplySelection === "function") window.playlistReapplySelection();
@@ -484,31 +523,6 @@ function addPlaylistFolderInteractive() {
   if (field && typeof field.startEdit === "function") field.startEdit();
   return folder;
 }
-
-// Auto Nextの範囲ボタン(Libraryの見出し行)。フォルダが1つも無い間は隠す
-function syncAutoNextScopeButton() {
-  const btn = document.getElementById("playlistScopeBtn");
-  if (!btn) return;
-  const has = playlistFolders.length > 0;
-  btn.hidden = !has;
-  if (!has) return;
-  const scope = getAutoNextScope();
-  const label = scope === "folder" ? "NEXT: FOLDER" : "NEXT: ALL";
-  const txt = btn.querySelector(".playlist-scope-label");
-  if (txt && txt.textContent !== label) txt.textContent = label;
-  btn.dataset.scope = scope;
-  btn.title = scope === "folder" ? "Auto Next: 同じフォルダ内だけ（タップで全体に切替）" : "Auto Next: ライブラリ全体（タップでフォルダ内に切替）";
-}
-
-(function setupAutoNextScopeButton() {
-  const btn = document.getElementById("playlistScopeBtn");
-  if (!btn) return;
-  btn.addEventListener("click", () => {
-    hapticTap();
-    setAutoNextScope(getAutoNextScope() === "folder" ? "all" : "folder");
-    syncAutoNextScopeButton();
-  });
-})();
 
 // 曲の移動先ピッカー(EDIT時のMOVEボタンから)。anchorの上に小さなメニュー。onPick(folderId|null)
 function showFolderPicker(anchor, onPick) {
@@ -640,7 +654,7 @@ function findEnabledTrackIndex(fromIndex, direction, wrapAround) {
   if (playlist.length === 0) return -1;
   // 【v3.24.0】Auto Next範囲: フォルダがあり設定が"folder"なら、今の曲と同じフォルダ(連続グループ)内だけで進む/戻る/ラップする
   let lo = 0, hi = playlist.length - 1;
-  if (playlistFolders.length > 0 && getAutoNextScope() === "folder" && playlist[fromIndex]) {
+  if (playlistFolders.length > 0 && repeatMode === "folder" && playlist[fromIndex]) {
     const fid = trackFolderId(playlist[fromIndex]);
     lo = hi = fromIndex;
     while (lo > 0 && trackFolderId(playlist[lo - 1]) === fid) lo--;
@@ -672,7 +686,7 @@ function seekToTrackStart() {
 function playPrevTrack() {
   if (currentPlaylistIndex < 0) return;
   hapticTap();
-  const wrapAround = repeatMode === "all";
+  const wrapAround = repeatMode === "all" || repeatMode === "folder";
   const prevIndex = findEnabledTrackIndex(currentPlaylistIndex, -1, wrapAround);
   if (prevIndex !== -1) playTrackAt(prevIndex);
 }
@@ -680,7 +694,7 @@ function playPrevTrack() {
 function playNextTrack() {
   if (currentPlaylistIndex < 0) return;
   hapticTap();
-  const wrapAround = repeatMode === "all";
+  const wrapAround = repeatMode === "all" || repeatMode === "folder";
   const nextIndex = findEnabledTrackIndex(currentPlaylistIndex, 1, wrapAround);
   if (nextIndex !== -1) playTrackAt(nextIndex);
 }
