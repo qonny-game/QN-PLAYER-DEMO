@@ -31,6 +31,7 @@ var QNChordEdit = (function () {
       '<div class="qn-ce-sec"><div class="qn-ce-lab">Type</div><div class="qn-ce-chips" data-k="type"></div></div>' +
       '<div class="qn-ce-sec"><div class="qn-ce-lab">Bass</div><div class="qn-ce-chips qn-ce-roots" data-k="bass"></div></div>' +
       '<div class="qn-ce-actions">' +
+        '<button type="button" class="qn-ce-btn" data-a="play">Play from here</button>' +
         '<button type="button" class="qn-ce-btn" data-a="none">No chord</button>' +
         '<button type="button" class="qn-ce-btn" data-a="split">Split here</button>' +
         '<button type="button" class="qn-ce-btn" data-a="merge">Merge next</button>' +
@@ -79,6 +80,14 @@ var QNChordEdit = (function () {
     if (!s) return;
     const a = b.dataset.a;
     if (a === "close") { close(); return; }
+    if (a === "play") {                                        // タップした位置から再生(編集中はタップでシークしないため)
+      if (typeof beginSeek === "function") beginSeek();
+      audio.currentTime = tapT;
+      if (typeof prevTime !== "undefined") prevTime = tapT;
+      audio.play();
+      if (typeof updatePlayButtonState === "function") updatePlayButtonState();
+      return;
+    }
     if (a === "none") { QNChords.setChord(s, { root: -1, q: "", bass: -1 }); return; }
     if (a === "split") { QNChords.splitAt(Math.round(tapT * 10) / 10); return; }
     if (a === "merge") { QNChords.mergeNext(s); return; }

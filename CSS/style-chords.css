@@ -36,3 +36,15 @@
 /* 編集中は行をタップするとシークせずポップアップが開く。それが分かるように行にカーソルとアウトラインを付ける */
 #vbarContainer.qn-chord-editing .vbar { cursor: pointer; }
 #vbarContainer.qn-chord-editing .vwave { outline: 1px dashed var(--border-strong); outline-offset: 1px; }
+
+/* 区間の長さ調整(Editモード): 境目に乗せると出るつまみ(.qn-chord-handle。player-bars.jsが行の中に1つだけ差し込む)。ドラッグ中は時刻を上に出す */
+#vbarContainer.qn-chord-resize .vbar { cursor: ew-resize; }
+.qn-chord-handle {
+  position: absolute; top: 4%; bottom: 4%; width: 6px; margin-left: -3px; box-sizing: border-box; pointer-events: none; z-index: 5;
+  background: var(--text-pure-white); border: 1px solid var(--accent-primary); border-radius: var(--radius-pill); box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35);
+}
+.qn-chord-handle.is-drag { background: var(--accent-primary); border-color: var(--text-pure-white); }
+.qn-chord-handle.is-drag::after {
+  content: attr(data-t); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 3px; padding: 1px 6px;
+  font-size: var(--fs-micro); font-weight: 600; white-space: nowrap; color: var(--text-pure-white); background: #16161b; border: 1px solid var(--border-strong); border-radius: var(--radius-pill);
+}

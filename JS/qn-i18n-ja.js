@@ -201,6 +201,7 @@
     "Bass": "ベース音",
     "none": "なし",
     "No chord": "コード無し",
+    "Play from here": "ここから再生",
     "Split here": "ここで分割",
     "Merge next": "次と結合",
     "Reset all": "すべて元に戻す",

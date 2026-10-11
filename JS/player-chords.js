@@ -323,6 +323,19 @@ var QNChords = (function () {
     return true;
   }
 
+  // 区間の境目(prev=[p0,t]とnext=[t,n1])をtへ動かす。pc/ncは両側のコード。ドラッグ中は保存せず(final=falseで描き直しだけ)、離した時(final=true)に保存
+  function moveBoundary(p0, n1, t, pc, nc, final) {
+    if (t - p0 < MIN_PIECE || n1 - t < MIN_PIECE) return false;
+    fillUser(p0, n1, null);
+    user.push({ t0: p0, t1: t, root: pc.root, q: pc.q || "", bass: pc.bass });
+    user.push({ t0: t, t1: n1, root: nc.root, q: nc.q || "", bass: nc.bass });
+    compose();
+    ver++;
+    if (final) save();
+    notify("state");
+    return true;
+  }
+
   // segの範囲の修正を全部消してautoに戻す
   function resetSeg(seg) { fillUser(seg.t0, seg.t1, null); changed(); }
   function resetAll() { user = []; changed(); }
@@ -358,6 +371,8 @@ var QNChords = (function () {
     splitAt: splitAt,
     mergeNext: mergeNext,
     resetSeg: resetSeg,
+    moveBoundary: moveBoundary,
+    chordOf: chordOf,
     resetAll: resetAll,
     hasUser() { return user.length > 0; },
     // 表示名。mode="letter"|"degree"、shift=プレイヤーのKey操作の半音数(letterだけ移調。degreeは変わらない)

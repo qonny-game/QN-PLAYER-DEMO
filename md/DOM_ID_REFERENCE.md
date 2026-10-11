@@ -42,3 +42,4 @@ grep -o 'id="[a-zA-Z0-9]*"' JS/player-ui-pc-v2.js | sed 's/id="//;s/"//' | sort 
 - 設定の最下段に`.qn-set-version`（バージョン表記）。
 - `.qn-view-item`（設定帯`.qn-set-inline`内のView(Wave/Chord)項目。PC幅はラベルを隠す。`style-settings.css`）。
 - `#qnChordEdit`（コード修正ポップアップ。`player-chord-edit.js`/`style-chords.css`。Editモードでコードのブロックをタップすると開く）／`.qn-edit-item`（設定帯のEdit項目）／`#vbarContainer.qn-chord-editing`（編集中）。
+- `.qn-chord-handle`（Editモードで区間の境目に出るつまみ。行に1つだけ差し込む動的要素。`style-chords.css`）／`#vbarContainer.qn-chord-resize`（境目の上＝↔カーソル）。

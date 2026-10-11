@@ -195,7 +195,7 @@ const QNBars = (function () {
   }
 
   function stripRow(el) {
-    el.querySelectorAll(".vbar-line, .vbar-ab-pt, .segmentHighlight, .segmentHighlight-preroll, .segmentSkip").forEach(n => n.remove());
+    el.querySelectorAll(".vbar-line, .vbar-ab-pt, .segmentHighlight, .segmentHighlight-preroll, .segmentSkip, .qn-chord-handle").forEach(n => n.remove());
   }
 
   function releaseRow(r) {
@@ -494,6 +494,7 @@ const QNBars = (function () {
     }
     cx.globalAlpha = 1;
     fillPath(el, r, played, accent, path, n);
+    if (editMode) paintGrips(cx, segs, lo, t0, t1, xOf, xEnd, by, bh);
 
     // コード名(と候補)。ブロックの塗り(再生済み=アクセント/マーカー色、未再生=薄い白)に合わせて文字色を決める
     const mode = viewMode === "degree" ? "degree" : "letter";
@@ -551,6 +552,20 @@ const QNBars = (function () {
     }
   }
 
+  // 編集中だけ、区間の境目に小さなつまみ印を描く(ドラッグで長さを変えられる合図。タッチ端末はホバーが無いので常時出す)
+  function paintGrips(cx, segs, lo, t0, t1, xOf, xEnd, by, bh) {
+    cx.fillStyle = "rgba(255,255,255,0.55)";
+    const w = Math.max(1, g.dpr), h = bh * 0.34;
+    for (let i = Math.max(1, lo); i < segs.length && segs[i].t0 < t1; i++) {
+      const b = segs[i].t0;
+      if (b <= t0 + 1e-6 || b >= t1 - 1e-6) continue;
+      const x = xOf(b);
+      if (x > xEnd) continue;
+      cx.fillRect(x - w * 1.5, by + (bh - h) / 2, w, h);
+      cx.fillRect(x + w * 0.5, by + (bh - h) / 2, w, h);
+    }
+  }
+
   function chordAlts() { return typeof QNChords !== "undefined" && QNChords.getAlts(); }
 
   function playedBars(r, ct) {
@@ -598,7 +613,7 @@ const QNBars = (function () {
       markersList = pins.filter(p => p.enabled).sort((a, b) => a.t - b.t);
     }
 
-    const sig = accent + "|" + ms + "|" + peaksVer + "|" + g.nBars + "|" + g.barW + "|" + g.barH + "|" + g.dpr + "|" + sec + "|" + waveShape + "|" + (window.__qnWaveformDrawCount || 0) + "|" + viewMode + "|" + keyShift() + "|" + (typeof QNChords !== "undefined" ? QNChords.version() : 0);
+    const sig = accent + "|" + ms + "|" + peaksVer + "|" + g.nBars + "|" + g.barW + "|" + g.barH + "|" + g.dpr + "|" + sec + "|" + waveShape + "|" + (window.__qnWaveformDrawCount || 0) + "|" + viewMode + "|" + editMode + "|" + keyShift() + "|" + (typeof QNChords !== "undefined" ? QNChords.version() : 0);
     rows.forEach((el, r) => {
       const played = playedBars(r, ct);
       const rs = sig + "|" + played;
@@ -833,18 +848,125 @@ const QNBars = (function () {
     }
     window.addEventListener("resize", () => { geomDirty = true; });
   }
-  // コード修正モード: 行のタップ/長押し/スワイプ開始を、他のハンドラ(シーク・マーカー追加。player-ui-shared.js)より先に奪って修正ポップアップを開く。マーカーの線・A/B旗の操作は奪わない
+  // コード修正モード: 行のタップ/長押し/スワイプ開始を、他のハンドラ(シーク・マーカー追加。player-ui-shared.js)より先に奪う。マーカーの線・A/B旗の操作は奪わない。
+//   タップ=修正ポップアップ / 行左の時刻(数字)=その行の頭へ移動 / ブロックの上下の余白=その位置へ移動(どちらも再生/停止はそのまま) / 境目のドラッグ=区間の長さ調整
   if (rowsEl) {
     const editHit = e => editMode && viewMode !== "wave" && !(e.target.closest && e.target.closest(".vbar-line, .vbar-label, .vbar-ab-pt"));
-    rowsEl.addEventListener("pointerdown", e => { if (editHit(e)) e.stopPropagation(); }, true);
+    const GRIP_MOUSE = 7, GRIP_TOUCH = 14, DRAG_MOVE = 4;
+    let handle = null;
+    let drag = null;
+    let suppressClickUntil = 0;
+
+    const fmtHandle = t => { const m = Math.floor(t / 60), s2 = t - m * 60; return m + ":" + (s2 < 10 ? "0" : "") + s2.toFixed(1); };
+    function moveHandle(bar, t) {
+      if (!handle) { handle = document.createElement("div"); handle.className = "qn-chord-handle"; }
+      if (handle.parentNode !== bar) bar.appendChild(handle);
+      const row = parseInt(bar.dataset.row, 10);
+      handle.style.left = ((t - row * sec) / sec * 100) + "%";
+      handle.dataset.t = fmtHandle(t);
+      handle.classList.toggle("is-drag", !!(drag && drag.moved));
+    }
+    function hideHandle() {
+      if (handle && handle.parentNode) handle.parentNode.removeChild(handle);
+      containerEl.classList.remove("qn-chord-resize");
+    }
+    // この行のbar上でclientX付近にある区間の境目(先頭は除く)。{i:区間の番号,t:境目の秒}
+    function boundaryNear(bar, row, clientX, tolPx) {
+      const segs = chordSegs();
+      if (!segs) return null;
+      const rect = bar.getBoundingClientRect();
+      if (!rect.width) return null;
+      const t0 = row * sec, tolS = tolPx / rect.width * sec;
+      let best = null;
+      for (let i = 1; i < segs.length; i++) {
+        const b = segs[i].t0;
+        if (b < t0 - tolS) continue;
+        if (b > t0 + sec + tolS) break;
+        const d = Math.abs(rect.left + (b - t0) / sec * rect.width - clientX);
+        if (d <= tolPx && (!best || d < best.d)) best = { i: i, t: b, d: d };
+      }
+      return best;
+    }
+    function seekHere(t) {
+      if (typeof beginSeek === "function") beginSeek();
+      audio.currentTime = Math.min(Math.max(0, t), dur);
+      if (typeof prevTime !== "undefined") prevTime = audio.currentTime;
+      resumeFollow();
+    }
+
+    rowsEl.addEventListener("pointerdown", e => {
+      if (!editHit(e)) return;
+      e.stopPropagation();
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      const bar = e.target.closest ? e.target.closest(".vbar") : null;
+      if (!bar || e.target.closest(".vbar-time")) return;
+      const row = parseInt(bar.dataset.row, 10);
+      const nb = boundaryNear(bar, row, e.clientX, e.pointerType === "mouse" ? GRIP_MOUSE : GRIP_TOUCH);
+      if (!nb) return;
+      const segs = chordSegs(), a = segs[nb.i - 1], b = segs[nb.i];
+      drag = { id: e.pointerId, bar: bar, row: row, x0: e.clientX, moved: false, t: nb.t, p0: a.t0, n1: b.t1, pc: QNChords.chordOf(a), nc: QNChords.chordOf(b) };
+    }, true);
+
+    rowsEl.addEventListener("pointermove", e => {
+      if (drag && e.pointerId === drag.id) {
+        if (!drag.moved) {
+          if (Math.abs(e.clientX - drag.x0) < DRAG_MOVE) return;
+          drag.moved = true;
+          try { rowsEl.setPointerCapture(e.pointerId); } catch (err) {}
+        }
+        if (!drag.bar.isConnected) return;
+        const rect = drag.bar.getBoundingClientRect();
+        const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / (rect.width || 1)));
+        let t = Math.round((drag.row * sec + ratio * sec) * 20) / 20;      // 0.05秒刻み
+        t = Math.max(drag.p0 + 0.2, Math.min(drag.n1 - 0.2, t));
+        drag.t = t;
+        QNChords.moveBoundary(drag.p0, drag.n1, t, drag.pc, drag.nc, false);
+        moveHandle(drag.bar, t);
+        e.preventDefault();
+        return;
+      }
+      // ホバー(マウスのみ): 境目に近い時だけつまみを出してカーソルを変える
+      if (e.pointerType !== "mouse" || !editMode || viewMode === "wave") return;
+      const bar = e.target.closest ? e.target.closest(".vbar") : null;
+      if (!bar || (e.target.closest && e.target.closest(".vbar-line, .vbar-label, .vbar-ab-pt, .vbar-time"))) { hideHandle(); return; }
+      const nb = boundaryNear(bar, parseInt(bar.dataset.row, 10), e.clientX, GRIP_MOUSE);
+      if (nb) { moveHandle(bar, nb.t); containerEl.classList.add("qn-chord-resize"); } else hideHandle();
+    });
+
+    const endDrag = e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const d = drag;
+      drag = null;
+      try { rowsEl.releasePointerCapture(e.pointerId); } catch (err) {}
+      if (d.moved) {
+        suppressClickUntil = Date.now() + 400;
+        QNChords.moveBoundary(d.p0, d.n1, d.t, d.pc, d.nc, true);   // 離した時に保存
+      }
+      hideHandle();
+    };
+    rowsEl.addEventListener("pointerup", endDrag);
+    rowsEl.addEventListener("pointercancel", endDrag);
+    rowsEl.addEventListener("pointerleave", e => { if (!drag) hideHandle(); });
+
     rowsEl.addEventListener("click", e => {
       if (!editHit(e)) return;
       e.stopPropagation();
       e.preventDefault();
+      if (Date.now() < suppressClickUntil) return;
       const bar = e.target.closest ? e.target.closest(".vbar") : null;
       if (!bar || typeof QNChordEdit === "undefined") return;
-      const t = timeInRow(bar, parseInt(bar.dataset.row, 10), e.clientX);
-      if (t !== null) QNChordEdit.open(t, e.clientX, e.clientY);
+      const row = parseInt(bar.dataset.row, 10);
+      // 行の左の時刻表示(数字)をタップ=その行の頭へ再生位置を移す(再生/停止の状態はそのまま)。編集中でも再生位置を動かせるように
+      if (e.target.closest(".vbar-time") || e.clientX < bar.getBoundingClientRect().left) {
+        seekHere(row * sec);
+        return;
+      }
+      const t = timeInRow(bar, row, e.clientX);
+      if (t === null) return;
+      // ブロックの上下の余白(ブロックは高さの14〜86%)をタップ=その位置へ移動(ポップアップは開かない)
+      const rc = bar.getBoundingClientRect(), fy = (e.clientY - rc.top) / (rc.height || 1);
+      if (fy < 0.14 || fy > 0.86) { seekHere(t); return; }
+      QNChordEdit.open(t, e.clientX, e.clientY);
     }, true);
   }
   if (typeof audio !== "undefined" && audio) {
