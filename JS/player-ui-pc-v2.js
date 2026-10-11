@@ -571,12 +571,14 @@
     // 【v4.11.0】SP: Audioの右にA/Bボタン(本体の#setABtn/#setBBtnへ中継+ラベル/点灯のミラー。長押しはquickpopの対象)。PC幅はCSSで非表示
     const makeAbMirror = (kind) => {
       const src = document.getElementById(kind === "A" ? "setABtn" : "setBBtn");
-      const b = el('<button type="button" class="panel-fab-btn pcv2-fab-ab" id="pcV2FabSet' + kind + '" title="' + (kind === "A" ? "現在位置をA点に（もう一度押すと解除）" : "現在位置をB点に（もう一度押すと解除）") + '"><span>' + kind + ' --</span></button>');
+      const b = el('<button type="button" class="panel-fab-btn pcv2-fab-ab" id="pcV2FabSet' + kind + '" title="' + (kind === "A" ? "現在位置をA点に（もう一度押すと解除）" : "現在位置をB点に（もう一度押すと解除）") + '" aria-label="' + kind + ' point"><svg viewBox="0 0 24 24"><text x="12" y="18" text-anchor="middle" font-size="17" font-weight="700" font-family="Instrument Sans, sans-serif" fill="currentColor">' + kind + '</text></svg><span class="pcv2-ab-t">' + kind + ' --</span></button>');
       b.addEventListener("click", () => { if (src) src.click(); });
       const sync = () => {
         if (!src) return;
         const l = src.querySelector(".top-controls-btn-label");
-        b.firstChild.textContent = l ? l.textContent : kind + " --";
+        const tx = l ? l.textContent : kind + " --";
+        b.querySelector(".pcv2-ab-t").textContent = tx;
+        b.setAttribute("aria-label", tx);
         b.classList.toggle("has-point", src.classList.contains("has-point"));
       };
       if (src && typeof MutationObserver === "function") new MutationObserver(sync).observe(src, { attributes: true, attributeFilter: ["class"], childList: true, subtree: true, characterData: true });

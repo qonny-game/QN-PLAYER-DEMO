@@ -141,3 +141,4 @@
 - 4.32.0 コード編集を拍・小節に対応: 境目ドラッグの拍/裏拍吸着、Apply to whole bar、Split at bars
 - 4.33.0 小節頭を拍と拍の間でも手動指定(Bar start point)、コードの再解析ボタン、境目ドラッグが行をまたげる・タッチで縦スクロールしない
 - 4.34.0 スマホ: View(Wave/Chord/Degree)とEditスイッチを+Audioの右へ
+- 4.35.0 スマホ: A/Bボタンをアイコンだけにして、Audio・View・Editと同じ段に収める
