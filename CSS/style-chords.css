@@ -1,0 +1,38 @@
+/* style-chords.css — コード修正ポップアップ(#qnChordEdit。JSは player-chord-edit.js)と編集中のシークバー。
+   見た目はアプリの共通トークン(角丸=--radius-popup/--radius-pill、文字=--fs-*)に揃える。SP幅(≤900px)は下から出るシート */
+.qn-ce {
+  position: fixed; z-index: 1200; width: 320px; max-height: min(78vh, 560px); overflow-y: auto; box-sizing: border-box;
+  padding: 12px 14px 14px; background: #16161b; border: 1px solid var(--border-strong); border-radius: var(--radius-popup);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55); color: var(--text-bright); font-family: var(--font-body), sans-serif;
+}
+.qn-ce[hidden] { display: none; }
+.qn-ce-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.qn-ce-title { display: flex; flex-direction: column; min-width: 0; }
+.qn-ce-time { font-size: var(--fs-small); color: var(--icon-muted); }
+.qn-ce-name { font-size: var(--fs-heading); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qn-ce-x { width: 30px; height: 30px; flex: none; display: grid; place-items: center; background: none; border: 0; border-radius: var(--radius-round); color: var(--icon-muted); cursor: pointer; }
+.qn-ce-x svg { width: 20px; height: 20px; fill: currentColor; }
+.qn-ce-x:active { color: var(--text-bright); background: var(--bg-hover-subtle); }
+.qn-ce-sec { margin-top: 8px; }
+.qn-ce-lab { font-size: var(--fs-micro); letter-spacing: 0.4px; text-transform: uppercase; color: var(--icon-muted); margin-bottom: 4px; }
+.qn-ce-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.qn-ce-chip, .qn-ce-btn {
+  height: 26px; padding: 0 9px; font-family: inherit; font-size: var(--fs-btn); font-weight: 600; color: var(--icon-muted);
+  background: none; border: 1px solid var(--border-strong); border-radius: var(--radius-pill); cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.qn-ce-roots .qn-ce-chip { min-width: 34px; padding: 0 6px; }
+.qn-ce-chip.is-on, .qn-ce-btn.is-on { color: var(--text-pure-white); background: var(--accent-primary); border-color: var(--accent-primary); }
+.qn-ce-chip:active, .qn-ce-btn:active { color: var(--accent-primary); border-color: var(--accent-primary); }
+.qn-ce-chip.is-on:active, .qn-ce-btn.is-on:active { color: var(--text-pure-white); }
+.qn-ce-btn:disabled { opacity: 0.35; pointer-events: none; }
+.qn-ce-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-subtle); }
+@media (hover: hover) and (pointer: fine) {
+  .qn-ce-chip:hover, .qn-ce-btn:hover { color: var(--text-bright); }
+  .qn-ce-chip.is-on:hover, .qn-ce-btn.is-on:hover { color: var(--text-pure-white); }
+}
+@media screen and (max-width: 900px) {
+  .qn-ce { left: 0; right: 0; bottom: 0; top: auto; width: auto; max-height: 62vh; border-radius: var(--radius-popup) var(--radius-popup) 0 0; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+}
+/* 編集中は行をタップするとシークせずポップアップが開く。それが分かるように行にカーソルとアウトラインを付ける */
+#vbarContainer.qn-chord-editing .vbar { cursor: pointer; }
+#vbarContainer.qn-chord-editing .vwave { outline: 1px dashed var(--border-strong); outline-offset: 1px; }

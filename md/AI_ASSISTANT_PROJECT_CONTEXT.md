@@ -23,7 +23,8 @@ JS/
   player-normalize.js         自動ノーマライズ（曲ごとの音量差を揃える。既定OFF）
   qn-chord-core.js            【v4.27.0 プロトタイプ】コード解析の計算(QNChordCore。chroma=STFT→12音クロマ / classify=テンプレート照合＋Viterbi。DOMなし。Nodeでも動く)
   qn-chord-worker.js          上のchroma()をWorkerで実行(重いのでメインスレッド外)
-  player-chords.js            コード解析の窓口QNChords(offer/ensure/segments/setDetail。コードモードの時だけ解析。CHORD_MODE.md)
+  player-chords.js            コード解析の窓口QNChords(offer/ensure/segments/setDetail/手動修正setChord・splitAt・mergeNext・reset/保存。コードモードの時だけ解析。CHORD_MODE.md)
+  player-chord-edit.js        コード修正ポップアップQNChordEdit(Editモードでブロックをタップ)
   player-id3.js               ID3v2タグ（Title/Artist）
   player-playlist.js          ライブラリ：追加/削除/並び替え/お気に入り/フォルダ見出し・Auto Next範囲
   player-track-backup.js      Backup/Import（本体・YouTube・PITCH共通の画面。qnBackupMount/qnBackupMountInto/qnBackupParts）
@@ -64,13 +65,14 @@ CSS/
   style-youtube.css           YouTubeアプリ専用（.qn-yt*）
   style-tuner.css             TUNERアプリ専用（.qn-tn*）
   style-pitch.css             PITCHアプリ専用（.qn-pt*）
+  style-chords.css            コード修正ポップアップ(.qn-ce*)と編集中のシークバー(.qn-chord-editing)
 favicon/  guide/  md/  index.html  terms.html  privacy.html  pricing.html  pricing-en.html  QUICK_START.md  CNAME
 guide/                        アプリ内ガイド（静的HTML8枚＋guide.css/guide.js＋img/*.webp）。更新ルールはUSER_DOCS.md
 ```
 
 **読み込み順（`index.html`）。順序で上書きが決まる／グローバルでつながるので変えない：**
 - CSS：core → playlist → markers → control-eq → controls → export → text → layout-sp → layout-pc-v2 → **layout-pc-v2-sp** → pcv2-panels → **bars** → settings → stem → quickpop → auth → shareware → theme → apps → **youtube** → tuner → pitch
-- JS：qn-i18n → qn-i18n-apps → qn-i18n-ja → jszip.min → player-shareware → qn-marker-core → player-core → **player-bars** → player-ui-shared → player-normalize → **qn-chord-core → player-chords** → player-id3 → player-playlist → player-track-backup → player-sync → player-p2p → player-markers → **player-marker-presets** → player-control-eq → player-controls → qn-settings-ui → player-text → player-stem → player-ui-pc-v2 → player-quickpop → qn-wakelock → qn-apps → player-swipe → qn-app-youtube → qn-pitch-core → qn-app-tuner → qn-pitch-filters → qn-app-pitch → player-theme → player-auth
+- JS：qn-i18n → qn-i18n-apps → qn-i18n-ja → jszip.min → player-shareware → qn-marker-core → player-core → **player-bars** → player-ui-shared → player-normalize → **qn-chord-core → player-chords → player-chord-edit** → player-id3 → player-playlist → player-track-backup → player-sync → player-p2p → player-markers → **player-marker-presets** → player-control-eq → player-controls → qn-settings-ui → player-text → player-stem → player-ui-pc-v2 → player-quickpop → qn-wakelock → qn-apps → player-swipe → qn-app-youtube → qn-pitch-core → qn-app-tuner → qn-pitch-filters → qn-app-pitch → player-theme → player-auth
 
 新しい関数を他ファイルから使う時は「呼ぶ側より前に定義されているか」を確認する。共通ヘルパーは`player-core.js`が定位置。
 `player-ui-pc-v2.js`と`qn-app-youtube.js`は、それぞれ1つのIIFEの中で多数の変数を共有している。**ファイル分割はしない**（変数の持ち方から作り直しになるため）。
@@ -104,7 +106,8 @@ guide/                        アプリ内ガイド（静的HTML8枚＋guide.css
 | シークバー1本の秒数 | localStorage | `qn_bar_sec`（1秒刻みの整数、既定5。上限＝曲長÷「Rows Autoで画面に入る行数」） |
 | シークバー追従ON/OFF | localStorage | `qn_bar_follow`（"0"でOFF、既定ON） |
 | 波形の形 | localStorage | `qn_bar_wave`（`mirror`既定\|`bottom`） |
-| シークバーの表示 | localStorage | `qn_bar_view`（`wave`既定\|`chord`）、`qn_chord_detail`（`extended`既定\|`basic`） |
+| シークバーの表示 | localStorage | `qn_bar_view`（`wave`既定\|`chord`\|`degree`）、`qn_chord_detail`（`basic`\|`extended`既定\|`full`）、`qn_chord_alts`（候補表示。既定ON） |
+| コード解析・手動修正 | localStorage | `qn_chords_<ファイル名>`（解析結果＋手動修正。`player-chords.js`） |
 | 手動スクロール後の追従停止秒数 | localStorage | `qn_bar_follow_pause`（1〜30、既定6） |
 | シークバーの1画面の本数 | localStorage | `qn_bar_rows`（0=自動/3〜12、既定0） |
 | 送り戻しボタンの秒数 | localStorage | `qn_skip_sec`（5/10/15/30/60、既定10） |

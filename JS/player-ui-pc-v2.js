@@ -549,13 +549,15 @@
     const waveFabRow = el('<div id="pcV2WaveFabRow"></div>');
     // Audio/Marker/再生の左に、シークバーの常用設定を常時表示(設定パネルのSeek bar項目と同じ値。変更は相互に同期)。狭い幅では折り返して上の段になる
     const viewLabel = v => {
-      if (v !== "chord") return "Wave";
-      if (typeof QNChords !== "undefined" && QNChords.phase() === "analyzing") return "Chord " + Math.round(QNChords.progress() * 100) + "%";
-      return "Chord";
+      if (v === "wave") return "Wave";
+      const nm = v === "degree" ? "Degree" : "Chord";
+      if (typeof QNChords !== "undefined" && QNChords.phase() === "analyzing") return nm + " " + Math.round(QNChords.progress() * 100) + "%";
+      return nm;
     };
     const waveBarStrip = QNSettingsUI.inline([
       // 【v4.27.0 プロトタイプ】シークバーの表示: 波形 / コード(解析中は進捗%)。Settingsパネルの同名項目と同期
-      { label: "View", cls: "qn-view-item", type: "stepper", values: () => ["wave", "chord"], get: () => QNBars.getViewMode(), set: v => QNBars.setViewMode(v), fmt: viewLabel },
+      { label: "View", cls: "qn-view-item", type: "stepper", values: () => ["wave", "chord", "degree"], get: () => QNBars.getViewMode(), set: v => QNBars.setViewMode(v), fmt: viewLabel },
+      { label: "Edit", cls: "qn-edit-item", type: "switch", get: () => QNBars.getEditMode(), set: on => QNBars.setEditMode(on), disabledWhen: () => QNBars.getViewMode() === "wave" },
       { label: "Bar length", type: "slider", values: () => QNBars.secValues(), get: () => QNBars.getSec(), set: v => QNBars.setSec(v), fmt: QNBars.fmtSec, action: { label: "Fit", title: "Fit the whole track on screen", run: () => QNBars.fit() } },
       { label: "Rows", type: "slider", values: () => QNBars.ROWS_OPTIONS, get: () => QNBars.getRows(), set: v => QNBars.setRows(v), fmt: v => v === 0 ? "Auto" : String(v) },
       { label: "Follow", type: "switch", spHide: true, get: () => QNBars.getFollow(), set: on => QNBars.setFollow(on) }
@@ -1023,8 +1025,10 @@
     const rowsBar = [
       { label: "Bar length", hint: "1 bar = seconds", type: "stepper", values: () => QNBars.secValues(), get: () => QNBars.getSec(), set: v => QNBars.setSec(v), fmt: QNBars.fmtSec },
       { label: "Bars on screen", hint: "Rows shown at once", type: "stepper", values: () => QNBars.ROWS_OPTIONS, get: () => QNBars.getRows(), set: v => QNBars.setRows(v), fmt: v => v === 0 ? "Auto" : String(v) },
-      { label: "View", hint: "Show the waveform or the detected chords on the seek bar", type: "stepper", values: () => ["wave", "chord"], get: () => QNBars.getViewMode(), set: v => QNBars.setViewMode(v), fmt: v => v === "chord" ? "Chord" : "Wave" },
-      { label: "Chord detail", hint: "Basic: major / minor. Extended: adds 7th, dim, sus4", type: "stepper", values: () => QNChords.DETAILS, get: () => QNChords.getDetail(), set: v => QNChords.setDetail(v), fmt: v => v === "basic" ? "Basic" : "Extended" },
+      { label: "View", hint: "Wave, chord names (C Am7) or degree names (I vi7) on the seek bar", type: "stepper", values: () => ["wave", "chord", "degree"], get: () => QNBars.getViewMode(), set: v => QNBars.setViewMode(v), fmt: v => v === "wave" ? "Wave" : v === "chord" ? "Chord" : "Degree" },
+      { label: "Chord detail", hint: "Basic: major / minor. Extended: adds 7th, dim, sus4. Full: adds tensions (add9, 6, 9, m7b5...)", type: "stepper", values: () => QNChords.DETAILS, get: () => QNChords.getDetail(), set: v => QNChords.setDetail(v), fmt: v => v === "basic" ? "Basic" : v === "extended" ? "Extended" : "Full" },
+      { label: "Chord key", hint: "Key used for note spelling and degree names. Auto uses the detected key", type: "stepper", values: () => QNChords.KEYS, get: () => QNChords.getKeySel(), set: v => QNChords.setKeySel(v), fmt: v => QNChords.keyName(v) },
+      { label: "Chord candidates", hint: "Show other likely chords under each chord", type: "switch", get: () => QNChords.getAlts(), set: on => QNChords.setAlts(on) },
       { label: "Wave shape", hint: "Mirror is symmetric around the center", type: "stepper", values: () => ["mirror", "bottom"], get: () => QNBars.getWaveShape(), set: v => QNBars.setWaveShape(v), fmt: v => v === "mirror" ? "Mirror" : "Bottom" },
       { label: "Follow playhead", hint: "Auto-scroll while playing", type: "switch", get: () => QNBars.getFollow(), set: on => QNBars.setFollow(on) },
       { label: "Pause after scrolling", hint: "Seconds before follow resumes", type: "stepper",

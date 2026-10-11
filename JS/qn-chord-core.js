@@ -9,26 +9,44 @@
   const FLAT = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
   const FLAT_KEYS = [5, 10, 3, 8, 1, 6]; // 主音がこれなら♭表記(F, Bb, Eb, Ab, Db, Gb)。短調は平行調(+3)で判定
 
-  // iv=構成音(根音からの半音数)、w=テンプレートの重み、bias=複雑なコードを選びにくくする下駄(cosine類似度に足す)
+  // iv=構成音(根音からの半音数。9thは2、13thは9)、w=テンプレートの重み、bias=複雑なコードを選びにくくする下駄(cosine類似度に足す)
+  const BIAS_SCALE = 0.6;   // 複雑なコードへの下駄の強さ(合成音源での調整値。大きいほど単純なコードを選びやすい)
+  const T3 = [1, 0.9, 0.8];
+  const T4 = [1, 0.9, 0.8, 0.75];
   const QUALITIES = {
-    maj:  { suf: "",     iv: [0, 4, 7],     w: [1, 0.9, 0.8],       bias: 0 },
-    min:  { suf: "m",    iv: [0, 3, 7],     w: [1, 0.9, 0.8],       bias: 0 },
-    dom7: { suf: "7",    iv: [0, 4, 7, 10], w: [1, 0.9, 0.8, 0.75], bias: -0.035 },
-    maj7: { suf: "maj7", iv: [0, 4, 7, 11], w: [1, 0.9, 0.8, 0.75], bias: -0.05 },
-    min7: { suf: "m7",   iv: [0, 3, 7, 10], w: [1, 0.9, 0.8, 0.75], bias: -0.04 },
-    dim:  { suf: "dim",  iv: [0, 3, 6],     w: [1, 0.9, 0.8],       bias: -0.06 },
-    sus4: { suf: "sus4", iv: [0, 5, 7],     w: [1, 0.9, 0.8],       bias: -0.06 }
+    maj:   { suf: "",      iv: [0, 4, 7],        w: T3,                    bias: 0 },
+    min:   { suf: "m",     iv: [0, 3, 7],        w: T3,                    bias: 0 },
+    dom7:  { suf: "7",     iv: [0, 4, 7, 10],    w: T4,                    bias: -0.035 },
+    maj7:  { suf: "maj7",  iv: [0, 4, 7, 11],    w: T4,                    bias: -0.05 },
+    min7:  { suf: "m7",    iv: [0, 3, 7, 10],    w: T4,                    bias: -0.04 },
+    dim:   { suf: "dim",   iv: [0, 3, 6],        w: T3,                    bias: -0.06 },
+    sus4:  { suf: "sus4",  iv: [0, 5, 7],        w: T3,                    bias: -0.06 },
+    // ここから「テンション」系(Fullのみ)。足した音(9th/6th)は弱めに重み付け
+    add9:  { suf: "add9",  iv: [0, 2, 4, 7],     w: [1, 0.6, 0.9, 0.8],    bias: -0.06 },
+    six:   { suf: "6",     iv: [0, 4, 7, 9],     w: [1, 0.9, 0.8, 0.65],   bias: -0.07 },
+    min6:  { suf: "m6",    iv: [0, 3, 7, 9],     w: [1, 0.9, 0.8, 0.65],   bias: -0.08 },
+    dom9:  { suf: "9",     iv: [0, 2, 4, 7, 10], w: [1, 0.55, 0.9, 0.8, 0.7], bias: -0.08 },
+    maj9:  { suf: "maj9",  iv: [0, 2, 4, 7, 11], w: [1, 0.55, 0.9, 0.8, 0.7], bias: -0.09 },
+    min9:  { suf: "m9",    iv: [0, 2, 3, 7, 10], w: [1, 0.55, 0.9, 0.8, 0.7], bias: -0.09 },
+    m7b5:  { suf: "m7b5",  iv: [0, 3, 6, 10],    w: T4,                    bias: -0.07 },
+    dim7:  { suf: "dim7",  iv: [0, 3, 6, 9],     w: T4,                    bias: -0.09 },
+    aug:   { suf: "aug",   iv: [0, 4, 8],        w: T3,                    bias: -0.09 },
+    sus2:  { suf: "sus2",  iv: [0, 2, 7],        w: T3,                    bias: -0.07 },
+    s7sus4:{ suf: "7sus4", iv: [0, 5, 7, 10],    w: T4,                    bias: -0.08 },
+    pow:   { suf: "5",     iv: [0, 7],           w: [1, 0.9],              bias: -0.10 }
   };
   const LEVELS = {
     basic: ["maj", "min"],
-    extended: ["maj", "min", "dom7", "maj7", "min7", "dim", "sus4"]
+    extended: ["maj", "min", "dom7", "maj7", "min7", "dim", "sus4"],
+    full: ["maj", "min", "dom7", "maj7", "min7", "dim", "sus4", "add9", "six", "min6", "dom9", "maj9", "min9", "m7b5", "dim7", "aug", "sus2", "s7sus4", "pow"]
   };
 
   const KEY_MAJ = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88];
   const KEY_MIN = [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17];
 
   const TARGET_SR = 8000;
-  const FMIN = 65, FMAX = 2100;
+  const FMIN = 55, FMAX = 2100;
+const BASS_MAX = 260;   // ベース音として見る上限(Hz)
 
   // ---------- FFT(複素・基数2・反復) ----------
   function makeFFT(n) {
@@ -86,7 +104,7 @@
     if (Math.abs(N / 2 - sr * 0.5) < Math.abs(N - sr * 0.5)) N >>= 1;
     const hopS = N >> 2;
     const frames = Math.max(0, Math.floor((x.length - N) / hopS) + 1);
-    const out = { chroma: new Float32Array(frames * 12), rms: new Float32Array(frames), hop: hopS / sr, win: N / sr, frames: frames, tuning: 0 };
+    const out = { chroma: new Float32Array(frames * 12), bass: new Float32Array(frames * 12), rms: new Float32Array(frames), hop: hopS / sr, win: N / sr, frames: frames, tuning: 0 };
     if (!frames) return out;
 
     const fft = makeFFT(N);
@@ -96,6 +114,9 @@
     const kMin = Math.max(2, Math.floor(FMIN * N / sr)), kMax = Math.min(N / 2 - 2, Math.ceil(FMAX * N / sr));
     const MAXP = 60;
     const pf = new Float32Array(frames * MAXP), pw = new Float32Array(frames * MAXP), pn = new Uint8Array(frames);
+    const MAXB = 8;
+    const bf = new Float32Array(frames * MAXB), bw = new Float32Array(frames * MAXB), bn = new Uint8Array(frames);
+    const kBmax = Math.min(kMax, Math.ceil(BASS_MAX * N / sr));
 
     // 第1パス: FFT→ピーク(周波数と相対強度)。同時にチューニングのずれを集計
     let tc = 0, ts = 0;
@@ -130,6 +151,23 @@
         }
       }
       pn[f] = cnt;
+      // ベース帯(FMIN〜BASS_MAX)だけ、その帯の最大値を基準にしたピーク(低音は全体の最大に埋もれやすいので別に集める)
+      let bmx = 0;
+      for (let k = kMin; k <= kBmax; k++) if (mag[k] > bmx) bmx = mag[k];
+      let bc = 0;
+      if (bmx > 1e-9) {
+        for (let k = kMin; k <= kBmax && bc < MAXB; k++) {
+          const b = mag[k];
+          if (b < bmx * 0.25 || b <= mag[k - 1] || b < mag[k + 1]) continue;
+          const la = Math.log(mag[k - 1] + 1e-12), lb = Math.log(b + 1e-12), lc = Math.log(mag[k + 1] + 1e-12);
+          const den = la - 2 * lb + lc;
+          const dl = den < 0 ? 0.5 * (la - lc) / den : 0;
+          bf[f * MAXB + bc] = (k + dl) * sr / N;
+          bw[f * MAXB + bc] = b / bmx;
+          bc++;
+        }
+      }
+      bn[f] = bc;
       if (onProgress && (f & 31) === 0) onProgress(f / frames * 0.9);
     }
     out.tuning = (tc || ts) ? Math.atan2(ts, tc) / (2 * Math.PI) : 0;
@@ -153,6 +191,19 @@
       for (let i = 0; i < 12; i++) s += c[base + i] * c[base + i];
       s = Math.sqrt(s);
       if (s > 1e-9) for (let i = 0; i < 12; i++) c[base + i] /= s;
+      const bc2 = out.bass;
+      for (let j = 0; j < bn[f]; j++) {
+        const fr = bf[f * MAXB + j];
+        const p = 12 * Math.log2(fr / 440) + 9 - tun;
+        const fl = Math.floor(p), frac = p - fl;
+        const w = Math.pow(bw[f * MAXB + j], 1.5);      // 強い低音だけが効くよう強調
+        bc2[base + (((fl % 12) + 12) % 12)] += w * (1 - frac);
+        bc2[base + ((((fl + 1) % 12) + 12) % 12)] += w * frac;
+      }
+      let sb = 0;
+      for (let i = 0; i < 12; i++) sb += bc2[base + i] * bc2[base + i];
+      sb = Math.sqrt(sb);
+      if (sb > 1e-9) for (let i = 0; i < 12; i++) bc2[base + i] /= sb;
     }
     if (onProgress) onProgress(1);
     return out;
@@ -185,6 +236,14 @@
     return best;
   }
 
+  // 手動指定/推定のキーを正規化: { tonic(0-11), minor, flats, name }
+  function makeKey(tonic, minor) {
+    tonic = ((tonic % 12) + 12) % 12;
+    const maj = minor ? (tonic + 3) % 12 : tonic;
+    const flats = FLAT_KEYS.indexOf(maj) >= 0;
+    return { tonic: tonic, minor: !!minor, flats: flats, name: (flats ? FLAT : SHARP)[tonic] + (minor ? " minor" : " major") };
+  }
+
   function scaleSet(key) {
     const maj = key.minor ? (key.tonic + 3) % 12 : key.tonic;
     const s = new Set([0, 2, 4, 5, 7, 9, 11].map(i => (maj + i) % 12));
@@ -193,13 +252,16 @@
   }
 
   // ---------- 3) 分類 ----------
-  // opts: { detail:"basic"|"extended", key:(省略時は推定) }
-  // 戻り値: { segments:[{t0,t1,name,root,q,conf}], key, detail }。name="N"は無音/コード無し
+  // opts: { detail:"basic"|"extended"|"full", key:(省略時は推定), bass:true(既定。オンベース検出), alts:3(候補数) }
+  // 戻り値: { segments:[{t0,t1,name,root,q,bass,conf,alts:[{name,score}]}], key, detail }。name="N"は無音/コード無し
+  // name=コード名(オンベースならC/E形式)。alts=ほかの有力候補(スコアの高い順。名前はベース音なし)
   function classify(ch, dur, opts) {
     opts = opts || {};
     const detail = LEVELS[opts.detail] ? opts.detail : "extended";
+    const useBass = opts.bass !== false;
+    const nAlts = opts.alts === undefined ? 3 : opts.alts;
     const qs = LEVELS[detail];
-    const key = opts.key || estimateKey(ch);
+    const key = opts.key ? makeKey(opts.key.tonic, opts.key.minor) : estimateKey(ch);
     const names = key.flats ? FLAT : SHARP;
     const F = ch.frames;
     const res = { segments: [], key: key, detail: detail };
@@ -209,6 +271,7 @@
     // テンプレート(L2正規化)と事前スコア(複雑さの下駄＋キーに合うコードへの加点)
     const S = 12 * qs.length;
     const tpl = new Float32Array(S * 12), prior = new Float32Array(S);
+    const tone = new Uint8Array(S * 12);     // 構成音(オンベース判定用)
     for (let qi = 0; qi < qs.length; qi++) {
       const Q = QUALITIES[qs[qi]];
       for (let r = 0; r < 12; r++) {
@@ -217,23 +280,25 @@
         for (let j = 0; j < Q.iv.length; j++) {
           const pc = (r + Q.iv[j]) % 12;
           tpl[s * 12 + pc] = Q.w[j];
+          tone[s * 12 + pc] = 1;
           n += Q.w[j] * Q.w[j];
           if (!scale.has(pc)) diat = false;
         }
         n = Math.sqrt(n);
         for (let i = 0; i < 12; i++) tpl[s * 12 + i] /= n;
-        prior[s] = Q.bias + (diat ? 0.03 : 0);
+        prior[s] = Q.bias * BIAS_SCALE + (diat ? 0.03 : 0);
       }
     }
 
     // 時間方向に3フレーム平均(打楽器などの単発ノイズを均す)
-    const sm = new Float32Array(F * 12);
+    const sm = new Float32Array(F * 12), smB = new Float32Array(F * 12);
     for (let f = 0; f < F; f++) {
       const a = Math.max(0, f - 1), b = Math.min(F - 1, f + 1);
       for (let i = 0; i < 12; i++) {
-        let s = 0;
-        for (let g = a; g <= b; g++) s += ch.chroma[g * 12 + i];
+        let s = 0, sb = 0;
+        for (let g = a; g <= b; g++) { s += ch.chroma[g * 12 + i]; sb += ch.bass ? ch.bass[g * 12 + i] : 0; }
         sm[f * 12 + i] = s / (b - a + 1);
+        smB[f * 12 + i] = sb / (b - a + 1);
       }
     }
 
@@ -243,24 +308,28 @@
     const silent = new Uint8Array(F);
     for (let f = 0; f < F; f++) if (ch.rms[f] < Math.max(1e-4, med * 0.06)) silent[f] = 1;
 
+    // フレームごとの各コードの評価値(ev)。類似度＋事前スコア＋「最低音が根音」ボーナス(Am7とC6のように構成音が同じコードを分ける)
+    const BASSW = useBass && ch.bass ? 0.10 : 0;
+    const ev = new Float32Array(F * S), sim = new Float32Array(F * S);
+    for (let f = 0; f < F; f++) {
+      for (let s = 0; s < S; s++) {
+        let dot = 0;
+        for (let i = 0; i < 12; i++) dot += sm[f * 12 + i] * tpl[s * 12 + i];
+        sim[f * S + s] = dot;
+        ev[f * S + s] = dot + prior[s] + BASSW * smB[f * 12 + (s % 12)];
+      }
+    }
+
     // Viterbi: 状態=S個のコード+N。同じ状態に居続けるのは無料、移るにはSWITCHを払う
     const BETA = 9, SWITCH = 1.6;
     const NS = S + 1;
     let prev = new Float64Array(NS), cur = new Float64Array(NS);
-    const back = new Int16Array(F * NS);   // 直前の状態(-1相当は自分自身=stay)。stayならs、jumpなら最良の前状態
-    const sim = new Float32Array(F * S);
+    const back = new Int16Array(F * NS);
     for (let f = 0; f < F; f++) {
-      let em;
       let bestPrev = 0, bestPrevS = 0;
       if (f > 0) { bestPrev = -1e18; for (let s = 0; s < NS; s++) if (prev[s] > bestPrev) { bestPrev = prev[s]; bestPrevS = s; } }
       for (let s = 0; s < NS; s++) {
-        if (s === S) em = silent[f] ? 1.0 * BETA : -0.4 * BETA;
-        else {
-          let dot = 0;
-          for (let i = 0; i < 12; i++) dot += sm[f * 12 + i] * tpl[s * 12 + i];
-          sim[f * S + s] = dot;
-          em = silent[f] ? -0.4 * BETA : (dot + prior[s]) * BETA;
-        }
+        const em = s === S ? (silent[f] ? 1.0 * BETA : -0.4 * BETA) : (silent[f] ? -0.4 * BETA : ev[f * S + s] * BETA);
         if (f === 0) { cur[s] = em; back[s] = s; continue; }
         const stay = prev[s], jump = bestPrev - SWITCH;
         if (stay >= jump) { cur[s] = stay + em; back[f * NS + s] = s; }
@@ -282,23 +351,80 @@
       const s = path[a];
       const t0 = a === 0 ? 0 : c0 + (a - 0.5) * hop;
       const t1 = f === F ? dur : c0 + (f - 0.5) * hop;
-      let name = "N", root = -1, q = "", conf = 0;
+      const seg = { t0: t0, t1: Math.min(dur, t1), name: "N", root: -1, q: "", bass: -1, conf: 0, alts: [] };
       if (s !== S) {
         const qi = Math.floor(s / 12);
-        root = s % 12;
-        q = qs[qi];
-        name = names[root] + QUALITIES[q].suf;
-        for (let g = a; g < f; g++) conf += sim[g * S + s];
-        conf /= (f - a);
+        const root = s % 12;
+        const n = f - a;
+        seg.root = root;
+        seg.q = qs[qi];
+        let nm = names[root] + QUALITIES[qs[qi]].suf;
+        for (let g = a; g < f; g++) seg.conf += sim[g * S + s];
+        seg.conf /= n;
+        // オンベース: 区間の低音の平均が、根音以外の構成音に強く出ていれば「コード/ベース」にする
+        if (BASSW) {
+          const mb = new Float64Array(12);
+          for (let g = a; g < f; g++) for (let i = 0; i < 12; i++) mb[i] += smB[g * 12 + i];
+          let bi = 0;
+          for (let i = 1; i < 12; i++) if (mb[i] > mb[bi]) bi = i;
+          const bs = mb[bi] / n, rs = mb[root] / n;
+          if (bi !== root && tone[s * 12 + bi] && bs > 0.45 && bs > rs * 1.6) { seg.bass = bi; nm += "/" + names[bi]; }
+        }
+        seg.name = nm;
+        // 候補: 区間内の平均評価値が高い別のコード(同じ根音+質の重複は除く)。差が小さいものだけ
+        if (nAlts > 0) {
+          const avg = new Float64Array(S);
+          for (let g = a; g < f; g++) for (let k = 0; k < S; k++) avg[k] += ev[g * S + k];
+          const order = [];
+          for (let k = 0; k < S; k++) if (k !== s) order.push(k);
+          order.sort((x, y) => avg[y] - avg[x]);
+          const top = avg[s];
+          for (let k = 0; k < order.length && seg.alts.length < nAlts; k++) {
+            const o = order[k];
+            const gap = (top - avg[o]) / n;
+            if (gap > 0.12) break;                   // 本命と差が大きい候補は出さない
+            seg.alts.push({ root: o % 12, q: qs[Math.floor(o / 12)], name: names[o % 12] + QUALITIES[qs[Math.floor(o / 12)]].suf, score: 1 - gap });
+          }
+        }
       }
-      segs.push({ t0: t0, t1: Math.min(dur, t1), name: name, root: root, q: q, conf: conf });
+      segs.push(seg);
       a = f;
     }
     res.segments = segs.filter(s => s.t1 > s.t0);
     return res;
   }
 
-  const api = { chroma: chroma, classify: classify, estimateKey: estimateKey, LEVELS: LEVELS, QUALITIES: QUALITIES };
+  // ---------- 表示名 ----------
+  // seg={root,q,bass}。key=推定/指定のキー。opts.shift=半音(プレイヤーのKey操作に合わせて移調)、opts.mode="letter"(C Am7)|"degree"(I vi7。ローマ数字)
+  const ROMAN_MAJ = ["I", "bII", "II", "bIII", "III", "IV", "#IV", "V", "bVI", "VI", "bVII", "VII"];
+  const ROMAN_MIN = ["I", "bII", "II", "III", "#III", "IV", "bV", "V", "VI", "#VI", "VII", "#VII"];
+  const MINOR_Q = { min: 1, min7: 1, min6: 1, min9: 1, m7b5: 1, dim: 1, dim7: 1 };
+  const DEG_SUF = { min: "", min7: "7", min6: "6", min9: "9", m7b5: "ø7", dim: "°", dim7: "°7" };
+
+  function label(seg, key, opts) {
+    if (!seg || seg.root < 0 || !seg.q) return "N";
+    opts = opts || {};
+    const shift = opts.shift || 0;
+    const Q = QUALITIES[seg.q];
+    if (opts.mode === "degree") {
+      const tab = key.minor ? ROMAN_MIN : ROMAN_MAJ;
+      const low = !!MINOR_Q[seg.q];
+      const rn = function (pc) {
+        const r = tab[((pc - key.tonic) % 12 + 12) % 12];
+        return low ? r.replace(/[IV]+/, function (m) { return m.toLowerCase(); }) : r;
+      };
+      let t = rn(seg.root) + (DEG_SUF[seg.q] !== undefined ? DEG_SUF[seg.q] : Q.suf);
+      if (seg.bass >= 0) t += "/" + tab[((seg.bass - key.tonic) % 12 + 12) % 12];
+      return t;
+    }
+    const k2 = makeKey(key.tonic + shift, key.minor);
+    const nm = k2.flats ? FLAT : SHARP;
+    let t = nm[((seg.root + shift) % 12 + 12) % 12] + Q.suf;
+    if (seg.bass >= 0) t += "/" + nm[((seg.bass + shift) % 12 + 12) % 12];
+    return t;
+  }
+
+  const api = { chroma: chroma, classify: classify, estimateKey: estimateKey, makeKey: makeKey, label: label, LEVELS: LEVELS, QUALITIES: QUALITIES };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   root.QNChordCore = api;
 })(typeof self !== "undefined" ? self : this);

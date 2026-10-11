@@ -18,11 +18,12 @@ const QNBars = (function () {
   const WAVE_KEY = "qn_bar_wave";
   let waveShape = "mirror";
   try { if (localStorage.getItem(WAVE_KEY) === "bottom") waveShape = "bottom"; } catch (e) {}
-  // 【v4.27.0 プロトタイプ】表示モード: wave=波形 / chord=コード(和音)。コードは QNChords(player-chords.js)の区間を波形の代わりに描く
+  // 【v4.27.0 プロトタイプ】表示モード: wave=波形 / chord=コード名(C Am7) / degree=ディグリー(I vi7)。コードは QNChords(player-chords.js)の区間を波形の代わりに描く
   const VIEW_KEY = "qn_bar_view";
   let viewMode = "wave";
-  try { if (localStorage.getItem(VIEW_KEY) === "chord") viewMode = "chord"; } catch (e) {}
+  try { const v = localStorage.getItem(VIEW_KEY); if (v === "chord" || v === "degree") viewMode = v; } catch (e) {}
   let fontCache = null;
+  let editMode = false;   // コード修正モード。ONの間、行のタップはシークでなくコード修正ポップアップ(player-chord-edit.js)を開く
   const PAUSE_KEY = "qn_bar_follow_pause";
   const PAUSE_DEFAULT = 6;
   const PAUSE_MIN = 1;
@@ -339,7 +340,7 @@ const QNBars = (function () {
     const W = cv.width;
     const H = cv.height;
     cx.clearRect(0, 0, W, H);
-    if (viewMode === "chord") {
+    if (viewMode !== "wave") {
       const segs = chordSegs();
       if (segs) { paintChordRow(el, r, played, accent, segs); return; }
     }
@@ -370,7 +371,7 @@ const QNBars = (function () {
     }
 
     // コードモードの解析待ち中は波形を薄く出しておく
-    if (viewMode === "chord") cx.globalAlpha = 0.3;
+    if (viewMode !== "wave") cx.globalAlpha = 0.3;
     fillPath(el, r, played, accent, path, n);
     cx.globalAlpha = 1;
   }
@@ -415,6 +416,11 @@ const QNBars = (function () {
   }
 
   // ---------- コードモードの描画 ----------
+  // プレイヤーのKey操作(半音)。コード名(letter)だけ移調して表示する。ディグリーは変わらない
+  function keyShift() {
+    return (typeof keyEffectEnabled !== "undefined" && keyEffectEnabled && typeof currentKeySemitones !== "undefined") ? currentKeySemitones : 0;
+  }
+
   function chordSegs() {
     if (typeof QNChords === "undefined") return null;
     const s = QNChords.segments();
@@ -489,28 +495,63 @@ const QNBars = (function () {
     cx.globalAlpha = 1;
     fillPath(el, r, played, accent, path, n);
 
-    // コード名。ブロックの塗り(再生済み=アクセント/マーカー色、未再生=薄い白)に合わせて文字色を決める
-    const fs = Math.min(bh * 0.52, 20 * g.dpr);
+    // コード名(と候補)。ブロックの塗り(再生済み=アクセント/マーカー色、未再生=薄い白)に合わせて文字色を決める
+    const mode = viewMode === "degree" ? "degree" : "letter";
+    const shift = mode === "letter" ? keyShift() : 0;
+    const twoLine = chordAlts() && bh >= 30 * g.dpr;           // 高さに余裕がある時だけ候補を2行目に出す
+    const fs = Math.min(bh * (twoLine ? 0.4 : 0.52), 20 * g.dpr);
     if (fs < 9 * g.dpr) return;
+    const fs2 = Math.max(8 * g.dpr, fs * 0.62);
     if (!fontCache) fontCache = getComputedStyle(document.body).fontFamily || "sans-serif";
-    cx.font = "600 " + fs + "px " + fontCache;
+    const f1 = "600 " + fs + "px " + fontCache, f2 = "500 " + fs2 + "px " + fontCache;
     cx.textAlign = "center";
     cx.textBaseline = "middle";
     for (let i = 0; i < vis.length; i++) {
       const v = vis[i];
       const avail = v.x1 - v.x0 - 8 * g.dpr;
-      let label = v.s.name;
-      if (cx.measureText(label).width > avail) {
-        label = label.match(/^[A-G][#b]?/)[0];     // 入りきらない時は根音だけ
-        if (cx.measureText(label).width > avail) continue;
-      }
+      const full = QNChords.label(v.s, mode, shift);
       const tm = (Math.max(v.s.t0, t0) + Math.min(v.s.t1, t1)) / 2;
       const bi = Math.min(n - 1, Math.floor((tm - t0) / barDur));
       const mc = markerColorAt(tm);
-      cx.fillStyle = bi < played ? textOn(mc || accent) : "rgba(255,255,255,0.88)";
-      cx.fillText(label, (v.x0 + v.x1) / 2, by + bh / 2 + g.dpr * 0.5);
+      const on = bi < played ? textOn(mc || accent) : "rgba(255,255,255,0.88)";
+      if (v.s.u && v.x1 - v.x0 > 12 * g.dpr) {                    // 手動で直したコードには左上に小さな点
+        cx.fillStyle = on;
+        cx.beginPath();
+        cx.arc(v.x0 + 6 * g.dpr, by + 6 * g.dpr, 2 * g.dpr, 0, 6.2832);
+        cx.fill();
+      }
+      cx.font = f1;
+      let label = full;
+      if (cx.measureText(label).width > avail) {
+        label = full.split("/")[0];                               // 入りきらない時はオンベースを省く
+        if (cx.measureText(label).width > avail && mode === "letter") label = label.match(/^[A-G][#b]?/)[0];   // それでも駄目なら根音だけ
+        if (cx.measureText(label).width > avail) continue;
+      }
+      const cxm = (v.x0 + v.x1) / 2;
+      let alt = "";
+      if (twoLine && v.s.alts && v.s.alts.length) {
+        cx.font = f2;
+        for (let k = 0; k < v.s.alts.length && k < 2; k++) {
+          const cand = alt ? alt + " " + QNChords.label(v.s.alts[k], mode, shift) : QNChords.label(v.s.alts[k], mode, shift);
+          if (cx.measureText(cand).width > avail) break;
+          alt = cand;
+        }
+      }
+      cx.font = f1;
+      cx.fillStyle = on;
+      if (alt) {
+        cx.fillText(label, cxm, by + bh * 0.36);
+        cx.font = f2;
+        cx.globalAlpha = 0.6;
+        cx.fillText(alt, cxm, by + bh * 0.74);
+        cx.globalAlpha = 1;
+      } else {
+        cx.fillText(label, cxm, by + bh / 2 + g.dpr * 0.5);
+      }
     }
   }
+
+  function chordAlts() { return typeof QNChords !== "undefined" && QNChords.getAlts(); }
 
   function playedBars(r, ct) {
     const t0 = r * sec;
@@ -557,7 +598,7 @@ const QNBars = (function () {
       markersList = pins.filter(p => p.enabled).sort((a, b) => a.t - b.t);
     }
 
-    const sig = accent + "|" + ms + "|" + peaksVer + "|" + g.nBars + "|" + g.barW + "|" + g.barH + "|" + g.dpr + "|" + sec + "|" + waveShape + "|" + (window.__qnWaveformDrawCount || 0) + "|" + viewMode + "|" + (typeof QNChords !== "undefined" ? QNChords.version() : 0);
+    const sig = accent + "|" + ms + "|" + peaksVer + "|" + g.nBars + "|" + g.barW + "|" + g.barH + "|" + g.dpr + "|" + sec + "|" + waveShape + "|" + (window.__qnWaveformDrawCount || 0) + "|" + viewMode + "|" + keyShift() + "|" + (typeof QNChords !== "undefined" ? QNChords.version() : 0);
     rows.forEach((el, r) => {
       const played = playedBars(r, ct);
       const rs = sig + "|" + played;
@@ -694,12 +735,22 @@ const QNBars = (function () {
 
   // 表示モード(wave/chord)。chordにした時だけコード解析を始める。選択は端末に保存
   function getViewMode() { return viewMode; }
+  function getEditMode() { return editMode; }
+  function setEditMode(on) {
+    on = !!on && viewMode !== "wave";
+    if (on === editMode) return;
+    editMode = on;
+    containerEl.classList.toggle("qn-chord-editing", on);
+    if (!on && typeof QNChordEdit !== "undefined") QNChordEdit.close();
+    if (typeof window.qnBarStripSync === "function") window.qnBarStripSync();
+  }
   function setViewMode(v) {
-    v = v === "chord" ? "chord" : "wave";
+    v = v === "chord" || v === "degree" ? v : "wave";
     if (v === viewMode) return;
     viewMode = v;
+    if (v === "wave") setEditMode(false);
     try { localStorage.setItem(VIEW_KEY, v); } catch (e) {}
-    if (v === "chord" && typeof QNChords !== "undefined") QNChords.ensure();
+    if (v !== "wave" && typeof QNChords !== "undefined") QNChords.ensure();
     draw(true);
     if (typeof window.qnBarViewSync === "function") window.qnBarViewSync();
   }
@@ -782,6 +833,20 @@ const QNBars = (function () {
     }
     window.addEventListener("resize", () => { geomDirty = true; });
   }
+  // コード修正モード: 行のタップ/長押し/スワイプ開始を、他のハンドラ(シーク・マーカー追加。player-ui-shared.js)より先に奪って修正ポップアップを開く。マーカーの線・A/B旗の操作は奪わない
+  if (rowsEl) {
+    const editHit = e => editMode && viewMode !== "wave" && !(e.target.closest && e.target.closest(".vbar-line, .vbar-label, .vbar-ab-pt"));
+    rowsEl.addEventListener("pointerdown", e => { if (editHit(e)) e.stopPropagation(); }, true);
+    rowsEl.addEventListener("click", e => {
+      if (!editHit(e)) return;
+      e.stopPropagation();
+      e.preventDefault();
+      const bar = e.target.closest ? e.target.closest(".vbar") : null;
+      if (!bar || typeof QNChordEdit === "undefined") return;
+      const t = timeInRow(bar, parseInt(bar.dataset.row, 10), e.clientX);
+      if (t !== null) QNChordEdit.open(t, e.clientX, e.clientY);
+    }, true);
+  }
   if (typeof audio !== "undefined" && audio) {
     audio.addEventListener("seeked", resumeFollow);
     audio.addEventListener("play", resumeFollow);
@@ -803,7 +868,7 @@ const QNBars = (function () {
     onTrackLoaded,
     createGearButton,
     setOpenSettings(fn) { openSettingsFn = fn; },
-    getFollow, setFollow, getPause, setPause, getWaveShape, setWaveShape, getViewMode, setViewMode,
+    getFollow, setFollow, getPause, setPause, getWaveShape, setWaveShape, getViewMode, setViewMode, getEditMode, setEditMode,
     PAUSE_MIN, PAUSE_MAX,
     rowOf,
     pctInRow,
