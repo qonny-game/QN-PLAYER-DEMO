@@ -721,7 +721,24 @@
       if (!inner) { inner = document.createElement("div"); inner.className = "pcv2-more-inner"; more.appendChild(inner); }
       if (mixer && mixer.parentElement !== inner) inner.appendChild(mixer);
       if (strip && (strip.parentElement !== inner || inner.firstChild !== strip)) inner.insertBefore(strip, inner.firstChild);
+      // View(Wave/Chord/Degree)とEditは+Audioの右へ(同じ要素を移すだけ。値の同期はそのまま)
+      const fabBtns = document.querySelector("#pcV2WaveFabRow .pcv2-wave-fab-btns");
+      const audioBtn = document.getElementById("pcV2WaveAddAudioBtn");
+      if (strip && fabBtns && audioBtn) {
+        let ref = audioBtn.nextSibling;
+        [".qn-view-item", ".qn-edit-item"].forEach(sel => {
+          const it = strip.querySelector(sel) || fabBtns.querySelector(sel);
+          if (!it) return;
+          if (it.parentElement !== fabBtns || it.previousSibling !== (ref ? ref.previousSibling : fabBtns.lastChild)) fabBtns.insertBefore(it, ref);
+        });
+      }
     } else {
+      if (strip) {
+        const fb = document.querySelector("#pcV2WaveFabRow .pcv2-wave-fab-btns");
+        const ed = fb && fb.querySelector(".qn-edit-item"), vw = fb && fb.querySelector(".qn-view-item");
+        if (ed) strip.insertBefore(ed, strip.firstChild);
+        if (vw) strip.insertBefore(vw, strip.firstChild);
+      }
       if (strip && fabRow && strip.parentElement !== fabRow) fabRow.insertBefore(strip, fabRow.firstChild);
       if (mixer && top && mixer.parentElement !== top) {
         const div = top.querySelector(".pcv2-mixer-divider");
@@ -1028,11 +1045,28 @@
       { label: "View", hint: "Wave, chord names (C Am7) or degree names (I vi7) on the seek bar", type: "stepper", values: () => ["wave", "chord", "degree"], get: () => QNBars.getViewMode(), set: v => QNBars.setViewMode(v), fmt: v => v === "wave" ? "Wave" : v === "chord" ? "Chord" : "Degree" },
       { label: "Chord detail", hint: "Basic: major / minor. Extended: adds 7th, dim, sus4. Full: adds tensions (add9, 6, 9, m7b5...)", type: "stepper", values: () => QNChords.DETAILS, get: () => QNChords.getDetail(), set: v => QNChords.setDetail(v), fmt: v => v === "basic" ? "Basic" : v === "extended" ? "Extended" : "Full" },
       { label: "Chord key", hint: "Key used for note spelling and degree names. Auto uses the detected key", type: "stepper", values: () => QNChords.KEYS, get: () => QNChords.getKeySel(), set: v => QNChords.setKeySel(v), fmt: v => QNChords.keyName(v) },
+      { label: "Re-analyze chords", hint: "Run the chord and beat analysis again for this track. Manual edits are kept", type: "node", node: (function () {
+          const b = document.createElement("button");
+          b.type = "button"; b.className = "qn-ce-btn"; b.textContent = "Re-analyze";
+          b.addEventListener("click", () => { if (typeof hapticTap === "function") { try { hapticTap(); } catch (e) {} } QNChords.rerun(); });
+          return b;
+        })() },
       { label: "Chord candidates", hint: "Show other likely chords under each chord", type: "switch", get: () => QNChords.getAlts(), set: on => QNChords.setAlts(on) },
       { label: "Chord beat snap", hint: "Align chord changes to beats. A small triangle marks a chord that comes in on an off-beat (syncopation)", type: "switch", get: () => QNChords.getSnap(), set: on => QNChords.setSnap(on) },
       { label: "Grid", hint: "Faint vertical lines for bars and beats behind the wave / chords. Needs a one-time analysis", type: "stepper", values: () => ["off", "bar", "beat"], get: () => QNChords.getGridMode(), set: v => QNChords.setGridMode(v), fmt: v => v === "off" ? "Off" : v === "bar" ? "Bars" : "Bars + beats" },
       { label: "Beats per bar", hint: "Auto picks 3 or 4. Change it if the bar lines look wrong", type: "stepper", values: () => [0, 2, 3, 4, 5, 6, 7], get: () => QNChords.getBt("bpb"), set: v => QNChords.setBt("bpb", v), fmt: v => v === 0 ? "Auto" : String(v) },
       { label: "Bar start", hint: "Shift which beat is the first of a bar", type: "stepper", values: () => [-3, -2, -1, 0, 1, 2, 3], get: () => QNChords.getBt("shift"), set: v => QNChords.setBt("shift", v), fmt: v => v > 0 ? "+" + v : String(v) },
+      { label: "Bar start point", hint: "Set the playhead as the start of a bar. Works between beats too (the grid then follows the detected tempo from that point)", type: "node", node: (function () {
+          const w = document.createElement("div");
+          w.style.cssText = "display:flex;gap:8px";
+          [["Set at playhead", () => QNChords.setAnchor(audio.currentTime)], ["Clear", () => QNChords.setAnchor(null)]].forEach(a => {
+            const b = document.createElement("button");
+            b.type = "button"; b.className = "qn-ce-btn"; b.textContent = a[0];
+            b.addEventListener("click", () => { if (typeof hapticTap === "function") { try { hapticTap(); } catch (e) {} } a[1](); });
+            w.appendChild(b);
+          });
+          return w;
+        })() },
       { label: "Beat tempo", hint: "Half or double if the detected tempo is off by a factor of two", type: "stepper", values: () => [-1, 0, 1], get: () => QNChords.getBt("tempo"), set: v => QNChords.setBt("tempo", v), fmt: v => { if (v < 0) return "Half"; if (v > 0) return "Double"; const b = QNChords.bpm(); return b ? "Auto (" + Math.round(b) + ")" : "Auto"; } },
       { label: "Wave shape", hint: "Mirror is symmetric around the center", type: "stepper", values: () => ["mirror", "bottom"], get: () => QNBars.getWaveShape(), set: v => QNBars.setWaveShape(v), fmt: v => v === "mirror" ? "Mirror" : "Bottom" },
       { label: "Follow playhead", hint: "Auto-scroll while playing", type: "switch", get: () => QNBars.getFollow(), set: on => QNBars.setFollow(on) },

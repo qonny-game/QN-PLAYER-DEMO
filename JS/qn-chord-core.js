@@ -559,7 +559,7 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
 
   // テンポの倍/半の補正と、拍子・小節頭の決定。bt={tempo:-1|0|1 (÷2/自動/×2), bpb:0(自動)|2..7, shift:小節頭を拍単位でずらす}
   // segs=コード区間(自動判定ぶん。コード変化の位置が小節頭の手がかり)。戻り値: { times:Float32Array, bar:Uint8Array(拍の小節内の番号。0=小節頭), m(拍子), phase }
-  function bars(bi, segs, bt) {
+  function bars(bi, segs, bt, dur) {
     bt = bt || {};
     let t = Array.from(bi.times), low = Array.from(bi.low);
     if (bt.tempo === 1) {                         // ×2: 拍と拍の真ん中に拍を足す
@@ -606,6 +606,30 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
     res.m = M;
     res.phase = ((cc.ph + (bt.shift || 0)) % M + M) % M;
     for (let i = 0; i < n; i++) res.bar[i] = ((i - res.phase) % M + M) % M;
+    // 手動の小節頭(bt.anchor=秒)。検出した拍の近く(拍間隔の12%以内)ならその拍を小節頭にする。
+    // 拍と拍の間なら、検出した拍は使わず「小節頭を起点に、検出テンポ(拍の最小二乗直線)で曲の端まで等間隔」の縦線にする
+    if (bt.anchor >= 0) {
+      let j = 0;
+      for (let i = 1; i < n; i++) if (Math.abs(t[i] - bt.anchor) < Math.abs(t[j] - bt.anchor)) j = i;
+      if (Math.abs(t[j] - bt.anchor) <= period * 0.12) {
+        res.phase = j % M;
+        for (let i = 0; i < n; i++) res.bar[i] = ((i - j) % M + M) % M;
+        res.manual = 1;
+        return res;
+      }
+      let sx = 0, sy = 0, sxx = 0, sxy = 0;
+      for (let i = 0; i < n; i++) { sx += i; sy += t[i]; sxx += i * i; sxy += i * t[i]; }
+      const den = n * sxx - sx * sx;
+      const p = den > 0 ? (n * sxy - sx * sy) / den : period;
+      const end = Math.max(dur || 0, t[n - 1] + p);
+      const k0 = -Math.floor(bt.anchor / p), k1 = Math.ceil((end - bt.anchor) / p);
+      const T = [], B = [];
+      for (let k = k0; k <= k1; k++) { const x = bt.anchor + k * p; if (x < -1e-6 || x > end + 1e-6) continue; T.push(x); B.push(((k % M) + M) % M); }
+      res.times = Float32Array.from(T);
+      res.bar = Uint8Array.from(B);
+      res.phase = 0;
+      res.manual = 2;
+    }
     return res;
   }
 

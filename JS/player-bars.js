@@ -947,6 +947,49 @@ const QNBars = (function () {
       drag = { id: e.pointerId, bar: bar, row: row, x0: e.clientX, moved: false, t: nb.t, p0: a.t0, n1: b.t1, pc: QNChords.chordOf(a), nc: QNChords.chordOf(b) };
     }, true);
 
+    // ドラッグ中の位置(clientX/Y)から時刻を決めて境目を動かす。行をまたいでもよい(今見えている行のうち縦に一番近い行を使う)
+    function barAtY(y) {
+      const bars = rowsEl.querySelectorAll(".vbar");
+      let best = null, bd = 1e9;
+      for (let i = 0; i < bars.length; i++) {
+        const r = bars[i].getBoundingClientRect();
+        const d = y < r.top ? r.top - y : y > r.bottom ? y - r.bottom : 0;
+        if (d < bd) { bd = d; best = bars[i]; }
+      }
+      return best;
+    }
+    function dragTo(cx, cy, free) {
+      const bar = barAtY(cy) || drag.bar;
+      if (!bar || !bar.isConnected) return;
+      const rect = bar.getBoundingClientRect();
+      const row = parseInt(bar.dataset.row, 10);
+      const ratio = Math.max(0, Math.min(1, (cx - rect.left) / (rect.width || 1)));
+      let t = snapBeat(row * sec + ratio * sec, free);
+      t = Math.max(drag.p0 + 0.2, Math.min(drag.n1 - 0.2, t));
+      drag.bar = bar; drag.row = row;
+      drag.t = t;
+      QNChords.moveBoundary(drag.p0, drag.n1, t, drag.pc, drag.nc, false);
+      moveHandle(bar, t);
+    }
+    // 指が行エリアの上端/下端に近い間は自動でスクロールして、離れた行まで運べるようにする
+    let edgeRaf = 0;
+    function edgeScroll() {
+      if (edgeRaf || !drag || !drag.moved) return;
+      const step = () => {
+        edgeRaf = 0;
+        if (!drag || !drag.moved) return;
+        const r = scrollEl.getBoundingClientRect(), z = 44;
+        const v = drag.cy < r.top + z ? -(r.top + z - drag.cy) : drag.cy > r.bottom - z ? drag.cy - (r.bottom - z) : 0;
+        if (!v) return;
+        scrollEl.scrollTop += Math.max(-18, Math.min(18, v * 0.4));
+        dragTo(drag.cx, drag.cy, false);
+        edgeRaf = requestAnimationFrame(step);
+      };
+      edgeRaf = requestAnimationFrame(step);
+    }
+    // タッチ: 境目をつかんでいる間は縦スクロールさせない(#vbarRowsはtouch-action:pan-yなので、touchmoveで止める)
+    rowsEl.addEventListener("touchmove", e => { if (drag && e.cancelable) e.preventDefault(); }, { passive: false, capture: true });
+
     rowsEl.addEventListener("pointermove", e => {
       if (drag && e.pointerId === drag.id) {
         if (!drag.moved) {
@@ -954,14 +997,9 @@ const QNBars = (function () {
           drag.moved = true;
           try { rowsEl.setPointerCapture(e.pointerId); } catch (err) {}
         }
-        if (!drag.bar.isConnected) return;
-        const rect = drag.bar.getBoundingClientRect();
-        const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / (rect.width || 1)));
-        let t = snapBeat(drag.row * sec + ratio * sec, e.altKey);
-        t = Math.max(drag.p0 + 0.2, Math.min(drag.n1 - 0.2, t));
-        drag.t = t;
-        QNChords.moveBoundary(drag.p0, drag.n1, t, drag.pc, drag.nc, false);
-        moveHandle(drag.bar, t);
+        drag.cx = e.clientX; drag.cy = e.clientY;
+        dragTo(e.clientX, e.clientY, e.altKey);
+        edgeScroll();
         e.preventDefault();
         return;
       }

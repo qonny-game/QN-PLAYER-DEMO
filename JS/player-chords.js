@@ -36,6 +36,7 @@ var QNChords = (function () {
   let curId = null;
   let curName = "";
   let curDur = 0;
+  let lastBuf = null;        // 再解析用に直近の波形を持っておく(8kHz前後に落とした小さいもの)
   let pending = null;        // { id, mono, sr, dur } まだ解析していないmono波形
   let phase = "idle";        // idle | queued | analyzing | ready | error
   let progress = 0;
@@ -44,7 +45,7 @@ var QNChords = (function () {
   let user = [];             // 手動修正 [{t0,t1,root,q,bass}]。root=-1は「コード無し」
   let composed = null;       // autoにuserを重ねた表示用の区間
   let beatInfo = null;       // 拍の検出結果 { times, low, bpm, period, conf }(QNChordCore.beats)
-  let bt = { tempo: 0, bpb: 0, shift: 0 };   // 拍の手動補正: テンポ(-1=半分/0=自動/1=倍)・1小節の拍数(0=自動)・小節頭のずらし(拍)
+  let bt = { tempo: 0, bpb: 0, shift: 0, anchor: -1 };   // 拍の手動補正: テンポ(-1=半分/0=自動/1=倍)・1小節の拍数(0=自動)・小節頭のずらし(拍)
   let gridData = null;       // 縦線の元データ { times, bar, m }(QNChordCore.bars)
   let gridVer = 0;
   let ver = 0;
@@ -109,7 +110,7 @@ var QNChords = (function () {
 
   // 縦線の元データ。小節頭の推定にはコード変化(自動判定ぶん。手動修正では動かさない)を使う
   function computeGrid() {
-    gridData = beatInfo && beatInfo.times && beatInfo.times.length > 3 && window.QNChordCore ? QNChordCore.bars(beatInfo, result ? result.segments : null, bt) : null;
+    gridData = beatInfo && beatInfo.times && beatInfo.times.length > 3 && window.QNChordCore ? QNChordCore.bars(beatInfo, result ? result.segments : null, bt, curDur) : null;
     gridVer++;
   }
 
@@ -133,7 +134,7 @@ var QNChords = (function () {
         o.beats = { t: Array.from(beatInfo.times, r3), l: Array.from(beatInfo.low, x => Math.round(x * 100) / 100), bpm: Math.round(beatInfo.bpm * 10) / 10, p: r3(beatInfo.period), c: Math.round(beatInfo.conf * 100) / 100 };
         if (beatInfo.on && beatInfo.mid) { o.beats.o = Array.from(beatInfo.on, x => Math.round(x * 10) / 10); o.beats.m = Array.from(beatInfo.mid, x => Math.round(x * 10) / 10); }
       }
-      o.bt = [bt.tempo, bt.bpb, bt.shift];
+      o.bt = [bt.tempo, bt.bpb, bt.shift, bt.anchor >= 0 ? r3(bt.anchor) : -1];
       const str = JSON.stringify(o);
       if (str.length > SAVE_MAX_CHARS) return;
       localStorage.setItem(saveKey(), str);
@@ -237,6 +238,21 @@ var QNChords = (function () {
     w.postMessage({ mono: p.mono, sr: p.sr }, [p.mono.buffer]);
   }
 
+  // 解析をやり直す(拍も含む)。手動の修正(user)とキー・詳細度の設定はそのまま
+  function rerun() {
+    if (!lastBuf || !curId) return;
+    gen++;
+    stopWorker();
+    cache.delete(curId);
+    result = null;
+    beatInfo = null;
+    pending = { id: curId, mono: downmix(lastBuf), sr: lastBuf.sampleRate, dur: lastBuf.duration };
+    compose();
+    computeGrid();
+    ver++;
+    run();
+  }
+
   // 詳細度/キーが変わった後: クロマがあればclassifyだけやり直し、無ければ(保存結果から開いた曲)波形から再解析
   function reanalyze() {
     if (cache.has(curId)) classifyNow();
@@ -251,6 +267,7 @@ var QNChords = (function () {
     stopWorker();
     pending = null;
     curId = null;
+    lastBuf = null;
     curName = "";
     keySel = "auto";
     result = null;
@@ -258,7 +275,7 @@ var QNChords = (function () {
     composed = null;
     beatInfo = null;
     gridData = null;
-    bt = { tempo: 0, bpb: 0, shift: 0 };
+    bt = { tempo: 0, bpb: 0, shift: 0, anchor: -1 };
     gridVer++;
     phase = "idle";
     progress = 0;
@@ -271,11 +288,12 @@ var QNChords = (function () {
     curId = id;
     curName = id.slice(0, id.lastIndexOf("|"));
     curDur = audioBuffer.duration;
+    lastBuf = audioBuffer;
     pending = { id: id, mono: downmix(audioBuffer), sr: audioBuffer.sampleRate, dur: audioBuffer.duration };
     const saved = loadSaved();
     user = saved && Array.isArray(saved.user) ? saved.user.map(a => ({ t0: a[0], t1: a[1], root: a[2], q: a[3], bass: a[4] })) : [];
     if (saved && saved.keySel) keySel = saved.keySel;
-    if (saved && saved.bt) bt = { tempo: saved.bt[0] | 0, bpb: saved.bt[1] | 0, shift: saved.bt[2] | 0 };
+    if (saved && saved.bt) bt = { tempo: saved.bt[0] | 0, bpb: saved.bt[1] | 0, shift: saved.bt[2] | 0, anchor: typeof saved.bt[3] === "number" ? saved.bt[3] : -1 };
     beatInfo = saved ? hydrateBeats(saved) : null;
     if (cache.has(id)) { classifyNow(); return; }
     // 保存済みの解析が今の設定(詳細度・キー)と合っていれば、再解析せずそのまま使う
@@ -439,7 +457,7 @@ var QNChords = (function () {
   }
   function setBt(k, v) {
     if (!(k in bt)) return;
-    bt[k] = v | 0;
+    bt[k] = k === "anchor" ? (v >= 0 ? v : -1) : v | 0;
     computeGrid();
     ver++;
     save();
@@ -497,6 +515,9 @@ var QNChords = (function () {
     getGridMode() { return gridMode; },
     setGridMode: setGridMode,
     getBt(k) { return bt[k]; },
+    // 手動の小節頭。t=秒(拍と拍の間でも可)。null/負で解除
+    setAnchor(t) { setBt("anchor", t === null || t === undefined ? -1 : t); },
+    rerun: rerun,
     setBt: setBt,
     grid() { return gridData; },
     gridVersion() { return gridVer; },

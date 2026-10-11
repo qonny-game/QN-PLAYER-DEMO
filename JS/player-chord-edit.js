@@ -35,11 +35,13 @@ var QNChordEdit = (function () {
         '<button type="button" class="qn-ce-btn" data-a="play">Play from here</button>' +
         '<button type="button" class="qn-ce-btn" data-a="bar">Apply to whole bar</button>' +
         '<button type="button" class="qn-ce-btn" data-a="bars">Split at bars</button>' +
+        '<button type="button" class="qn-ce-btn" data-a="anchor">Bar starts here</button>' +
         '<button type="button" class="qn-ce-btn" data-a="none">No chord</button>' +
         '<button type="button" class="qn-ce-btn" data-a="split">Split here</button>' +
         '<button type="button" class="qn-ce-btn" data-a="merge">Merge next</button>' +
         '<button type="button" class="qn-ce-btn" data-a="reset">Reset</button>' +
         '<button type="button" class="qn-ce-btn" data-a="resetall">Reset all</button>' +
+        '<button type="button" class="qn-ce-btn" data-a="rerun">Re-analyze</button>' +
       '</div>';
     document.body.appendChild(el);
     el.addEventListener("click", onClick);
@@ -78,6 +80,7 @@ var QNChordEdit = (function () {
     bb.disabled = !hasBars;
     bb.classList.toggle("is-on", hasBars && barMode);
     el.querySelector('[data-a="bars"]').disabled = !hasBars;
+    el.querySelector('[data-a="anchor"]').disabled = !QNChords.grid();
   }
 
   function onClick(e) {
@@ -97,6 +100,8 @@ var QNChordEdit = (function () {
       return;
     }
     if (a === "bar") { barMode = !barMode; render(); return; }
+    if (a === "anchor") { QNChords.setAnchor(tapT); return; }
+    if (a === "rerun") { QNChords.rerun(); close(); return; }
     if (a === "bars") { QNChords.splitBars(s); return; }
     if (a === "none") { apply(s, { root: -1, q: "", bass: -1 }); return; }
     if (a === "split") { QNChords.splitAt(Math.round(QNChords.snapTime(tapT) * 100) / 100); return; }
