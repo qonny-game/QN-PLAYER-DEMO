@@ -568,6 +568,8 @@
     const waveFabBtns = el('<div class="pcv2-wave-fab-btns"></div>');
     waveFabRow.appendChild(waveFabBtns);
     waveFabBtns.appendChild(waveAddAudioBtn);
+    // SP幅ではView/Editの項目をここへ移す(syncMoreExtras)。項目は設定帯(root)の外になるので、clickは帯の処理へ渡す
+    waveFabBtns.addEventListener("click", e => { if (e.target.closest && e.target.closest(".qn-view-item, .qn-edit-item")) waveBarStrip.onClick(e); });
     // 【v4.11.0】SP: Audioの右にA/Bボタン(本体の#setABtn/#setBBtnへ中継+ラベル/点灯のミラー。長押しはquickpopの対象)。PC幅はCSSで非表示
     const makeAbMirror = (kind) => {
       const src = document.getElementById(kind === "A" ? "setABtn" : "setBBtn");

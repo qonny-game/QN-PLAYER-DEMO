@@ -527,7 +527,7 @@ html {
   #pcV2WaveFabRow .pcv2-fab-ab .pcv2-ab-t { display: none; }
   /* View(Wave/Chord/Degree)とEditは+Audioの右(JSのsyncMoreExtrasが移す)。入りきらない時はA/Bが次の段へ */
   #pcV2WaveFabRow .pcv2-wave-fab-btns { flex-wrap: wrap; row-gap: 8px; }
-  #pcV2WaveFabRow .qn-set-inline-item { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 0; border: 0; order: 0; min-width: 0; }
+  #pcV2WaveFabRow .qn-set-inline-item { pointer-events: auto; flex: 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 0; border: 0; order: 0; min-width: 0; }
   #pcV2WaveFabRow .qn-view-item .qn-set-inline-label { display: none; }
   #pcV2WaveFabRow .qn-set-inline-item .qn-stepper { height: 36px; }
   #pcV2WaveFabRow .qn-set-inline-item .qn-stepper-btn { width: 24px; }

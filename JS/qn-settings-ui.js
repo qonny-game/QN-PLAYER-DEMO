@@ -176,7 +176,7 @@ window.QNSettingsUI = (function () {
       root.appendChild(item);
     });
     function sync() { infos.forEach(syncInfo); }
-    root.addEventListener("click", function (e) {
+    function onClick(e) {
       var btn = e.target.closest ? e.target.closest("button") : null;
       if (btn && btn.classList.contains("qn-set-fit")) {
         for (var k = 0; k < infos.length; k++) {
@@ -187,7 +187,8 @@ window.QNSettingsUI = (function () {
       if (!btn || !applyClick(infos, btn)) return;
       sync();
       if (onChange) onChange();
-    });
+    }
+    root.addEventListener("click", onClick);
     // スライダー(FAB帯専用。設定パネルの行は従来どおり「‹ 値 ›」): つまみの位置=values()の添字。1段ごとに触覚フィードバック
     root.addEventListener("input", function (e) {
       var inp = e.target;
@@ -203,7 +204,7 @@ window.QNSettingsUI = (function () {
       if (onChange) onChange();
     });
     sync();
-    return { el: root, sync: sync };
+    return { el: root, sync: sync, onClick: onClick };   // onClick: 項目を別の場所へ移した時、その入れ物のclickから呼ぶ(移した項目はrootの外になるため)
   }
 
   // 階層に入る行の一覧(Backup/Import/Color/Keyboard/Transfer/Guide)。onPick(id)。Guideだけは別タブでguide/index.htmlを開く(再生を止めない。onPickは呼ばない)
