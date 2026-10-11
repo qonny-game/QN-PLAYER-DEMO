@@ -122,7 +122,7 @@ var QNChords = (function () {
     if (!curId || !curName) return;
     try {
       if (!result && !user.length && !beatInfo) { localStorage.removeItem(saveKey()); return; }
-      const o = { v: 1, dur: Math.round(curDur * 100) / 100, user: user.map(u => [r3(u.t0), r3(u.t1), u.root, u.q, u.bass]) };
+      const o = { v: 2, dur: Math.round(curDur * 100) / 100, user: user.map(u => [r3(u.t0), r3(u.t1), u.root, u.q, u.bass]) };
       if (result) {
         o.detail = result.detail;
         o.keySel = keySel;
@@ -132,6 +132,7 @@ var QNChords = (function () {
       }
       if (beatInfo && beatInfo.times) {
         o.beats = { t: Array.from(beatInfo.times, r3), l: Array.from(beatInfo.low, x => Math.round(x * 100) / 100), bpm: Math.round(beatInfo.bpm * 10) / 10, p: r3(beatInfo.period), c: Math.round(beatInfo.conf * 100) / 100 };
+        if (beatInfo.hi && beatInfo.hi.length === beatInfo.times.length) o.beats.h = Array.from(beatInfo.hi, x => Math.round(x * 10) / 10);
         if (beatInfo.on && beatInfo.mid) { o.beats.o = Array.from(beatInfo.on, x => Math.round(x * 10) / 10); o.beats.m = Array.from(beatInfo.mid, x => Math.round(x * 10) / 10); }
       }
       o.bt = [bt.tempo, bt.bpb, bt.shift, bt.anchor >= 0 ? r3(bt.anchor) : -1];
@@ -146,7 +147,7 @@ var QNChords = (function () {
       const raw = localStorage.getItem(saveKey());
       if (!raw) return null;
       const o = JSON.parse(raw);
-      if (!o || o.v !== 1 || Math.abs((o.dur || 0) - curDur) > 0.6) return null;
+      if (!o || (o.v !== 1 && o.v !== 2) || Math.abs((o.dur || 0) - curDur) > 0.6) return null;
       return o;
     } catch (e) { return null; }
   }
@@ -164,7 +165,7 @@ var QNChords = (function () {
 
   function hydrateBeats(o) {
     if (!o.beats || !o.beats.t || !o.beats.t.length) return null;
-    return { times: Float32Array.from(o.beats.t), low: Float32Array.from(o.beats.l || []), on: Float32Array.from(o.beats.o || []), mid: Float32Array.from(o.beats.m || []), bpm: o.beats.bpm, period: o.beats.p, conf: o.beats.c };
+    return { times: Float32Array.from(o.beats.t), low: Float32Array.from(o.beats.l || []), on: Float32Array.from(o.beats.o || []), mid: Float32Array.from(o.beats.m || []), hi: Float32Array.from(o.beats.h || []), bpm: o.beats.bpm, period: o.beats.p, conf: o.beats.c };
   }
 
   // ---------- 解析 ----------
@@ -294,10 +295,12 @@ var QNChords = (function () {
     user = saved && Array.isArray(saved.user) ? saved.user.map(a => ({ t0: a[0], t1: a[1], root: a[2], q: a[3], bass: a[4] })) : [];
     if (saved && saved.keySel) keySel = saved.keySel;
     if (saved && saved.bt) bt = { tempo: saved.bt[0] | 0, bpb: saved.bt[1] | 0, shift: saved.bt[2] | 0, anchor: typeof saved.bt[3] === "number" ? saved.bt[3] : -1 };
-    beatInfo = saved ? hydrateBeats(saved) : null;
+    const stale = !!saved && saved.v < 2;       // 旧い解析器の結果(拍・コード)は捨てて解析し直す。手動編集(user)と拍の設定(bt)は引き継ぐ
+    if (stale) bt = { tempo: 0, bpb: bt.bpb, shift: 0, anchor: bt.anchor };   // 古い拍に合わせた補正(ずらし・倍/半)は新しい拍には合わない
+    beatInfo = saved && !stale ? hydrateBeats(saved) : null;
     if (cache.has(id)) { classifyNow(); return; }
     // 保存済みの解析が今の設定(詳細度・キー)と合っていれば、再解析せずそのまま使う
-    if (saved && saved.detail === detail && saved.keySel === keySel && (saved.snap ? 1 : 0) === (snap ? 1 : 0)) {
+    if (saved && !stale && saved.detail === detail && saved.keySel === keySel && (saved.snap ? 1 : 0) === (snap ? 1 : 0)) {
       const h = hydrate(saved);
       if (h) {
         result = h; compose(); computeGrid(); phase = "ready"; progress = 1; ver++; notify("state");
@@ -521,7 +524,7 @@ var QNChords = (function () {
     setBt: setBt,
     grid() { return gridData; },
     gridVersion() { return gridVer; },
-    bpm() { return beatInfo ? beatInfo.bpm * (bt.tempo === 1 ? 2 : bt.tempo === -1 ? 0.5 : 1) : 0; },
+    bpm() { return gridData && gridData.bpm ? gridData.bpm : beatInfo ? beatInfo.bpm * (bt.tempo === 1 ? 2 : bt.tempo === -1 ? 0.5 : 1) : 0; },
     chordOf: chordOf,
     resetAll: resetAll,
     hasUser() { return user.length > 0; },

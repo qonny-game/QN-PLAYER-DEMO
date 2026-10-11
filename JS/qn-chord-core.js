@@ -328,7 +328,7 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
         }
         n = Math.sqrt(n);
         for (let i = 0; i < 12; i++) tpl[s * 12 + i] /= n;
-        prior[s] = Q.bias * BIAS_SCALE + (diat ? 0.03 : 0);
+        prior[s] = Q.bias * BIAS_SCALE + (diat ? +(typeof process !== "undefined" && process.env.DIAT || 0.03) : 0);
       }
     }
 
@@ -363,8 +363,24 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
     }
 
     // Viterbi: 状態=S個のコード+N。同じ状態に居続けるのは無料、移るにはSWITCHを払う
-    const BETA = 9, SWITCH = 1.6;
+    const BETA = 9, SWITCH = +(typeof process !== "undefined" && process.env.SWITCH || 6);
     const NS = S + 1;
+    // 拍に同期: 拍の近くでは乗り換えやすく、拍と拍の間(特に拍から遠い所)では乗り換えにくくする
+    const envN = function (k, d) { return +(typeof process !== "undefined" && process.env[k] || d); };
+    const swOn = envN("SW_ON", 0.7), swOff = envN("SW_OFF", 2.2), swWin = envN("SW_WIN", 0.08);
+    const swF = new Float32Array(F).fill(1);
+    if (opts.grid && opts.grid.times && opts.grid.times.length > 3) {
+      const Tg = opts.grid.times, Mg = opts.grid.period || 0.5;
+      let k = 0;
+      for (let f = 0; f < F; f++) {
+        const t = ch.win / 2 + f * ch.hop;
+        while (k + 1 < Tg.length && Tg[k + 1] <= t) k++;
+        let d = Math.abs(t - Tg[k]);
+        if (k + 1 < Tg.length) d = Math.min(d, Math.abs(Tg[k + 1] - t));
+        const dh = Math.abs(t - (Tg[k] + (k + 1 < Tg.length ? Tg[k + 1] - Tg[k] : Mg) / 2));
+        swF[f] = d <= swWin ? swOn : (dh <= swWin ? 1.2 : swOff);
+      }
+    }
     let prev = new Float64Array(NS), cur = new Float64Array(NS);
     const back = new Int16Array(F * NS);
     for (let f = 0; f < F; f++) {
@@ -373,7 +389,7 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
       for (let s = 0; s < NS; s++) {
         const em = s === S ? (silent[f] ? 1.0 * BETA : -0.4 * BETA) : (silent[f] ? -0.4 * BETA : ev[f * S + s] * BETA);
         if (f === 0) { cur[s] = em; back[s] = s; continue; }
-        const stay = prev[s], jump = bestPrev - SWITCH;
+        const stay = prev[s], jump = bestPrev - SWITCH * swF[f];
         if (stay >= jump) { cur[s] = stay + em; back[f * NS + s] = s; }
         else { cur[s] = jump + em; back[f * NS + s] = bestPrevS; }
       }
@@ -442,6 +458,8 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
   // beats(): オンセット(音の立ち上がり)の強さ → テンポ(自己相関) → 動的計画法で拍の位置を追跡(Ellis 2007)。小節頭は bars() が別に決める。
   // 戻り値: { times:Float32Array(拍の秒), low:Float32Array(拍ごとの低音の立ち上がり 0〜1), bpm, period(秒), conf }
   const B_N = 512, B_HOP = 80;      // 8kHzで64ms窓・10msごと
+  const B_TIGHT = 1000;              // 拍の間隔がテンポからずれることへの罰の強さ(大きいほど等間隔)
+  const B_LOWW = 1.0;               // 低音の立ち上がりを拍の手がかりに足す重み
   const B_LAT = 0.001;              // フレームの位置→実際の音の立ち上がりの時刻の補正(合成音源で測った値)
 
   function beats(mono, sr, onProgress) {
@@ -450,28 +468,28 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
     sr = d.sr;
     const hop = Math.round(B_HOP * sr / 8000), N = B_N;
     const F = Math.max(0, Math.floor((x.length - N) / hop) + 1);
-    const out = { times: new Float32Array(0), low: new Float32Array(0), on: new Float32Array(0), mid: new Float32Array(0), bpm: 0, period: 0, conf: 0 };
+    const out = { times: new Float32Array(0), low: new Float32Array(0), on: new Float32Array(0), mid: new Float32Array(0), hi: new Float32Array(0), bpm: 0, period: 0, conf: 0 };
     if (F < 300) return out;                                   // 3秒未満は無理
     const fps = sr / hop;
     const fft = makeFFT(N);
     const win = new Float64Array(N);
     for (let i = 0; i < N; i++) win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (N - 1));
     const re = new Float64Array(N), im = new Float64Array(N);
-    const kLo0 = Math.max(1, Math.floor(40 * N / sr)), kLo1 = Math.floor(200 * N / sr), kHi1 = Math.min(N / 2 - 1, Math.floor(3500 * N / sr));
+    const kMid0 = Math.floor(1000 * N / sr), kLo0 = Math.max(1, Math.floor(40 * N / sr)), kLo1 = Math.floor(200 * N / sr), kHi1 = Math.min(N / 2 - 1, Math.floor(3500 * N / sr));
     let prev = new Float64Array(kHi1 + 1), cur = new Float64Array(kHi1 + 1);
-    const on = new Float32Array(F), low = new Float32Array(F);
+    const on = new Float32Array(F), low = new Float32Array(F), hiB = new Float32Array(F);
     for (let f = 0; f < F; f++) {
       const o = f * hop;
       for (let i = 0; i < N; i++) { re[i] = x[o + i] * win[i]; im[i] = 0; }
       fft(re, im);
-      let fl = 0, lw = 0;
+      let fl = 0, lw = 0, hw = 0;
       for (let k = kLo0; k <= kHi1; k++) {
         const v = Math.log(1 + 100 * Math.sqrt(re[k] * re[k] + im[k] * im[k]) / N * 8);
         cur[k] = v;
         const df = v - prev[k];
-        if (df > 0 && f > 0) { fl += df; if (k <= kLo1) lw += df; }
+        if (df > 0 && f > 0) { fl += df; if (k <= kLo1) lw += df; else if (k >= kMid0) hw += df; }
       }
-      on[f] = fl; low[f] = lw;
+      on[f] = fl; low[f] = lw; hiB[f] = hw;
       const t = prev; prev = cur; cur = t;
       if (onProgress && (f & 255) === 0) onProgress(f / F * 0.5);
     }
@@ -490,7 +508,9 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
       for (let i = 0; i < a.length; i++) r[i] /= sd;
       return r;
     };
-    const o1 = norm(on), oLow = norm(low);
+    const oB = norm(on), oLow = norm(low), oHi = norm(hiB);
+    const LW = +(typeof process !== "undefined" && process.env.LW || B_LOWW);
+    const o1 = Float32Array.from(oB, (v, i) => v + LW * oLow[i]);   // 拍の手がかり = 全帯域 + 低音(キック/ベース)。裏拍のコードやハットに引っ張られにくくする
 
     // テンポ: 自己相関(60〜200BPM)。120BPM付近を好む事前分布と、倍/半のテンポも足し合わせて拍子の階層を拾う
     const lagMin = Math.round(fps * 60 / 200), lagMax = Math.round(fps * 60 / 60);
@@ -520,7 +540,7 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
       loc[i] = s;
     }
     const cum = new Float64Array(F), link = new Int32Array(F).fill(-1);
-    const TIGHT = 100, wMin = Math.max(1, Math.round(p / 2)), wMax = Math.round(p * 2);
+    const TIGHT = +(typeof process !== "undefined" && process.env.TIGHT || B_TIGHT), wMin = Math.max(1, Math.round(p / 2)), wMax = Math.round(p * 2);
     const pen = new Float64Array(wMax + 1);
     for (let t = wMin; t <= wMax; t++) pen[t] = -TIGHT * Math.pow(Math.log(t / p), 2);
     for (let i = 0; i < F; i++) {
@@ -547,6 +567,7 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
     const pk = (c) => { let m = 0; const i0 = Math.round(c); for (let k = -3; k <= 3; k++) { const j = i0 + k; if (j >= 0 && j < F && o1[j] > m) m = o1[j]; } return m; };
     out.on = Float32Array.from(keep, i => pk(i));
     out.mid = Float32Array.from(keep, (i, n) => pk(i + (n + 1 < keep.length ? keep[n + 1] - i : p) / 2));
+    out.hi = Float32Array.from(keep, i => { let m = 0; for (let k = -4; k <= 4; k++) { const j = i + k; if (j >= 0 && j < F && oHi[j] > m) m = oHi[j]; } return m; });
     out.period = p * hop / sr;
     out.bpm = 60 / out.period;
     // 確信度: 拍の位置の立ち上がりの平均 / 全体の平均
@@ -561,19 +582,34 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
   // segs=コード区間(自動判定ぶん。コード変化の位置が小節頭の手がかり)。戻り値: { times:Float32Array, bar:Uint8Array(拍の小節内の番号。0=小節頭), m(拍子), phase }
   function bars(bi, segs, bt, dur) {
     bt = bt || {};
-    let t = Array.from(bi.times), low = Array.from(bi.low);
-    if (bt.tempo === 1) {                         // ×2: 拍と拍の真ん中に拍を足す
-      const nt = [], nl = [];
-      for (let i = 0; i < t.length; i++) { nt.push(t[i]); nl.push(low[i]); if (i + 1 < t.length) { nt.push((t[i] + t[i + 1]) / 2); nl.push(0); } }
-      t = nt; low = nl;
-    } else if (bt.tempo === -1) {                 // ÷2: 1つおきに残す(低音の強い方の位相を採る)
+    let t = Array.from(bi.times), low = Array.from(bi.low), hi = Array.from(bi.hi && bi.hi.length === bi.times.length ? bi.hi : bi.low.map(() => 0));
+    // テンポの倍/半の自動補正(bt.tempo=0の時だけ)。拍だけでは決められない倍/半の取り違えを、低音の強弱の交互パターンとコードが変わる間隔(拍数)で直す
+    let tempo = bt.tempo | 0, auto = 0;
+    if (!tempo && t.length >= 8) {
+      const per0 = (t[t.length - 1] - t[0]) / (t.length - 1), bpm0 = 60 / per0;
+      const mean = (ph) => { let s = 0, c = 0; for (let i = ph; i < low.length; i += 2) { s += low[i]; c++; } return c ? s / c : 0; };
+      const m0 = mean(0), m1 = mean(1), alt = Math.max(m0, m1) / Math.max(0.05, Math.min(m0, m1));
+      let Lmed = 0;
+      if (segs) {
+        const d = segs.filter(x => x.name !== "N" && x.t1 > x.t0).map(x => (x.t1 - x.t0) / per0).sort((a, b) => a - b);
+        if (d.length >= 4) Lmed = d[d.length >> 1];
+      }
+      if (bpm0 > 135 && alt > 2.0) auto = -1;                       // キック/ベースが1拍おき=本当の拍は半分
+      else if (Lmed > 0 && ((Lmed <= 1.3 && bpm0 < 80) || (Lmed <= 2.2 && bpm0 < 72))) auto = 1;   // コードが1〜2拍で変わる遅い拍=倍
+      tempo = auto;
+    }
+    if (tempo === 1) {                         // ×2: 拍と拍の真ん中に拍を足す
+      const nt = [], nl = [], nh = [];
+      for (let i = 0; i < t.length; i++) { nt.push(t[i]); nl.push(low[i]); nh.push(hi[i]); if (i + 1 < t.length) { nt.push((t[i] + t[i + 1]) / 2); nl.push(0); nh.push(0); } }
+      t = nt; low = nl; hi = nh;
+    } else if (tempo === -1) {                 // ÷2: 1つおきに残す(低音の強い方の位相を採る)
       let s0 = 0, s1 = 0;
       for (let i = 0; i < low.length; i++) if (i % 2) s1 += low[i]; else s0 += low[i];
       const off = s1 > s0 ? 1 : 0;
-      t = t.filter((_, i) => i % 2 === off); low = low.filter((_, i) => i % 2 === off);
+      t = t.filter((_, i) => i % 2 === off); low = low.filter((_, i) => i % 2 === off); hi = hi.filter((_, i) => i % 2 === off);
     }
     const n = t.length;
-    const res = { times: Float32Array.from(t), bar: new Uint8Array(n), m: 4, phase: 0 };
+    const res = { times: Float32Array.from(t), bar: new Uint8Array(n), m: 4, phase: 0, auto: auto, bpm: n > 1 ? 60 * (n - 1) / (t[n - 1] - t[0]) : 0 };
     if (n < 4) return res;
     // 各拍がコード変化の位置に近いか
     const period = (t[n - 1] - t[0]) / (n - 1);
@@ -593,9 +629,26 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
       for (let i = ph; i < n; i += M) { s += 0.8 * low[i] + 2.2 * chg[i]; c++; }
       return c ? s / c : 0;
     };
+    // 最初に鳴ったコードの頭は、小節頭であることが多い(出だしが小節の途中でも、コードは1拍目から始まる曲が大半)。小節頭の候補が拮抗した時の決め手にする
+    let j0 = -1;
+    if (segs) {
+      for (let k = 0; k < segs.length; k++) {
+        if (segs[k].name === "N") continue;
+        let best = 0;
+        for (let i = 1; i < n; i++) if (Math.abs(t[i] - segs[k].t0) < Math.abs(t[best] - segs[k].t0)) best = i;
+        if (Math.abs(t[best] - segs[k].t0) < period * 0.4) j0 = best;
+        break;
+      }
+    }
+    const J0T = +(typeof process !== "undefined" && process.env.J0T || 0.9);
     const contrast = (M) => {
       let best = -1e9, bp = 0, sum = 0;
-      for (let ph = 0; ph < M; ph++) { const v = score(M, ph); sum += v; if (v > best) { best = v; bp = ph; } }
+      const sc = [];
+      for (let ph = 0; ph < M; ph++) { const v = score(M, ph); sc.push(v); sum += v; if (v > best) { best = v; bp = ph; } }
+      if (j0 >= 0) {
+        const want = ((j0 % M) + M) % M;
+        if (want !== bp && sc[want] >= J0T * best) bp = want;
+      }
       return { c: best - sum / M, ph: bp };
     };
     let M = bt.bpb >= 2 ? bt.bpb : 4, cc = contrast(M);
