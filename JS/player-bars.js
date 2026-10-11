@@ -333,6 +333,29 @@ const QNBars = (function () {
     return v;
   }
 
+  // 小節線・拍線(薄い縦線)。波形/コードの下に敷く
+  function paintGrid(cx, r, W, H) {
+    if (typeof QNChords === "undefined") return;
+    const mode = QNChords.getGridMode();
+    if (mode === "off") return;
+    const gd = QNChords.grid();
+    if (!gd || !gd.times || !gd.times.length) return;
+    const ts = gd.times, bar = gd.bar;
+    const t0 = r * sec, t1 = Math.min(t0 + sec, dur || t0 + sec);
+    let lo = 0, hi = ts.length;
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (ts[mid] < t0) lo = mid + 1; else hi = mid; }
+    const lw = Math.max(1, Math.round(g.dpr));
+    for (let pass = 0; pass < 2; pass++) {       // 0: 拍(薄い) 1: 小節頭(少し濃い)
+      if (pass === 0 && mode !== "beat") continue;
+      cx.fillStyle = pass ? "rgba(255,255,255,0.24)" : "rgba(255,255,255,0.09)";
+      for (let i = lo; i < ts.length && ts[i] < t1; i++) {
+        if ((bar[i] === 0) !== (pass === 1)) continue;
+        const x = Math.round((ts[i] - t0) / sec * W - lw / 2);
+        cx.fillRect(x, 0, pass ? lw + (g.dpr > 1.5 ? 1 : 0) : lw, H);
+      }
+    }
+  }
+
   // 連続した波形(隙間なし)。1行ぶんの輪郭を1本のPathにして、色が変わる区間(再生済み/未再生/マーカー色)ごとにclipして塗る
   function paintRow(el, r, played, accent) {
     const cv = el._cv;
@@ -340,6 +363,7 @@ const QNBars = (function () {
     const W = cv.width;
     const H = cv.height;
     cx.clearRect(0, 0, W, H);
+    paintGrid(cx, r, W, H);
     if (viewMode !== "wave") {
       const segs = chordSegs();
       if (segs) { paintChordRow(el, r, played, accent, segs); return; }
@@ -458,6 +482,12 @@ const QNBars = (function () {
     return lum > 0.62 ? "#111" : "#fff";
   }
 
+  // 境目ドラッグ: 拍と裏拍(拍の真ん中)のうち一番近い所に吸着。Altを押している間は自由(0.05秒刻み)
+  function snapBeat(t, free) {
+    if (!free && typeof QNChords !== "undefined" && QNChords.getGridMode() !== "off" && QNChords.grid()) return QNChords.snapTime(t);
+    return Math.round(t * 20) / 20;
+  }
+
   function paintChordRow(el, r, played, accent, segs) {
     const cx = el._cx;
     const W = el._cv.width;
@@ -520,6 +550,16 @@ const QNBars = (function () {
         cx.beginPath();
         cx.arc(v.x0 + 6 * g.dpr, by + 6 * g.dpr, 2 * g.dpr, 0, 6.2832);
         cx.fill();
+      }
+      if (v.s.sync && !v.s.u && v.s.t0 >= t0 && v.x1 - v.x0 > 14 * g.dpr) {   // 裏拍で入るコード(シンコペ)は左下に小さな三角
+        const qx = v.x0 + 3 * g.dpr, qy = by + bh - 4 * g.dpr, qs = 3.5 * g.dpr;
+        cx.fillStyle = on;
+        cx.globalAlpha = 0.75;
+        cx.beginPath();
+        cx.moveTo(qx, qy - qs); cx.lineTo(qx + qs * 1.4, qy); cx.lineTo(qx, qy + qs);
+        cx.closePath();
+        cx.fill();
+        cx.globalAlpha = 1;
       }
       cx.font = f1;
       let label = full;
@@ -613,7 +653,7 @@ const QNBars = (function () {
       markersList = pins.filter(p => p.enabled).sort((a, b) => a.t - b.t);
     }
 
-    const sig = accent + "|" + ms + "|" + peaksVer + "|" + g.nBars + "|" + g.barW + "|" + g.barH + "|" + g.dpr + "|" + sec + "|" + waveShape + "|" + (window.__qnWaveformDrawCount || 0) + "|" + viewMode + "|" + editMode + "|" + keyShift() + "|" + (typeof QNChords !== "undefined" ? QNChords.version() : 0);
+    const sig = accent + "|" + ms + "|" + peaksVer + "|" + g.nBars + "|" + g.barW + "|" + g.barH + "|" + g.dpr + "|" + sec + "|" + waveShape + "|" + (window.__qnWaveformDrawCount || 0) + "|" + viewMode + "|" + editMode + "|" + keyShift() + "|" + (typeof QNChords !== "undefined" ? QNChords.getGridMode() + QNChords.gridVersion() : "") + "|" + (typeof QNChords !== "undefined" ? QNChords.version() : 0);
     rows.forEach((el, r) => {
       const played = playedBars(r, ct);
       const rs = sig + "|" + played;
@@ -917,7 +957,7 @@ const QNBars = (function () {
         if (!drag.bar.isConnected) return;
         const rect = drag.bar.getBoundingClientRect();
         const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / (rect.width || 1)));
-        let t = Math.round((drag.row * sec + ratio * sec) * 20) / 20;      // 0.05秒刻み
+        let t = snapBeat(drag.row * sec + ratio * sec, e.altKey);
         t = Math.max(drag.p0 + 0.2, Math.min(drag.n1 - 0.2, t));
         drag.t = t;
         QNChords.moveBoundary(drag.p0, drag.n1, t, drag.pc, drag.nc, false);

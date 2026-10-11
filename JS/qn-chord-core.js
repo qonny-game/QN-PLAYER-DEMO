@@ -255,6 +255,48 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
   // opts: { detail:"basic"|"extended"|"full", key:(省略時は推定), bass:true(既定。オンベース検出), alts:3(候補数) }
   // 戻り値: { segments:[{t0,t1,name,root,q,bass,conf,alts:[{name,score}]}], key, detail }。name="N"は無音/コード無し
   // name=コード名(オンベースならC/E形式)。alts=ほかの有力候補(スコアの高い順。名前はベース音なし)
+  // 区間の境目を拍に合わせる。候補=境目の近くの拍と、拍の真ん中(裏拍)。
+  // 点数 = その位置で区切った時のコードの当てはまり + そこで音が立ち上がっているか - 裏拍/グリッド外の罰。
+  // 裏拍に決まった境目は seg.sync=true(コードが拍より先に入る/遅れて入るシンコペ)
+  const SN_ON = 0.25, SN_ONCAP = 3, SN_OFF = 0.30, SN_FREE = 0.45, SN_DIST = 0.4;
+  function snapSegs(segs, meta, gr, ev, S, silent, ch) {
+    const T = gr.times, M = gr.mid, O = gr.on, P = gr.period;
+    if (!T || T.length < 4 || !(P > 0)) return;
+    const hop = ch.hop, c0 = ch.win / 2;
+    const R = Math.min(0.42, P * 0.85);
+    const med = function (a) { if (!a || !a.length) return 0; const v = Array.from(a).sort(function (x, y) { return x - y; }); return v[v.length >> 1]; };
+    const mO = med(O), mM = med(M);     // 拍/裏拍それぞれの普段の立ち上がり。これを超えた分だけ加点
+    const evAt = function (f, st) { return st === S ? (silent[f] ? 1 : -0.4) : ev[f * S + st]; };
+    const lowerBound = function (x) { let lo = 0, hi = T.length; while (lo < hi) { const m = (lo + hi) >> 1; if (T[m] < x) lo = m + 1; else hi = m; } return lo; };
+    for (let i = 1; i < segs.length; i++) {
+      const A = meta[i - 1], B = meta[i];
+      const tb = segs[i].t0;
+      const cost = function (t) {
+        const k = Math.max(A.a, Math.min(B.f, Math.ceil((t - c0) / hop)));
+        let c = 0;
+        for (let f = A.a; f < k; f++) c += evAt(f, A.s);
+        for (let f = k; f < B.f; f++) c += evAt(f, B.s);
+        return c;
+      };
+      const lo = segs[i - 1].t0 + 0.15, hi = (i + 1 < segs.length ? segs[i + 1].t0 : segs[i].t1) - 0.15;
+      let bestT = tb, bestS = cost(tb) - SN_FREE, sync = !!segs[i].sync;
+      sync = false;
+      const k0 = Math.max(0, lowerBound(tb - R) - 1);
+      for (let k = k0; k < T.length && T[k] - R <= tb; k++) {
+        const tests = [[T[k], O ? Math.max(0, O[k] - mO) : 0, 0]];
+        if (k + 1 < T.length && M) tests.push([(T[k] + T[k + 1]) / 2, Math.max(0, M[k] - mM), SN_OFF]);
+        for (let j = 0; j < tests.length; j++) {
+          const t = tests[j][0];
+          if (Math.abs(t - tb) > R || t < lo || t > hi) continue;
+          const sc = cost(t) + SN_ON * Math.min(SN_ONCAP, tests[j][1]) - tests[j][2] - SN_DIST * Math.abs(t - tb);
+          if (sc > bestS) { bestS = sc; bestT = t; sync = tests[j][2] > 0; }
+        }
+      }
+      segs[i].t0 = bestT; segs[i - 1].t1 = bestT;
+      if (sync) segs[i].sync = true;
+    }
+  }
+
   function classify(ch, dur, opts) {
     opts = opts || {};
     const detail = LEVELS[opts.detail] ? opts.detail : "extended";
@@ -344,7 +386,7 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
 
     // 区間にまとめる。フレームfの中心=f*hop+win/2、境界は隣のフレーム中心の中間
     const hop = ch.hop, c0 = ch.win / 2;
-    const segs = [];
+    const segs = [], meta = [];
     let a = 0;
     for (let f = 1; f <= F; f++) {
       if (f < F && path[f] === path[a]) continue;
@@ -388,9 +430,182 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
         }
       }
       segs.push(seg);
+      meta.push({ a: a, f: f, s: s });
       a = f;
     }
+    if (opts.grid && segs.length > 1) snapSegs(segs, meta, opts.grid, ev, S, silent, ch);
     res.segments = segs.filter(s => s.t1 > s.t0);
+    return res;
+  }
+
+  // ---------- 4) 拍・小節 ----------
+  // beats(): オンセット(音の立ち上がり)の強さ → テンポ(自己相関) → 動的計画法で拍の位置を追跡(Ellis 2007)。小節頭は bars() が別に決める。
+  // 戻り値: { times:Float32Array(拍の秒), low:Float32Array(拍ごとの低音の立ち上がり 0〜1), bpm, period(秒), conf }
+  const B_N = 512, B_HOP = 80;      // 8kHzで64ms窓・10msごと
+  const B_LAT = 0.001;              // フレームの位置→実際の音の立ち上がりの時刻の補正(合成音源で測った値)
+
+  function beats(mono, sr, onProgress) {
+    const d = decimate(mono, sr);
+    const x = d.x;
+    sr = d.sr;
+    const hop = Math.round(B_HOP * sr / 8000), N = B_N;
+    const F = Math.max(0, Math.floor((x.length - N) / hop) + 1);
+    const out = { times: new Float32Array(0), low: new Float32Array(0), on: new Float32Array(0), mid: new Float32Array(0), bpm: 0, period: 0, conf: 0 };
+    if (F < 300) return out;                                   // 3秒未満は無理
+    const fps = sr / hop;
+    const fft = makeFFT(N);
+    const win = new Float64Array(N);
+    for (let i = 0; i < N; i++) win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (N - 1));
+    const re = new Float64Array(N), im = new Float64Array(N);
+    const kLo0 = Math.max(1, Math.floor(40 * N / sr)), kLo1 = Math.floor(200 * N / sr), kHi1 = Math.min(N / 2 - 1, Math.floor(3500 * N / sr));
+    let prev = new Float64Array(kHi1 + 1), cur = new Float64Array(kHi1 + 1);
+    const on = new Float32Array(F), low = new Float32Array(F);
+    for (let f = 0; f < F; f++) {
+      const o = f * hop;
+      for (let i = 0; i < N; i++) { re[i] = x[o + i] * win[i]; im[i] = 0; }
+      fft(re, im);
+      let fl = 0, lw = 0;
+      for (let k = kLo0; k <= kHi1; k++) {
+        const v = Math.log(1 + 100 * Math.sqrt(re[k] * re[k] + im[k] * im[k]) / N * 8);
+        cur[k] = v;
+        const df = v - prev[k];
+        if (df > 0 && f > 0) { fl += df; if (k <= kLo1) lw += df; }
+      }
+      on[f] = fl; low[f] = lw;
+      const t = prev; prev = cur; cur = t;
+      if (onProgress && (f & 255) === 0) onProgress(f / F * 0.5);
+    }
+    // 正規化: 0.6秒の移動平均を引いて負を切り、標準偏差で割る
+    const norm = (a) => {
+      const w = Math.round(fps * 0.6), pre = new Float64Array(a.length + 1);
+      for (let i = 0; i < a.length; i++) pre[i + 1] = pre[i] + a[i];
+      const r = new Float32Array(a.length);
+      let ss = 0;
+      for (let i = 0; i < a.length; i++) {
+        const l = Math.max(0, i - w), h = Math.min(a.length, i + w + 1);
+        const v = Math.max(0, a[i] - (pre[h] - pre[l]) / (h - l));
+        r[i] = v; ss += v * v;
+      }
+      const sd = Math.sqrt(ss / a.length) || 1;
+      for (let i = 0; i < a.length; i++) r[i] /= sd;
+      return r;
+    };
+    const o1 = norm(on), oLow = norm(low);
+
+    // テンポ: 自己相関(60〜200BPM)。120BPM付近を好む事前分布と、倍/半のテンポも足し合わせて拍子の階層を拾う
+    const lagMin = Math.round(fps * 60 / 200), lagMax = Math.round(fps * 60 / 60);
+    const ac = new Float64Array(lagMax * 2 + 2);
+    for (let l = lagMin; l <= lagMax * 2; l++) {
+      let s = 0;
+      for (let i = 0; i + l < F; i++) s += o1[i] * o1[i + l];
+      ac[l] = s / (F - l);
+    }
+    let bestL = lagMin, bestV = -1e18;
+    for (let l = lagMin; l <= lagMax; l++) {
+      const bpm = 60 * fps / l;
+      const prior = Math.exp(-0.5 * Math.pow(Math.log2(bpm / 120) / 0.9, 2));
+      const v = (ac[l] + 0.5 * ac[2 * l] + 0.25 * (ac[Math.round(l / 2)] || 0)) * prior;
+      if (v > bestV) { bestV = v; bestL = l; }
+    }
+    // 放物線補間で端数のラグへ
+    const y0 = ac[bestL - 1], y1 = ac[bestL], y2 = ac[bestL + 1];
+    const den = y0 - 2 * y1 + y2;
+    const p = bestL + (den < 0 ? 0.5 * (y0 - y2) / den : 0);       // 拍の間隔(フレーム)
+
+    // 拍追跡(動的計画法): 各フレームの得点 = 立ち上がりの強さ(少しぼかす) + 直前の拍からの最良の累積。間隔がpから外れるほど罰
+    const loc = new Float32Array(F);
+    for (let i = 0; i < F; i++) {
+      let s = 0;
+      for (let k = -3; k <= 3; k++) { const j = i + k; if (j >= 0 && j < F) s += o1[j] * Math.exp(-0.5 * k * k / 2.25); }
+      loc[i] = s;
+    }
+    const cum = new Float64Array(F), link = new Int32Array(F).fill(-1);
+    const TIGHT = 100, wMin = Math.max(1, Math.round(p / 2)), wMax = Math.round(p * 2);
+    const pen = new Float64Array(wMax + 1);
+    for (let t = wMin; t <= wMax; t++) pen[t] = -TIGHT * Math.pow(Math.log(t / p), 2);
+    for (let i = 0; i < F; i++) {
+      let best = 0, bj = -1;
+      for (let t = wMin; t <= wMax; t++) {
+        const j = i - t;
+        if (j < 0) break;
+        const v = cum[j] + pen[t];
+        if (bj < 0 || v > best) { best = v; bj = j; }
+      }
+      cum[i] = loc[i] + (bj >= 0 ? best : 0);
+      link[i] = bj;
+      if (onProgress && (i & 1023) === 0) onProgress(0.5 + i / F * 0.5);
+    }
+    // 終点: 最後の2拍分のうち累積が最大の所から逆にたどる
+    let end = F - 1;
+    for (let i = Math.max(0, F - Math.round(p * 2)); i < F; i++) if (cum[i] > cum[end]) end = i;
+    const keep = [];
+    for (let i = end; i >= 0; i = link[i]) { keep.push(i); if (link[i] < 0) break; }
+    keep.reverse();
+    out.times = Float32Array.from(keep, i => (i * hop + N / 2) / sr - B_LAT);
+    out.low = Float32Array.from(keep, i => { let m = 0; for (let k = -4; k <= 4; k++) { const j = i + k; if (j >= 0 && j < F && oLow[j] > m) m = oLow[j]; } return m; });
+    // 拍の位置と、拍と拍の真ん中(8分音符の裏)の立ち上がりの強さ(シンコペ判定用)
+    const pk = (c) => { let m = 0; const i0 = Math.round(c); for (let k = -3; k <= 3; k++) { const j = i0 + k; if (j >= 0 && j < F && o1[j] > m) m = o1[j]; } return m; };
+    out.on = Float32Array.from(keep, i => pk(i));
+    out.mid = Float32Array.from(keep, (i, n) => pk(i + (n + 1 < keep.length ? keep[n + 1] - i : p) / 2));
+    out.period = p * hop / sr;
+    out.bpm = 60 / out.period;
+    // 確信度: 拍の位置の立ち上がりの平均 / 全体の平均
+    let sb = 0;
+    keep.forEach(i => { sb += o1[i]; });
+    out.conf = keep.length ? sb / keep.length : 0;
+    if (onProgress) onProgress(1);
+    return out;
+  }
+
+  // テンポの倍/半の補正と、拍子・小節頭の決定。bt={tempo:-1|0|1 (÷2/自動/×2), bpb:0(自動)|2..7, shift:小節頭を拍単位でずらす}
+  // segs=コード区間(自動判定ぶん。コード変化の位置が小節頭の手がかり)。戻り値: { times:Float32Array, bar:Uint8Array(拍の小節内の番号。0=小節頭), m(拍子), phase }
+  function bars(bi, segs, bt) {
+    bt = bt || {};
+    let t = Array.from(bi.times), low = Array.from(bi.low);
+    if (bt.tempo === 1) {                         // ×2: 拍と拍の真ん中に拍を足す
+      const nt = [], nl = [];
+      for (let i = 0; i < t.length; i++) { nt.push(t[i]); nl.push(low[i]); if (i + 1 < t.length) { nt.push((t[i] + t[i + 1]) / 2); nl.push(0); } }
+      t = nt; low = nl;
+    } else if (bt.tempo === -1) {                 // ÷2: 1つおきに残す(低音の強い方の位相を採る)
+      let s0 = 0, s1 = 0;
+      for (let i = 0; i < low.length; i++) if (i % 2) s1 += low[i]; else s0 += low[i];
+      const off = s1 > s0 ? 1 : 0;
+      t = t.filter((_, i) => i % 2 === off); low = low.filter((_, i) => i % 2 === off);
+    }
+    const n = t.length;
+    const res = { times: Float32Array.from(t), bar: new Uint8Array(n), m: 4, phase: 0 };
+    if (n < 4) return res;
+    // 各拍がコード変化の位置に近いか
+    const period = (t[n - 1] - t[0]) / (n - 1);
+    const chg = new Float32Array(n);
+    if (segs) {
+      for (let k = 1; k < segs.length; k++) {
+        const b = segs[k].t0;
+        if (segs[k].name === "N" || segs[k - 1].name === "N") continue;
+        // 最も近い拍
+        let lo = 0, hi = n - 1;
+        while (lo < hi) { const mid = (lo + hi) >> 1; if (t[mid] < b) lo = mid + 1; else hi = mid; }
+        for (const j of [lo - 1, lo]) if (j >= 0 && j < n && Math.abs(t[j] - b) < period * 0.3) chg[j] = Math.max(chg[j], 1 - Math.abs(t[j] - b) / (period * 0.3));
+      }
+    }
+    const score = (M, ph) => {
+      let s = 0, c = 0;
+      for (let i = ph; i < n; i += M) { s += 0.8 * low[i] + 2.2 * chg[i]; c++; }
+      return c ? s / c : 0;
+    };
+    const contrast = (M) => {
+      let best = -1e9, bp = 0, sum = 0;
+      for (let ph = 0; ph < M; ph++) { const v = score(M, ph); sum += v; if (v > best) { best = v; bp = ph; } }
+      return { c: best - sum / M, ph: bp };
+    };
+    let M = bt.bpb >= 2 ? bt.bpb : 4, cc = contrast(M);
+    if (!(bt.bpb >= 2)) {
+      const c3 = contrast(3);
+      if (c3.c > cc.c * 1.35) { M = 3; cc = c3; }                 // 4拍子を優先。3拍子の方がはっきり良い時だけ3
+    }
+    res.m = M;
+    res.phase = ((cc.ph + (bt.shift || 0)) % M + M) % M;
+    for (let i = 0; i < n; i++) res.bar[i] = ((i - res.phase) % M + M) % M;
     return res;
   }
 
@@ -424,7 +639,7 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
     return t;
   }
 
-  const api = { chroma: chroma, classify: classify, estimateKey: estimateKey, makeKey: makeKey, label: label, LEVELS: LEVELS, QUALITIES: QUALITIES };
+  const api = { beats: beats, bars: bars, chroma: chroma, classify: classify, estimateKey: estimateKey, makeKey: makeKey, label: label, LEVELS: LEVELS, QUALITIES: QUALITIES };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   root.QNChordCore = api;
 })(typeof self !== "undefined" ? self : this);

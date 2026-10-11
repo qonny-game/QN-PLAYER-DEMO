@@ -21,7 +21,7 @@ JS/
   player-bars.js              シークバー(QNBars)：1本=N秒(1秒刻み)の行を曲末まで縦に並べる仮想スクロール、波形描画、再生位置追従、歯車/秒数ポップアップ
   player-ui-shared.js         loadFile / updateBars（毎フレームのループ判定）/ togglePlay / キーボードショートカット
   player-normalize.js         自動ノーマライズ（曲ごとの音量差を揃える。既定OFF）
-  qn-chord-core.js            【v4.27.0 プロトタイプ】コード解析の計算(QNChordCore。chroma=STFT→12音クロマ / classify=テンプレート照合＋Viterbi。DOMなし。Nodeでも動く)
+  qn-chord-core.js            【v4.27.0 プロトタイプ】コード解析の計算(QNChordCore。chroma=STFT→12音クロマ / classify=テンプレート照合＋Viterbi / beats・bars=拍と小節(v4.30.0)。DOMなし。Nodeでも動く)
   qn-chord-worker.js          上のchroma()をWorkerで実行(重いのでメインスレッド外)
   player-chords.js            コード解析の窓口QNChords(offer/ensure/segments/setDetail/手動修正setChord・splitAt・mergeNext・reset/保存。コードモードの時だけ解析。CHORD_MODE.md)
   player-chord-edit.js        コード修正ポップアップQNChordEdit(Editモードでブロックをタップ)
@@ -106,7 +106,7 @@ guide/                        アプリ内ガイド（静的HTML8枚＋guide.css
 | シークバー1本の秒数 | localStorage | `qn_bar_sec`（1秒刻みの整数、既定5。上限＝曲長÷「Rows Autoで画面に入る行数」） |
 | シークバー追従ON/OFF | localStorage | `qn_bar_follow`（"0"でOFF、既定ON） |
 | 波形の形 | localStorage | `qn_bar_wave`（`mirror`既定\|`bottom`） |
-| シークバーの表示 | localStorage | `qn_bar_view`（`wave`既定\|`chord`\|`degree`）、`qn_chord_detail`（`basic`\|`extended`既定\|`full`）、`qn_chord_alts`（候補表示。既定ON） |
+| シークバーの表示 | localStorage | `qn_bar_view`（`wave`既定\|`chord`\|`degree`）、`qn_chord_detail`（`basic`\|`extended`既定\|`full`）、`qn_chord_alts`（候補表示。既定ON）、`qn_chord_snap`（コード境目の拍合わせ。既定ON）、`qn_grid`（拍・小節の縦線 `off`\|`bar`\|`beat`既定）。曲ごとの解析結果は `qn_chords_<ファイル名>`（拍`beats`と手動補正`bt`も含む） |
 | コード解析・手動修正 | localStorage | `qn_chords_<ファイル名>`（解析結果＋手動修正。`player-chords.js`） |
 | 手動スクロール後の追従停止秒数 | localStorage | `qn_bar_follow_pause`（1〜30、既定6） |
 | シークバーの1画面の本数 | localStorage | `qn_bar_rows`（0=自動/3〜12、既定0） |

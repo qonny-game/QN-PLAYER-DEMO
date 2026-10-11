@@ -12,6 +12,7 @@ var QNChordEdit = (function () {
   let el = null;
   let tapT = 0;
   let isOpen = false;
+  let barMode = false;      // ONの間は、コードの変更をタップした小節ぜんぶに適用する
 
   const fmtT = t => { const s = Math.floor(t), m = Math.floor(s / 60); return m + ":" + String(s % 60).padStart(2, "0"); };
   const names = () => { const k = QNChords.key(); return k && k.flats ? FLAT : SHARP; };
@@ -32,6 +33,8 @@ var QNChordEdit = (function () {
       '<div class="qn-ce-sec"><div class="qn-ce-lab">Bass</div><div class="qn-ce-chips qn-ce-roots" data-k="bass"></div></div>' +
       '<div class="qn-ce-actions">' +
         '<button type="button" class="qn-ce-btn" data-a="play">Play from here</button>' +
+        '<button type="button" class="qn-ce-btn" data-a="bar">Apply to whole bar</button>' +
+        '<button type="button" class="qn-ce-btn" data-a="bars">Split at bars</button>' +
         '<button type="button" class="qn-ce-btn" data-a="none">No chord</button>' +
         '<button type="button" class="qn-ce-btn" data-a="split">Split here</button>' +
         '<button type="button" class="qn-ce-btn" data-a="merge">Merge next</button>' +
@@ -70,6 +73,11 @@ var QNChordEdit = (function () {
     const segs = QNChords.segments() || [];
     el.querySelector('[data-a="merge"]').disabled = segs.indexOf(s) < 0 || segs.indexOf(s) >= segs.length - 1;
     el.querySelector('[data-a="none"]').classList.toggle("is-on", s.root < 0);
+    const hasBars = !!QNChords.barRange(tapT);
+    const bb = el.querySelector('[data-a="bar"]');
+    bb.disabled = !hasBars;
+    bb.classList.toggle("is-on", hasBars && barMode);
+    el.querySelector('[data-a="bars"]').disabled = !hasBars;
   }
 
   function onClick(e) {
@@ -88,8 +96,10 @@ var QNChordEdit = (function () {
       if (typeof updatePlayButtonState === "function") updatePlayButtonState();
       return;
     }
-    if (a === "none") { QNChords.setChord(s, { root: -1, q: "", bass: -1 }); return; }
-    if (a === "split") { QNChords.splitAt(Math.round(tapT * 10) / 10); return; }
+    if (a === "bar") { barMode = !barMode; render(); return; }
+    if (a === "bars") { QNChords.splitBars(s); return; }
+    if (a === "none") { apply(s, { root: -1, q: "", bass: -1 }); return; }
+    if (a === "split") { QNChords.splitAt(Math.round(QNChords.snapTime(tapT) * 100) / 100); return; }
     if (a === "merge") { QNChords.mergeNext(s); return; }
     if (a === "reset") { QNChords.resetSeg(s); return; }
     if (a === "resetall") { QNChords.resetAll(); return; }
@@ -108,7 +118,12 @@ var QNChordEdit = (function () {
       c.bass = parseInt(b.dataset.bass, 10);
       if (c.root < 0) return;
     } else return;
-    QNChords.setChord(s, c);
+    apply(s, c);
+  }
+
+  function apply(s, c) {
+    const r = barMode ? QNChords.barRange(tapT) : null;
+    if (r) QNChords.setChordRange(r.t0, r.t1, c); else QNChords.setChord(s, c);
   }
 
   function place(x, y) {

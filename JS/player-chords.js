@@ -10,6 +10,8 @@
 var QNChords = (function () {
   const DETAIL_KEY = "qn_chord_detail";
   const ALTS_KEY = "qn_chord_alts";
+  const SNAP_KEY = "qn_chord_snap";
+  const GRID_KEY = "qn_grid";
   const SAVE_PREFIX = "qn_chords_";
   const SAVE_MAX_CHARS = 400000;   // 1曲あたりの保存サイズの上限(超えたら保存しない)
   const CACHE_MAX = 3;
@@ -18,11 +20,16 @@ var QNChords = (function () {
 
   let detail = "extended";
   let showAlts = true;
+  let snap = true;            // コードの切り替わりを拍(と裏拍)に合わせる
+  let gridMode = "beat";      // 背景の縦線: off | bar(小節頭だけ) | beat(拍と小節頭)
   let keySel = "auto";        // "auto" か "M<0-11>"(長調) / "m<0-11>"(短調)
   try {
     const v = localStorage.getItem(DETAIL_KEY);
     if (DETAILS.indexOf(v) >= 0) detail = v;
     showAlts = localStorage.getItem(ALTS_KEY) !== "0";
+    snap = localStorage.getItem(SNAP_KEY) !== "0";
+    const gm = localStorage.getItem(GRID_KEY);
+    if (gm === "off" || gm === "bar" || gm === "beat") gridMode = gm;
   } catch (e) {}
 
   let gen = 0;               // 曲が変わるたびに増やす。古いWorkerの返事を捨てる印
@@ -36,6 +43,10 @@ var QNChords = (function () {
   let result = null;         // classify()の結果(auto) { segments, key, detail }
   let user = [];             // 手動修正 [{t0,t1,root,q,bass}]。root=-1は「コード無し」
   let composed = null;       // autoにuserを重ねた表示用の区間
+  let beatInfo = null;       // 拍の検出結果 { times, low, bpm, period, conf }(QNChordCore.beats)
+  let bt = { tempo: 0, bpb: 0, shift: 0 };   // 拍の手動補正: テンポ(-1=半分/0=自動/1=倍)・1小節の拍数(0=自動)・小節頭のずらし(拍)
+  let gridData = null;       // 縦線の元データ { times, bar, m }(QNChordCore.bars)
+  let gridVer = 0;
   let ver = 0;
   let worker = null;
   const cache = new Map();   // id -> { ch, dur }
@@ -44,8 +55,9 @@ var QNChords = (function () {
   function notify(kind) {
     listeners.forEach(fn => { try { fn(kind); } catch (e) {} });
   }
+  // 解析を走らせたい状態か: コード/ディグリー表示、または縦線(Grid)がON
   function wanted() {
-    return typeof QNBars !== "undefined" && QNBars.getViewMode && QNBars.getViewMode() !== "wave";
+    return gridMode !== "off" || (typeof QNBars !== "undefined" && QNBars.getViewMode && QNBars.getViewMode() !== "wave");
   }
 
   function downmix(buf) {
@@ -70,7 +82,7 @@ var QNChords = (function () {
 
   // ---------- 表示用区間(auto + user) ----------
   function piece(A, t0, t1) {
-    return { t0: t0, t1: t1, name: A.name, root: A.root, q: A.q, bass: A.bass, conf: A.conf, alts: A.alts, u: false };
+    return { t0: t0, t1: t1, name: A.name, root: A.root, q: A.q, bass: A.bass, conf: A.conf, alts: A.alts, u: false, sync: !!A.sync && t0 === A.t0 };
   }
 
   function compose() {
@@ -95,6 +107,12 @@ var QNChords = (function () {
     composed = out;
   }
 
+  // 縦線の元データ。小節頭の推定にはコード変化(自動判定ぶん。手動修正では動かさない)を使う
+  function computeGrid() {
+    gridData = beatInfo && beatInfo.times && beatInfo.times.length > 3 && window.QNChordCore ? QNChordCore.bars(beatInfo, result ? result.segments : null, bt) : null;
+    gridVer++;
+  }
+
   // ---------- 保存 ----------
   function saveKey() { return SAVE_PREFIX + curName; }
   function r3(x) { return Math.round(x * 1000) / 1000; }
@@ -102,14 +120,20 @@ var QNChords = (function () {
   function save() {
     if (!curId || !curName) return;
     try {
-      if (!result && !user.length) { localStorage.removeItem(saveKey()); return; }
+      if (!result && !user.length && !beatInfo) { localStorage.removeItem(saveKey()); return; }
       const o = { v: 1, dur: Math.round(curDur * 100) / 100, user: user.map(u => [r3(u.t0), r3(u.t1), u.root, u.q, u.bass]) };
       if (result) {
         o.detail = result.detail;
         o.keySel = keySel;
         o.key = [result.key.tonic, result.key.minor ? 1 : 0];
-        o.segs = result.segments.map(s => [r3(s.t0), r3(s.t1), s.root, s.q, s.bass, Math.round(s.conf * 100) / 100, (s.alts || []).map(a => [a.root, a.q, Math.round(a.score * 100) / 100])]);
+        o.snap = snap ? 1 : 0;
+        o.segs = result.segments.map(s => [r3(s.t0), r3(s.t1), s.root, s.q, s.bass, Math.round(s.conf * 100) / 100, (s.alts || []).map(a => [a.root, a.q, Math.round(a.score * 100) / 100]), s.sync ? 1 : 0]);
       }
+      if (beatInfo && beatInfo.times) {
+        o.beats = { t: Array.from(beatInfo.times, r3), l: Array.from(beatInfo.low, x => Math.round(x * 100) / 100), bpm: Math.round(beatInfo.bpm * 10) / 10, p: r3(beatInfo.period), c: Math.round(beatInfo.conf * 100) / 100 };
+        if (beatInfo.on && beatInfo.mid) { o.beats.o = Array.from(beatInfo.on, x => Math.round(x * 10) / 10); o.beats.m = Array.from(beatInfo.mid, x => Math.round(x * 10) / 10); }
+      }
+      o.bt = [bt.tempo, bt.bpb, bt.shift];
       const str = JSON.stringify(o);
       if (str.length > SAVE_MAX_CHARS) return;
       localStorage.setItem(saveKey(), str);
@@ -130,19 +154,28 @@ var QNChords = (function () {
     if (!o.segs || !o.key || !window.QNChordCore) return null;
     const key = QNChordCore.makeKey(o.key[0], !!o.key[1]);
     const segs = o.segs.map(a => {
-      const s = { t0: a[0], t1: a[1], root: a[2], q: a[3], bass: a[4], conf: a[5], alts: (a[6] || []).map(x => ({ root: x[0], q: x[1], score: x[2] })), name: "N", u: false };
+      const s = { t0: a[0], t1: a[1], root: a[2], q: a[3], bass: a[4], conf: a[5], alts: (a[6] || []).map(x => ({ root: x[0], q: x[1], score: x[2] })), name: "N", u: false, sync: !!a[7] };
       if (s.root >= 0) s.name = QNChordCore.label(s, key, {});
       return s;
     });
     return { segments: segs, key: key, detail: o.detail };
   }
 
+  function hydrateBeats(o) {
+    if (!o.beats || !o.beats.t || !o.beats.t.length) return null;
+    return { times: Float32Array.from(o.beats.t), low: Float32Array.from(o.beats.l || []), on: Float32Array.from(o.beats.o || []), mid: Float32Array.from(o.beats.m || []), bpm: o.beats.bpm, period: o.beats.p, conf: o.beats.c };
+  }
+
   // ---------- 解析 ----------
   function classifyNow() {
     const c = cache.get(curId);
     if (!c || !window.QNChordCore) return;
-    result = QNChordCore.classify(c.ch, c.dur, { detail: detail, key: keyOverride() });
+    if (c.bi) beatInfo = c.bi;
+    const bi = beatInfo;
+    const grid = snap && bi && bi.times && bi.times.length > 8 && bi.mid && bi.mid.length === bi.times.length ? { times: bi.times, mid: bi.mid, on: bi.on, period: bi.period } : null;
+    result = QNChordCore.classify(c.ch, c.dur, { detail: detail, key: keyOverride(), grid: grid });
     compose();
+    computeGrid();
     ver++;
     phase = "ready";
     progress = 1;
@@ -158,9 +191,9 @@ var QNChords = (function () {
     notify("state");
   }
 
-  function done(id, myGen, ch, dur) {
+  function done(id, myGen, ch, dur, bi) {
     if (myGen !== gen) return;
-    cache.set(id, { ch: ch, dur: dur });
+    cache.set(id, { ch: ch, dur: dur, bi: bi || null });
     while (cache.size > CACHE_MAX) cache.delete(cache.keys().next().value);
     classifyNow();
   }
@@ -170,8 +203,10 @@ var QNChords = (function () {
     setTimeout(function () {
       if (myGen !== gen) return;
       try {
-        const ch = QNChordCore.chroma(p.mono, p.sr, function (x) { progress = x; notify("progress"); });
-        done(p.id, myGen, ch, p.dur);
+        const ch = QNChordCore.chroma(p.mono, p.sr, function (x) { progress = x * 0.7; notify("progress"); });
+        let bi = null;
+        try { bi = QNChordCore.beats(p.mono, p.sr, function (x) { progress = 0.7 + x * 0.3; notify("progress"); }); } catch (e2) { bi = null; }
+        done(p.id, myGen, ch, p.dur, bi);
       } catch (e) { fail(e && e.message); }
     }, 30);
   }
@@ -195,7 +230,7 @@ var QNChords = (function () {
       else if (d.type === "error") fail(d.message);
       else if (d.type === "done") {
         stopWorker();
-        done(p.id, myGen, { chroma: d.chroma, bass: d.bass, rms: d.rms, hop: d.hop, win: d.win, frames: d.frames, tuning: d.tuning }, p.dur);
+        done(p.id, myGen, { chroma: d.chroma, bass: d.bass, rms: d.rms, hop: d.hop, win: d.win, frames: d.frames, tuning: d.tuning }, p.dur, d.beats);
       }
     };
     w.onerror = function () { if (myGen === gen) fail("Worker failed"); };
@@ -221,6 +256,10 @@ var QNChords = (function () {
     result = null;
     user = [];
     composed = null;
+    beatInfo = null;
+    gridData = null;
+    bt = { tempo: 0, bpb: 0, shift: 0 };
+    gridVer++;
     phase = "idle";
     progress = 0;
     ver++;
@@ -236,14 +275,21 @@ var QNChords = (function () {
     const saved = loadSaved();
     user = saved && Array.isArray(saved.user) ? saved.user.map(a => ({ t0: a[0], t1: a[1], root: a[2], q: a[3], bass: a[4] })) : [];
     if (saved && saved.keySel) keySel = saved.keySel;
+    if (saved && saved.bt) bt = { tempo: saved.bt[0] | 0, bpb: saved.bt[1] | 0, shift: saved.bt[2] | 0 };
+    beatInfo = saved ? hydrateBeats(saved) : null;
     if (cache.has(id)) { classifyNow(); return; }
     // 保存済みの解析が今の設定(詳細度・キー)と合っていれば、再解析せずそのまま使う
-    if (saved && saved.detail === detail && saved.keySel === keySel) {
+    if (saved && saved.detail === detail && saved.keySel === keySel && (saved.snap ? 1 : 0) === (snap ? 1 : 0)) {
       const h = hydrate(saved);
-      if (h) { result = h; compose(); phase = "ready"; progress = 1; ver++; notify("state"); return; }
+      if (h) {
+        result = h; compose(); computeGrid(); phase = "ready"; progress = 1; ver++; notify("state");
+        if (!beatInfo && gridMode !== "off") run();       // 古い保存(拍なし)でGridがON: 拍だけ足りないので解析し直す
+        return;
+      }
     }
     phase = "queued";
     compose();
+    computeGrid();
     ver++;
     notify("state");
     if (wanted()) run();
@@ -251,7 +297,8 @@ var QNChords = (function () {
 
   // コードモードに切り替えた時: 未解析なら解析を始める
   function ensure() {
-    if (phase === "queued" && pending) run();
+    if (!pending) return;
+    if (phase === "queued" || (gridMode !== "off" && !beatInfo && phase !== "analyzing")) run();
   }
 
   function setDetail(d) {
@@ -296,6 +343,50 @@ var QNChords = (function () {
 
   function chordOf(s) { return { root: s.root, q: s.q, bass: s.bass }; }
 
+  // ---------- 拍・小節に合わせた操作 ----------
+  // tに最も近い拍/裏拍(拍と拍の真ん中)の時刻。縦線が無ければそのまま
+  function snapTime(t) {
+    const T = gridData && gridData.times;
+    if (!T || T.length < 2) return t;
+    let lo = 0, hi = T.length;
+    while (lo < hi) { const m = (lo + hi) >> 1; if (T[m] < t) lo = m + 1; else hi = m; }
+    let best = t, bd = 1e9;
+    for (let i = Math.max(0, lo - 1); i <= Math.min(T.length - 1, lo); i++) {
+      const c = [T[i]];
+      if (i + 1 < T.length) c.push((T[i] + T[i + 1]) / 2);
+      if (i > 0) c.push((T[i - 1] + T[i]) / 2);
+      c.forEach(x => { const d = Math.abs(x - t); if (d < bd) { bd = d; best = x; } });
+    }
+    return best;
+  }
+  // tを含む小節の範囲 {t0,t1}。小節線が無ければnull(頭出し前は0から、最後の小節は曲の終わりまで)
+  function barRange(t) {
+    const T = gridData && gridData.times, B = gridData && gridData.bar;
+    if (!T || !B || !T.length) return null;
+    let i = -1;
+    for (let k = 0; k < T.length && T[k] <= t + 1e-6; k++) i = k;
+    let a = i;
+    while (a >= 0 && B[a] !== 0) a--;
+    let e = i + 1;
+    while (e < T.length && B[e] !== 0) e++;
+    return { t0: a >= 0 ? T[a] : 0, t1: e < T.length ? T[e] : curDur };
+  }
+  // 範囲[t0,t1]のコードをまとめて変える(chord=nullで元に戻す)
+  function setChordRange(t0, t1, chord) { fillUser(t0, t1, chord); changed(); }
+  // 区間seg(表示用)を小節線で分ける(コードはそのまま)。分けた数を返す
+  function splitBars(seg) {
+    const T = gridData && gridData.times, B = gridData && gridData.bar;
+    if (!T || !B) return 0;
+    const c = chordOf(seg), pts = [seg.t0];
+    for (let k = 0; k < T.length; k++) if (B[k] === 0 && T[k] - pts[pts.length - 1] >= MIN_PIECE && seg.t1 - T[k] >= MIN_PIECE) pts.push(T[k]);
+    if (pts.length < 2) return 0;
+    pts.push(seg.t1);
+    fillUser(seg.t0, seg.t1, null);
+    for (let i = 0; i + 1 < pts.length; i++) user.push({ t0: pts[i], t1: pts[i + 1], root: c.root, q: c.q, bass: c.bass });
+    changed();
+    return pts.length - 1;
+  }
+
   // 区間seg(表示用)のコードを変える。root=-1でコード無し
   function setChord(seg, chord) { fillUser(seg.t0, seg.t1, chord); changed(); }
 
@@ -336,6 +427,25 @@ var QNChords = (function () {
     return true;
   }
 
+  // ---------- 公開: 拍・小節の縦線 ----------
+  function setGridMode(m) {
+    if (m !== "off" && m !== "bar" && m !== "beat") return;
+    if (m === gridMode) return;
+    gridMode = m;
+    try { localStorage.setItem(GRID_KEY, m); } catch (e) {}
+    gridVer++; ver++;
+    notify("state");
+    if (m !== "off") ensure();
+  }
+  function setBt(k, v) {
+    if (!(k in bt)) return;
+    bt[k] = v | 0;
+    computeGrid();
+    ver++;
+    save();
+    notify("state");
+  }
+
   // segの範囲の修正を全部消してautoに戻す
   function resetSeg(seg) { fillUser(seg.t0, seg.t1, null); changed(); }
   function resetAll() { user = []; changed(); }
@@ -347,6 +457,14 @@ var QNChords = (function () {
     ensure: ensure,
     getDetail() { return detail; },
     setDetail: setDetail,
+    getSnap() { return snap; },
+    setSnap(on) {
+      on = !!on;
+      if (on === snap) return;
+      snap = on;
+      try { localStorage.setItem(SNAP_KEY, snap ? "1" : "0"); } catch (e) {}
+      reanalyze();
+    },
     getAlts() { return showAlts; },
     setAlts(on) {
       showAlts = !!on;
@@ -372,6 +490,17 @@ var QNChords = (function () {
     mergeNext: mergeNext,
     resetSeg: resetSeg,
     moveBoundary: moveBoundary,
+    snapTime: snapTime,
+    barRange: barRange,
+    setChordRange: setChordRange,
+    splitBars: splitBars,
+    getGridMode() { return gridMode; },
+    setGridMode: setGridMode,
+    getBt(k) { return bt[k]; },
+    setBt: setBt,
+    grid() { return gridData; },
+    gridVersion() { return gridVer; },
+    bpm() { return beatInfo ? beatInfo.bpm * (bt.tempo === 1 ? 2 : bt.tempo === -1 ? 0.5 : 1) : 0; },
     chordOf: chordOf,
     resetAll: resetAll,
     hasUser() { return user.length > 0; },
