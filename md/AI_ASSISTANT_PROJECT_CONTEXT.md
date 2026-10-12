@@ -184,3 +184,7 @@ guide/                        アプリ内ガイド（静的HTML8枚＋guide.css
 - **状態**：`qn_<アプリ名>_*`のlocalStorageキー。音声実体は持たない。`qn_last_app`で再読み込み時に復元（`ready:true`で自動対象）。
 - **画面スリープ防止**：再生中`QNWake.set("<アプリ名>",true)`、停止・非表示で`false`。
 - **表示中はPLAYER側を止める**：`body.qn-app-open`でaudio一時停止・下段バー非表示・ショートカット無効・曲追加D&D無効。
+
+## Exact seek (4.39.0, JS/player-exact-seek.js)
+- Chromium seeks in VBR MP3 land up to ~0.8 s off and the error persists. On the first seek of a track (duration <= 1500 s) the file is decoded to 44.1 kHz PCM, wrapped as a WAV blob and swapped into the same <audio> element at the indicated time (QNExact; loadFile calls QNExact.onLoad). Later seeks are exact (measured spread <= 1.5 ms). Tracks over 1500 s keep the original source.
+- Markers placed before this version may carry per-seek errors; re-place them if they look off.

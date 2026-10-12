@@ -179,6 +179,7 @@ function loadFile(file) {
   currentObjectUrl = url;
   audio.src = url;
   audio.load();
+  if (window.QNExact) QNExact.onLoad(file);
   updatePlaybackRate();
 
   // setupAudioGraph()は曲読込時に呼ばない(常時Web Audio接続だとiOS Safariで長時間再生後にクラッシュ。Safari固有)。EQボタン等の実操作時のみ(setupAudioGraphOnDemand)
