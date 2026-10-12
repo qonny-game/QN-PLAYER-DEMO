@@ -30,7 +30,7 @@
   max-width: 420px;
   max-height: 88vh;
   overflow-y: auto;
-  background: #16161b;
+  background: var(--bg-16161b);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-modal);
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
@@ -68,7 +68,7 @@
   height: 30px;
   border-radius: var(--radius-round);
   border: 1px solid var(--border-subtle);
-  background: #1c1c24;
+  background: var(--bg-1c1c24);
   color: var(--icon-muted);
   font-size: 13px;
   cursor: pointer;
@@ -76,7 +76,7 @@
 }
 
 .export-modal-close:hover {
-  background: #252530;
+  background: var(--bg-252530);
   color: var(--text-bright);
   border-color: var(--accent-primary);
 }
@@ -107,7 +107,7 @@
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: none;
-  color: #6b6b7b;
+  color: var(--fg-6b6b7b);
 }
 
 
@@ -128,7 +128,7 @@
 .export-filename-input {
   width: 100%;
   padding: 10px 12px;
-  background: #1c1c24;
+  background: var(--bg-1c1c24);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-field);
   color: var(--text-bright);
@@ -141,11 +141,11 @@
 .export-filename-input:focus {
   outline: none;
   border-color: var(--accent-primary);
-  background: #22222c;
+  background: var(--bg-22222c);
 }
 
 .export-filename-input::placeholder {
-  color: #5a5a68;
+  color: var(--fg-5a5a68);
 }
 
 .export-modal-footer {
@@ -212,7 +212,7 @@
   padding: 12px 20px;
   background: transparent;
   color: var(--icon-muted);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(var(--ov), 0.12);
   border-radius: var(--radius-pill);
   font-family: var(--font-display, 'Instrument Sans'), sans-serif;
   font-size: var(--fs-btn-primary);
@@ -225,7 +225,7 @@
 
 .export-cancel-btn:hover {
   background: var(--bg-hover-subtle);
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(var(--ov), 0.2);
   color: var(--text-bright);
 }
 
@@ -302,7 +302,7 @@
   min-width: 0;
   box-sizing: border-box;
   padding: 12px 14px;
-  background: #1c1c24;
+  background: var(--bg-1c1c24);
   border: 1px solid var(--border-subtle);
   border-radius: 0;
   cursor: pointer;
@@ -310,8 +310,8 @@
 }
 
 .track-backup-row:hover {
-  background: #22222c;
-  border-color: rgba(255, 255, 255, 0.16);
+  background: var(--bg-22222c);
+  border-color: rgba(var(--ov), 0.16);
 }
 
 .track-backup-row:has(input:checked) {
@@ -326,7 +326,7 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  border: 1.5px solid rgba(var(--ov), 0.28);
   background: transparent;
   cursor: pointer;
   position: relative;
@@ -345,8 +345,8 @@
   top: 2px;
   width: 5px;
   height: 9px;
-  border-right: 2px solid var(--text-pure-white, #fff);
-  border-bottom: 2px solid var(--text-pure-white, #fff);
+  border-right: 2px solid var(--text-pure-white, var(--bd-ffffff));
+  border-bottom: 2px solid var(--text-pure-white, var(--bd-ffffff));
   transform: rotate(45deg);
 }
 
@@ -361,13 +361,13 @@
   font-family: var(--font-body, 'Instrument Sans'), sans-serif;
   font-size: var(--fs-body);
   font-weight: 500;
-  color: #c8c8d0;
+  color: var(--fg-c8c8d0);
   overflow-wrap: break-word;
   transition: color var(--dur-hover, 0.18s) var(--ease-snap, ease);
 }
 
 .track-backup-row:has(input:checked) .track-backup-row-label {
-  color: var(--text-pure-white, #fff);
+  color: var(--text-pure-white, var(--fg-ffffff));
 }
 
 .track-backup-tracklist-header {
@@ -386,7 +386,7 @@
 .track-backup-mini-btn {
   height: var(--btn-h);
   padding: 0 var(--btn-pad-x);
-  background: #1c1c24;
+  background: var(--bg-1c1c24);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-pill);
   font-family: var(--font-body, 'Instrument Sans'), sans-serif;
@@ -399,7 +399,7 @@
 
 .track-backup-mini-btn:hover {
   color: var(--text-bright);
-  border-color: rgba(255, 255, 255, 0.24);
+  border-color: rgba(var(--ov), 0.24);
 }
 
 .track-backup-tracklist {
@@ -430,7 +430,7 @@
   align-items: center;
   gap: 10px;
   padding: 9px 12px;
-  background: #1c1c24;
+  background: var(--bg-1c1c24);
   border: 1px solid var(--border-subtle);
   border-radius: 0;
   cursor: pointer;
@@ -450,7 +450,7 @@
   font-family: var(--font-body, 'Instrument Sans'), sans-serif;
   font-size: var(--fs-body);
   font-weight: 500;
-  color: #c8c8d0;
+  color: var(--fg-c8c8d0);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -510,7 +510,7 @@
   box-sizing: border-box;
   border: 1.5px dashed var(--border-subtle);
   border-radius: var(--radius-field);
-  background: #1c1c24;
+  background: var(--bg-1c1c24);
   cursor: pointer;
   text-align: center;
   transition: border-color var(--dur-hover, 0.18s) var(--ease-snap, ease), background var(--dur-hover, 0.18s) var(--ease-snap, ease);
@@ -519,7 +519,7 @@
 .track-import-dropzone:hover,
 .track-import-dropzone.dragover {
   border-color: var(--accent-primary, #3b82f6);
-  background: color-mix(in srgb, var(--accent-primary, #3b82f6) 8%, #1c1c24);
+  background: color-mix(in srgb, var(--accent-primary, #3b82f6) 8%, var(--bg-1c1c24));
 }
 
 .track-import-dropzone-icon {
@@ -630,7 +630,7 @@
   font-family: var(--font-body, 'Instrument Sans'), sans-serif;
   font-size: var(--fs-body);
   font-weight: 500;
-  color: #c8c8d0;
+  color: var(--fg-c8c8d0);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

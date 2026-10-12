@@ -31,6 +31,7 @@
 
 ## 4. スクリーンショット（`guide/img/*.webp`）
 - 画面の並びやアイコンが変わると古くなる。サイドメニューの並び、ドック、Moreが写っているもの（`pc-overview` `sp-overview-ann` `sp-more` `pc-settings*` `pc-flyout`など）は特に注意。
+- 撮り直しは `python3 -I md/tools/guide_shots.py /home/claude/src`（出力先は guide/img）。番号バッジ付きの2枚（pc-overview / sp-overview-ann）は、ガイドの番号表と合わせて撮る。スマホ版の sp-control / sp-markers / sp-more / sp-playlist / sp-settings / sp-text と pc-ab-set / pc-color / pc-keyboard / pc-loop-section は本文から参照されておらず未更新。
 - 文章だけ先に直し、画像の差し替えが必要なものは`QUICK_START.md`の「要判断」に書き残す。
 
 ## 5. 文体

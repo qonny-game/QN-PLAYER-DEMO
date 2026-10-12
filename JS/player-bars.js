@@ -29,7 +29,12 @@ const QNBars = (function () {
   const PAUSE_MIN = 1;
   const PAUSE_MAX = 30;
   const PROG_SCROLL_MS = 800;
-  const UNPLAYED = "rgba(255, 255, 255, 0.16)";
+  // 白半透明(未再生・グリッド線・文字)は背景モードの--ov(ダーク=白、ライト=濃いグレー)。モード切替で読み直す
+  let ovRgb = "255,255,255";
+  function readOv() { try { ovRgb = (getComputedStyle(document.documentElement).getPropertyValue("--ov") || "255,255,255").trim() || "255,255,255"; } catch (e) {} }
+  const ovc = a => "rgba(" + ovRgb + "," + a + ")";
+  document.addEventListener("qn-bg-change", () => { readOv(); geomDirty = true; try { draw(); } catch (e) {} });
+  readOv();
   const GEAR_SVG = '<svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>';
 
   const containerEl = document.getElementById("vbarContainer");
@@ -308,11 +313,18 @@ const QNBars = (function () {
     return Math.min(dur, t);
   }
 
+  // 波形の元。Stemの録音トラックを選んでいる間は、その録音の波形(window.QNWaveOverride。曲と同じ長さ・同じ刻みの配列)に差し替える
+  function srcPeaks() {
+    const o = window.QNWaveOverride && window.QNWaveOverride();
+    if (o) return o;
+    return (typeof waveformPeaks !== "undefined") ? waveformPeaks : null;
+  }
+
   // ---------- 描画 ----------
   function rowPeaks(r) {
     let v = peakCache.get(r);
     if (v) return v;
-    const peaks = waveformPeaks;
+    const peaks = srcPeaks();
     if (!peaks || !peaks.length || !dur) return null;
     const nB = g.nBars;
     const t0 = r * sec;
@@ -347,7 +359,7 @@ const QNBars = (function () {
     const lw = Math.max(1, Math.round(g.dpr));
     for (let pass = 0; pass < 2; pass++) {       // 0: 拍(薄い) 1: 小節頭(少し濃い)
       if (pass === 0 && mode !== "beat") continue;
-      cx.fillStyle = pass ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.09)";
+      cx.fillStyle = pass ? ovc(0.55) : ovc(0.09);
       for (let i = lo; i < ts.length && ts[i] < t1; i++) {
         if ((bar[i] === 0) !== (pass === 1)) continue;
         const x = Math.round((ts[i] - t0) / sec * W - lw / 2);
@@ -429,7 +441,7 @@ const QNBars = (function () {
       const f = ptr >= 0 ? ms[ptr] : null;
       const mc = (f && f.color && MARKER_COLOR_PALETTE[f.color]) || null;
       const isPlayed = i < played;
-      const fill = mc ? (isPlayed ? mc : rgbaFor(mc, 0.35)) : (isPlayed ? accent : UNPLAYED);
+      const fill = mc ? (isPlayed ? mc : rgbaFor(mc, 0.35)) : (isPlayed ? accent : ovc(0.16));
       if (fill !== runFill) {
         flush(i);
         runStart = i;
@@ -544,7 +556,7 @@ const QNBars = (function () {
       const tm = (Math.max(v.s.t0, t0) + Math.min(v.s.t1, t1)) / 2;
       const bi = Math.min(n - 1, Math.floor((tm - t0) / barDur));
       const mc = markerColorAt(tm);
-      const on = bi < played ? textOn(mc || accent) : "rgba(255,255,255,0.88)";
+      const on = bi < played ? textOn(mc || accent) : ovc(0.88);
       if (v.s.u && v.x1 - v.x0 > 12 * g.dpr) {                    // 手動で直したコードには左上に小さな点
         cx.fillStyle = on;
         cx.beginPath();
@@ -594,7 +606,7 @@ const QNBars = (function () {
 
   // 編集中だけ、区間の境目に小さなつまみ印を描く(ドラッグで長さを変えられる合図。タッチ端末はホバーが無いので常時出す)
   function paintGrips(cx, segs, lo, t0, t1, xOf, xEnd, by, bh) {
-    cx.fillStyle = "rgba(255,255,255,0.55)";
+    cx.fillStyle = ovc(0.55);
     const w = Math.max(1, g.dpr), h = bh * 0.34;
     for (let i = Math.max(1, lo); i < segs.length && segs[i].t0 < t1; i++) {
       const b = segs[i].t0;
@@ -634,7 +646,7 @@ const QNBars = (function () {
       curRowEl = cr;
     }
 
-    const peaks = (typeof waveformPeaks !== "undefined") ? waveformPeaks : null;
+    const peaks = srcPeaks();
     if (!peaks) return;
     if (peaks !== lastPeaksRef) { lastPeaksRef = peaks; peaksVer++; peakCache.clear(); }
 

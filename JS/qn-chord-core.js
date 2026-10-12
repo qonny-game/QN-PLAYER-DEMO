@@ -258,7 +258,8 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
   // 区間の境目を拍に合わせる。候補=境目の近くの拍と、拍の真ん中(裏拍)。
   // 点数 = その位置で区切った時のコードの当てはまり + そこで音が立ち上がっているか - 裏拍/グリッド外の罰。
   // 裏拍に決まった境目は seg.sync=true(コードが拍より先に入る/遅れて入るシンコペ)
-  const SN_ON = 0.25, SN_ONCAP = 3, SN_OFF = 0.30, SN_FREE = 0.45, SN_DIST = 0.4;
+  const envP = function (k, d) { return +(typeof process !== "undefined" && process.env[k] || d); };
+  const SN_ON = 0.25, SN_ONCAP = 3, SN_OFF = envP("SN_OFF", 0.80), SN_FREE = 0.45, SN_DIST = 0.4;
   function snapSegs(segs, meta, gr, ev, S, silent, ch) {
     const T = gr.times, M = gr.mid, O = gr.on, P = gr.period;
     if (!T || T.length < 4 || !(P > 0)) return;
@@ -368,6 +369,9 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
     // 拍に同期: 拍の近くでは乗り換えやすく、拍と拍の間(特に拍から遠い所)では乗り換えにくくする
     const envN = function (k, d) { return +(typeof process !== "undefined" && process.env[k] || d); };
     const swOn = envN("SW_ON", 0.7), swOff = envN("SW_OFF", 2.2), swWin = envN("SW_WIN", 0.08);
+    const swMid = envN("SW_MID", 2.2), headMul = envN("HEAD_MUL", 0.7), beatMul = envN("BEAT_MUL", 1.35);
+    const H = opts.grid && opts.grid.heads && opts.grid.heads.length > 1 ? opts.grid.heads : null;
+    let kh = 0;
     const swF = new Float32Array(F).fill(1);
     if (opts.grid && opts.grid.times && opts.grid.times.length > 3) {
       const Tg = opts.grid.times, Mg = opts.grid.period || 0.5;
@@ -378,7 +382,12 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
         let d = Math.abs(t - Tg[k]);
         if (k + 1 < Tg.length) d = Math.min(d, Math.abs(Tg[k + 1] - t));
         const dh = Math.abs(t - (Tg[k] + (k + 1 < Tg.length ? Tg[k + 1] - Tg[k] : Mg) / 2));
-        swF[f] = d <= swWin ? swOn : (dh <= swWin ? 1.2 : swOff);
+        swF[f] = d <= swWin ? swOn : (dh <= swWin ? swMid : swOff);
+        if (H && d <= swWin) {          // 小節頭のそばは、さらに乗り換えやすく(コードは小節頭で変わることが多い)
+          while (kh + 1 < H.length && H[kh + 1] <= t) kh++;
+          if (Math.min(Math.abs(t - H[kh]), kh + 1 < H.length ? Math.abs(H[kh + 1] - t) : 1e9) <= swWin * 1.5) swF[f] = swOn * headMul;
+          else swF[f] = swOn * beatMul;
+        }
       }
     }
     let prev = new Float64Array(NS), cur = new Float64Array(NS);

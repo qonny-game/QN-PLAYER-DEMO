@@ -181,7 +181,7 @@
 - `QNSettingsUI.inline`の`type:"slider"`はFAB帯専用(つまみ=values()の添字)。設定パネルの行は従来どおり「‹ 値 ›」(stepper)のまま。スライダーを設定行に使わない。
 
 ## 見た目の統一ルール(v4.7.0。新しい部品を足す前に確認)
-- 入力欄(input/select/textarea)=角丸は必ず`--radius-field`、背景`#1c1c24`、枠`--border-subtle`。ピル型の入力欄を作らない(ピルはボタン/スイッチ/チップだけ)。
+- 入力欄(input/select/textarea)=角丸は必ず`--radius-field`、背景`var(--bg-1c1c24)`、枠`--border-subtle`。ピル型の入力欄を作らない(ピルはボタン/スイッチ/チップだけ)。
 - ボタン=ピル型(`--radius-pill`)。欄の隣に置くボタンは欄と同じ高さ(Library=38px、ステージ帯=40px)。
 - FAB帯などの設定の並び: 同じ設定の「ラベル+値+操作部」は密着(近接)、別の設定とは区切り線+余白で離す。値を操作部の反対側に離して置かない。
 - スクロールする行の窓: バーの外に縦スクロール専用の余白を残し、押した瞬間にシークしない(`attachTrackSeek`のscrub判定)。
@@ -201,6 +201,7 @@
 - **Stem(v4.16.0)**: 分離はmodule worker(`player-stem-worker.js`)で実行しメインスレッドを止めない。ONNX Runtimeはシングルスレッドのみ(マルチスレッドにはSharedArrayBuffer=COOP/COEPが必要でYouTube埋め込み等が壊れる)。Stemモード中はマスター`audio`をmutedにして4本の別`<audio>`をcurrentTime/playbackRate/再生状態へ追従させる(EQ/Key=SoundTouch経路は効かない)。YouTube(音声取得不可)・SP幅は非対応。モデルURL/ORT配布元は`window.QN_STEM_MODEL_URL`/`QN_STEM_ORT_BASE`で差し替え可(既定はHugging Face/jsDelivr)。
 
 - **録音トラック(v4.17.0)**: 録音はMediaRecorder→デコード→16bit mono WAV化して保持(MediaRecorderのwebmはduration/シークが不安定なため)。再生位置=(曲位置−startPos)/録音時rate+offset(ms)、再生rate=マスターrate/録音時rate。Stem/録音の保存キーは`名前|サイズ`(File.lastModifiedはライブラリ復元のたびに変わるので使わない)。
+- **録音のクリップ化(v4.52.0)**: 1トラック=クリップ配列`{blob,startPos,rate,dur,el,url}`。曲上の範囲=[startPos, startPos+dur*rate]、`<audio>`は1クリップ1本(`syncEl`が自分の長さ外で止める)。新しい録音/動かしたクリップは`punch()`で重なる既存クリップを`sliceClip()`でWAVごと切り詰める(切った分の容量は残らない)。保存はIndexedDB `rec|曲キー`の`recs[].clips`(`v3:true`)。旧データ(`blob`直置き)は`wavDur()`で長さを出して1クリップに読み替える。合計は`REC_LIMIT_SEC`(600秒)。録音中のトラックは`applyVol`でゲイン0。シークバーの波形切替は`window.QNWaveOverride`(player-bars.jsの`srcPeaks()`が読む。**配列の参照が変わらないと行キャッシュが更新されない**ので、計算後は`new Float32Array`で差し替える)。書き出し=`exportMix`(OfflineAudioContext 44.1kHzステレオ、速度≠1の録音は伸縮しない)。
 
 - **Bar length(v4.18.0)**: 値は1秒刻みの整数で、候補配列は固定せず`QNBars.secValues()`/`rowSecValues()`が曲長から作る(上限=曲長÷現在の行数(Rows指定ならその本数、AutoならCSS既定寸法で数える`autoVis`)。Rowsを変えたら上限が変わるので現在値を丸めて再同期)。曲/ウィンドウ/Rowsが変わったらスライダーの再同期(`qnBarStripSync`/`segStrip.sync`)が必要。短い曲では現在値を上限へ丸める(保存値は書き換えない)。
 
@@ -215,3 +216,12 @@
 
 ## シークバー上の曲名行(v4.24.0)
 `#pcV2HeadRow`は`renderHeadRow()`がLibraryの`buildPlaylistRow`を再利用して描く。`renderPlaylist()`と`renderNowPlaying()`の後で再描画される。見た目はlibraryのCSS(`.playlistItem`等)を流用し、PCのみSKIP/PIN/EDIT表示、SP(≤900px)は`#pcV2WaveHead #pcV2HeadRow`配下のボタンを非表示。時間は現在/総時間のライブ表示を残している。
+
+## 色トークンと背景モード(v4.46.0)
+- 無彩色(背景・罫線・文字)は`var(--bg-xxxxxx)`/`--fg-`/`--bd-`と`rgba(var(--ov), a)`を使う(`CSS/style-modes.css`)。hexや`rgba(255,255,255,a)`を直書きするとライト背景で浮く。ダークの値は元のhexと同じ。
+- 白文字は「暗い面の文字」(ライトでは濃い文字になる)と「アクセント色ボタンの上の文字」(ライトでも白)が同じ`#fff`になりやすい。アクセント背景の上は`color:#fff`をそのボタンに明示する(例:`.panel-fab-btn`)。既存の`--text-pure-white`はライトで濃い色になる。
+- CSSコメント内に`*/`を書かない(例:`--bg-*/--fg-*`)。コメントが途中で終わり、そのあとの規則が丸ごと無効になる(全面が白くなった実例)。
+- canvas描画の白半透明は`player-bars.js`の`ovc(a)`(`--ov`を読む)。背景を切り替えると`qn-bg-change`で読み直す。
+- 設定行の`hiddenWhen()`は行を非表示にする(`disabledWhen`は薄くするだけ)。stepperの`tap:true`は「‹ ›」ではなく押すたびに次の値へ進むボタン(波形エリアの帯のView用)。
+## 速度変更の方式(v4.47.0)
+- 自動はキー変更なし＆iOS以外のとき、`audio.preservesPitch=true`のブラウザ標準伸縮を使い、SoundTouchは素通し(playbackRate=1, pitch=1)。スマホでSoundTouchの処理が間に合わず音がスライスされるのを避ける。キー変更中とiOS(標準だと隙間が空く)はSoundTouch。切替は`?stretch=auto|native|st`か Settings>一般>再生。

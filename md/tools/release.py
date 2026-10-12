@@ -51,7 +51,7 @@ def allowed(rel):
     if rel in ALLOW_TOP:
         return True
     if rel.startswith("md/tools/"):
-        return rel.endswith(".py")  # 道具はpyだけ(出力の画像やjsonは入れない)
+        return rel.endswith((".py", ".js"))  # 道具はpy/jsだけ(出力の画像やjsonは入れない)
     return rel.startswith(ALLOW_DIRS)
 
 

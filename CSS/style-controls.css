@@ -5,7 +5,7 @@
   padding: 12px 0 10px;
   font-size: 20px;
   text-align: center;
-  background: #1c1c24;
+  background: var(--bg-1c1c24);
   border: 1px solid var(--border-subtle);
   border-radius: 0;
   cursor: pointer;
@@ -37,8 +37,8 @@
 }
 
 .loopbtn:hover {
-  background: #252530;
-  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--bg-252530);
+  border-color: rgba(var(--ov), 0.2);
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
 }
@@ -62,18 +62,18 @@
 }
 
 .loopbtn { 
-  background: #16161b;
+  background: var(--bg-16161b);
 }
 
 .loopbtn.is-active {
   color: var(--accent-primary);
-  background: color-mix(in srgb, var(--accent-primary) 14%, #16161b);
+  background: color-mix(in srgb, var(--accent-primary) 14%, var(--bg-16161b));
   border-color: var(--accent-primary);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(56, 189, 248, 0.15) inset;
 }
 
 .loopbtn.is-active:hover {
-  background: color-mix(in srgb, var(--accent-primary) 22%, #1c1c24);
+  background: color-mix(in srgb, var(--accent-primary) 22%, var(--bg-1c1c24));
   border-color: var(--accent-primary);
 }
 
@@ -91,7 +91,7 @@
   font-weight: 700;
   line-height: 1;
   color: var(--accent-primary);
-  background: #0d0d0f;
+  background: var(--bg-0d0d0f);
   border-radius: 50%;
   width: 13px;
   height: 13px;
@@ -178,7 +178,7 @@
 .auto-speed-number {
   width: 56px;
   padding: 6px 8px;
-  background: #1c1c24;
+  background: var(--bg-1c1c24);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-field);
   color: var(--text-bright);
@@ -208,7 +208,7 @@
 .auto-speed-dir-btn {
   flex: 1;
   padding: 8px 6px;
-  background: #1c1c24;
+  background: var(--bg-1c1c24);
   border: none;
   border-left: 1px solid var(--border-subtle);
   color: var(--icon-muted);
@@ -233,7 +233,7 @@
 .auto-speed-status {
   font-family: var(--font-body, 'Instrument Sans'), sans-serif;
   font-size: var(--fs-small);
-  color: #6b6b7b;
+  color: var(--fg-6b6b7b);
   text-align: center;
 }
 
@@ -285,7 +285,7 @@
   width: 40px;
   height: 22px;
   border-radius: var(--radius-pill);
-  background: #2a2a35;
+  background: var(--bg-2a2a35);
   border: 1px solid var(--border-subtle);
   cursor: pointer;
   padding: 0;

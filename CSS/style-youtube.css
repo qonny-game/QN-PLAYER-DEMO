@@ -99,7 +99,7 @@
   padding: 0 12px;
   border-radius: var(--radius-field);
   border: 1px solid var(--border-subtle);
-  background: #1c1c24; /* 入力欄はPLAYERのexport-filename-input等と同じ(角丸=--radius-field, 背景#1c1c24) */
+  background: var(--bg-1c1c24); /* 入力欄はPLAYERのexport-filename-input等と同じ(角丸=--radius-field, 背景#1c1c24) */
   color: var(--text-bright);
   font-family: inherit;
   font-size: var(--fs-body);
@@ -113,7 +113,7 @@
 
 .qn-yt-input:focus {
   border-color: var(--accent-primary);
-  background: #22222c;
+  background: var(--bg-22222c);
 }
 
 .qn-yt-btn {
@@ -136,7 +136,7 @@
 
 .qn-yt-btn:hover:not(:disabled) {
   background: var(--bg-hover-subtle);
-  border-color: rgba(255, 255, 255, 0.28);
+  border-color: rgba(var(--ov), 0.28);
 }
 
 .qn-yt-btn:active:not(:disabled) {
@@ -213,7 +213,7 @@
 .qn-yt-btn.ab.active-b {
   background: #f59e0b;
   border-color: transparent;
-  color: #1a1204;
+  color: var(--fg-1a1204);
 }
 
 /* ---------- Backup/Import: 本体と同部品を流用(ベースはstyle-export.css)。#pcV2PanelBody.pcv2-panel-backupと同じ枠なし・線区切りに揃える ---------- */
@@ -270,7 +270,7 @@
 
 .qn-yt-panel .track-backup-row-label {
   font-size: var(--fs-body);
-  color: #c8c8d0;
+  color: var(--fg-c8c8d0);
 }
 
 .qn-yt-panel .track-backup-options {
@@ -355,7 +355,7 @@
   position: relative;
   flex: none;
   height: 20px;
-  background: #111;
+  background: var(--bg-111111);
   border: none;
   border-radius: 0;
   overflow: visible;
@@ -403,7 +403,7 @@
   bottom: -3px;
   width: 2px;
   margin-left: -1px;
-  background: var(--text-pure-white, #fff);
+  background: var(--text-pure-white, var(--bg-ffffff));
   left: 0;
   pointer-events: none;
   z-index: 3;
@@ -503,7 +503,7 @@
   margin-left: 6px;
   font-size: 11px;
   font-weight: 500;
-  color: #b0b0b8;
+  color: var(--fg-b0b0b8);
 }
 
 .qn-yt-marker.flip .qn-yt-marker-label .memo {
@@ -612,7 +612,7 @@
     pointer-events: none;
   }
   .qn-yt-panel .qn-yt-panel-header { position: relative; padding-top: 22px; padding-right: 64px; touch-action: none; }
-  .qn-yt .qn-yt-bar { position: relative; z-index: 3; background: #0a0a0c; }
+  .qn-yt .qn-yt-bar { position: relative; z-index: 3; background: var(--bg-0a0a0c); }
   .qn-yt-panel .qn-yt-panel-header::before {
     content: "";
     position: absolute; top: 8px; left: 50%;
@@ -706,7 +706,7 @@
   line-height: 1.5;
   font-variant-numeric: tabular-nums;
 }
-.qn-yt-chapter-text::placeholder { color: rgba(255, 255, 255, 0.28); }
+.qn-yt-chapter-text::placeholder { color: rgba(var(--ov), 0.28); }
 .qn-yt-chapter .qn-yt-hint { margin: 8px 0; }
 
 
@@ -731,7 +731,7 @@
   padding-left: 16px;
   padding-right: 16px;
   padding-top: 14px;
-  border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  border-top: 1px solid var(--border-subtle, rgba(var(--ov), 0.08));
   font-size: 11px;
   line-height: 1.6;
   color: var(--icon-muted);
@@ -745,7 +745,7 @@
 .qn-yt-kbd-note {
   margin: 12px 0 0;
   font-size: var(--fs-small);
-  color: var(--text-dim, rgba(255, 255, 255, 0.45));
+  color: var(--text-dim, rgba(var(--ov), 0.45));
   line-height: 1.6;
 }
 
@@ -759,7 +759,7 @@
   align-items: center;
   gap: 4px;
   padding: 10px 24px;
-  background: var(--bg-base, #0a0a0c);
+  background: var(--bg-base, var(--bg-0a0a0c));
   border-top: 1px solid var(--border-subtle);
   overflow-x: auto;
   overflow-y: hidden;
@@ -873,7 +873,7 @@
   align-items: stretch;
   gap: 4px;
   padding: 8px 8px 6px;
-  background: #101013;
+  background: var(--bg-101013);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-popup, 12px);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
@@ -997,7 +997,7 @@
   .qn-yt-seekpop-btn b { height: 30px; }
   .qn-yt-seekpop-btn b svg { height: 30px; }
 }
-.qn-yt-seekpop-dot { display: block; width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.35); }
+.qn-yt-seekpop-dot { display: block; width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(var(--ov),0.35); }
 .qn-yt-seekpop-del.is-armed, .qn-yt-seekpop-del.is-armed b { color: var(--danger, #ff5a5a); }
 
 @media screen and (min-width: 901px) {
@@ -1036,7 +1036,7 @@
   padding: 2px 4px;
   border-radius: 3px;
   background: var(--accent-primary);
-  color: #0b0b0d;
+  color: var(--fg-0b0b0d);
   font-size: 10px;
   font-weight: 800;
   line-height: 1;
@@ -1058,7 +1058,7 @@
   flex-direction: column;
   gap: 8px;
   padding: 10px;
-  background: #101013;
+  background: var(--bg-101013);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-popup, 12px);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
@@ -1069,7 +1069,7 @@
   padding: 7px 10px;
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(var(--ov), 0.06);
   color: inherit;
   font: inherit;
   font-size: 14px;
@@ -1099,11 +1099,11 @@
 .qn-yt-panel-scroll::-webkit-scrollbar, .qn-yt-stage::-webkit-scrollbar { width: 8px; }
 .qn-yt-panel-scroll::-webkit-scrollbar-track, .qn-yt-stage::-webkit-scrollbar-track { background: transparent; }
 .qn-yt-panel-scroll::-webkit-scrollbar-thumb, .qn-yt-stage::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(var(--ov), 0.14);
   border-radius: 4px;
 }
 .qn-yt-panel-scroll::-webkit-scrollbar-thumb:hover, .qn-yt-stage::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.24);
+  background: rgba(var(--ov), 0.24);
 }
 
 /* v3.12.6: PLAYER下部バー(#pcV2BottomBar)とYouTube下段バー(.qn-yt-bar)の寸法を1仕様に(Speed/Keyトグルのみ例外)。最後に読まれるので個別指定を上書き。PC: バーpadding 10px 12px/ボタン 8px 4px/アイコン20px(中央32px)/ラベル9px/区切り余白6px。SP: ボタンpadding 10px/アイコン26px(中央38px)/ラベル11px */
@@ -1213,13 +1213,13 @@
 .qn-yt-hint li b {
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   width: 22px; height: 22px; border-radius: 50%;
-  background: #1c1c24; border: 1px solid var(--border-subtle);
+  background: var(--bg-1c1c24); border: 1px solid var(--border-subtle);
   font-size: var(--fs-small); font-weight: 700; color: var(--text-bright);
 }
 .qn-yt-sec-library.is-empty .qn-yt-hint-1 { color: var(--text-bright); }
 .qn-yt-sec-library.is-empty .qn-yt-hint-1 b { background: var(--accent-primary); border-color: var(--accent-primary); color: var(--text-pure-white); }
 .qn-yt-sec-library.is-empty.has-url .qn-yt-hint-1 { color: var(--icon-muted); }
-.qn-yt-sec-library.is-empty.has-url .qn-yt-hint-1 b { background: #1c1c24; border-color: var(--border-subtle); color: var(--text-bright); }
+.qn-yt-sec-library.is-empty.has-url .qn-yt-hint-1 b { background: var(--bg-1c1c24); border-color: var(--border-subtle); color: var(--text-bright); }
 .qn-yt-sec-library.is-empty.has-url .qn-yt-hint-2 { color: var(--text-bright); }
 .qn-yt-sec-library.is-empty.has-url .qn-yt-hint-2 b { background: var(--accent-primary); border-color: var(--accent-primary); color: var(--text-pure-white); }
 @keyframes qn-yt-pulse {
@@ -1254,7 +1254,7 @@
     display: grid;
     grid-template-columns: 1fr 1.2fr 1.7fr 1.2fr 1fr 0.9fr;
     align-items: center;
-    background: #0a0a0c;
+    background: var(--bg-0a0a0c);
     border-top: 1px solid var(--border-subtle);
     padding: 6px 6px 4px;
     gap: 2px;
@@ -1271,7 +1271,7 @@
   .qn-yt-dock .pcv2-dock-play::after, .qn-yt-dock .pcv2-dock-more::after { display: none; }
   .qn-yt[data-panel="none"] .qn-yt-stage { flex: 1 0 auto; } /* 余った高さはステージに回し、帯(margin-top:auto)を下段バーの直上へ。パネルを開いている間は対象外(パネルが動画の下辺まで上がる) */
   /* ステージ帯(SP): 設定帯 / URL欄+Save / Marker を同じ左右端で縦に並べる(右寄せの単独ボタンを作らない) */
-  .qn-yt-stage-fab { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 0; padding: 8px 16px 8px; background: var(--bg-base, #0a0a0c); order: -1; } /* controls(sticky)の先頭=下段バー/ドックの直上に固定 */ /* margin-top:auto = 余白は帯の上(シークバー側)に回し、帯は下段バーの直上に固定 */
+  .qn-yt-stage-fab { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 0; padding: 8px 16px 8px; background: var(--bg-base, var(--bg-0a0a0c)); order: -1; } /* controls(sticky)の先頭=下段バー/ドックの直上に固定 */ /* margin-top:auto = 余白は帯の上(シークバー側)に回し、帯は下段バーの直上に固定 */
   .qn-yt-urlgrp { max-width: none; min-width: 0; margin-right: 0; }
   .qn-yt-stage-fab .panel-fab-btn { padding: 0 16px; font-size: 13px; }
   .qn-yt-stage-fab > [data-yt="stageAddMarker"] { display: none; } /* SPはドックにMarkerがあるので重複させない */
@@ -1286,7 +1286,7 @@
   .qn-yt .qn-yt-bbtn { padding: 10px clamp(3px, 0.4vw, 16px); min-width: clamp(40px, 3.2vw, 68px); min-height: 64px; border-radius: 10px; }
   .qn-yt .qn-yt-bbtn.center { min-width: clamp(50px, 4vw, 76px); }
   .qn-yt .qn-yt-bbtn:not(.center) svg { width: 22px; height: 22px; }
-  .qn-yt .qn-yt-bbtn:hover { background: rgba(255, 255, 255, 0.05); }
+  .qn-yt .qn-yt-bbtn:hover { background: rgba(var(--ov), 0.05); }
   .qn-yt .qn-yt-bdiv { margin: 0 clamp(8px, 1.2vw, 28px); height: 32px; }
   .qn-yt .qn-yt-bspacer { flex: 0 0 1px; height: 32px; margin: 0 clamp(8px, 1.2vw, 28px); background: var(--border-subtle); min-width: 0; }
   .qn-yt .qn-yt-bstep-btn { width: clamp(30px, 2.6vw, 40px); height: 56px; font-size: 22px; border-radius: 10px; }
@@ -1306,7 +1306,7 @@
 .qn-yt-bbtn .repeat-one-badge {
   position: absolute; top: 8px; right: 50%; left: auto; transform: translateX(14px);
   width: 13px; height: 13px; padding: 0; margin: 0; font-size: 9px; font-weight: 700; letter-spacing: 0; line-height: 1;
-  color: var(--accent-primary); background: #0d0d0f;
+  color: var(--accent-primary); background: var(--bg-0d0d0f);
 }
 .qn-yt-bbtn .repeat-folder-badge { font-size: 8px; }
 .qn-yt-titlerow { display: contents; }
@@ -1326,7 +1326,7 @@
   .qn-yt-ab {
     display: flex; align-items: center; justify-content: center; flex: 1 1 0; min-width: 0; height: 36px; padding: 0 8px;
     font-family: var(--font-display, 'Instrument Sans'), sans-serif; font-size: 13px; font-weight: 600; white-space: nowrap;
-    background: none; border: 1px solid var(--border-strong, rgba(255,255,255,0.2)); border-radius: var(--radius-popup, 10px);
+    background: none; border: 1px solid var(--border-strong, rgba(var(--ov),0.2)); border-radius: var(--radius-popup, 10px);
     color: var(--icon-muted); cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
   .qn-yt-ab:active { transform: scale(0.97); }
@@ -1334,21 +1334,21 @@
 
   .qn-yt-mixcard {
     display: grid; grid-template-columns: 1fr; gap: 6px; padding: 8px 16px 8px;
-    background: #0e0e13; border: 1px solid var(--border-subtle); border-radius: var(--radius-popup, 10px);
+    background: var(--bg-0e0e13); border: 1px solid var(--border-subtle); border-radius: var(--radius-popup, 10px);
   }
   .qn-yt-mix-speed { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-  .qn-yt-mix-val { flex: 0 0 auto; min-width: 34px; text-align: right; font-size: 13px; color: var(--text-bright, #fff); font-variant-numeric: tabular-nums; cursor: pointer; }
+  .qn-yt-mix-val { flex: 0 0 auto; min-width: 34px; text-align: right; font-size: 13px; color: var(--text-bright, var(--fg-ffffff)); font-variant-numeric: tabular-nums; cursor: pointer; }
   .qn-yt-mix-row { display: flex; align-items: center; gap: 8px; }
   .qn-yt-mix-reset { flex: 0 0 auto; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; border-radius: 8px; background: none; color: var(--icon-muted); -webkit-tap-highlight-color: transparent; cursor: pointer; }
   .qn-yt-mix-reset svg { width: 22px; height: 22px; fill: currentColor; }
-  .qn-yt-mix-reset:active { background: rgba(255, 255, 255, 0.08); color: var(--accent-primary, #3b82f6); }
+  .qn-yt-mix-reset:active { background: rgba(var(--ov), 0.08); color: var(--accent-primary, #3b82f6); }
   .qn-yt-mix-range { flex: 1 1 auto; min-width: 0; width: 100%; height: 28px; margin: 0; background: transparent; -webkit-appearance: none; appearance: none; accent-color: var(--accent-primary, #3b82f6); }
   .qn-yt-mix-range:focus, .qn-yt-mix-range:focus-visible { outline: none; }
-  .qn-yt-mix-range::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--accent-primary) var(--p, 0%), #2a2a34 var(--p, 0%)); border: none; }
-  .qn-yt-mix-range::-moz-range-track { height: 4px; border-radius: 2px; background: #2a2a34; border: none; }
+  .qn-yt-mix-range::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--accent-primary) var(--p, 0%), var(--bg-2a2a34) var(--p, 0%)); border: none; }
+  .qn-yt-mix-range::-moz-range-track { height: 4px; border-radius: 2px; background: var(--bg-2a2a34); border: none; }
   .qn-yt-mix-range::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--accent-primary); }
-  .qn-yt-mix-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; margin-top: -6px; border-radius: 50%; background: var(--text-bright, #fff); border: none; box-shadow: none; }
-  .qn-yt-mix-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--text-bright, #fff); border: none; }
+  .qn-yt-mix-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; margin-top: -6px; border-radius: 50%; background: var(--text-bright, var(--bg-ffffff)); border: none; box-shadow: none; }
+  .qn-yt-mix-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--text-bright, var(--bg-ffffff)); border: none; }
 }
 
 /* Marker lock: lock glyph on the marker label, locked state on the popup nudge row */
@@ -1359,3 +1359,8 @@
 .vbar-line.is-locked { cursor: default; }
 .qn-pp-timerow.is-locked .qn-pp-nudge { opacity: 0.35; }
 .qn-yt-seekpop-btn[data-pop="LK"] svg { width: 18px; height: 18px; fill: currentColor; }
+
+/* マーカーのポップアップはボタンが多いので2段(5列グリッド)。幅は画面内に収める */
+.qn-pl-seekpop { max-width: calc(100vw - 16px); }
+.qn-pl-seekpop .qn-yt-seekpop-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; }
+.qn-pl-seekpop .qn-yt-seekpop-btn { min-width: 0; }

@@ -27,7 +27,7 @@
 
 <h2 id="storage">データの保存場所</h2>
 <p>QNPLAYER のデータは、基本的に、お使いの端末のブラウザの中だけに保存されます。自動で保存されるので、保存の操作は要りません。</p>
-<div class="g-table-wrap"><table><thead><tr><th>データ</th><th>保存先</th><th>補足</th></tr></thead><tbody><tr><td class="wrap-first">Stem の分離結果、録音トラック</td><td>ブラウザ内のデータベース（IndexedDB）</td><td>曲ごと（ファイル名とサイズ）に保存されます。バックアップと同期の対象外です。</td></tr><tr><td class="wrap-first">音声ファイル</td><td>ブラウザ内のデータベース（IndexedDB）</td><td>追加するとコピーが保存されます。元のファイルを消しても再生できます。</td></tr><tr><td class="wrap-first">曲名、アーティスト、ON/OFF、フォルダ、ピン留め、並び順</td><td>ブラウザの保存領域（localStorage）</td><td>曲のファイル名をキーにして保存します。</td></tr><tr><td class="wrap-first">マーカー、A-B 点、テキスト</td><td>同上</td><td>曲ごとに保存されます。</td></tr><tr><td class="wrap-first">設定（テーマ、バーの長さ、ループの余白、言語など）</td><td>同上</td><td>端末ごとの設定です。</td></tr></tbody></table></div>
+<div class="g-table-wrap"><table><thead><tr><th>データ</th><th>保存先</th><th>補足</th></tr></thead><tbody><tr><td class="wrap-first">Stem の分離結果、録音トラック</td><td>ブラウザ内のデータベース（IndexedDB）</td><td>曲ごと（ファイル名とサイズ）に保存されます。バックアップと同期の対象外です。</td></tr><tr><td class="wrap-first">音声ファイル</td><td>ブラウザ内のデータベース（IndexedDB）</td><td>追加するとコピーが保存されます。元のファイルを消しても再生できます。</td></tr><tr><td class="wrap-first">曲名、アーティスト、ON/OFF、フォルダ、ピン留め、並び順</td><td>ブラウザの保存領域（localStorage）</td><td>曲のファイル名をキーにして保存します。</td></tr><tr><td class="wrap-first">マーカー（ロック・1小節の拍数を含む）、A-B 点、テキスト</td><td>同上</td><td>曲ごとに保存されます。</td></tr><tr><td class="wrap-first">歌詞の行ごとの時刻</td><td>同上</td><td>曲ごとに保存されます。同期はされず、バックアップには含まれます。</td></tr><tr><td class="wrap-first">コード・拍の解析結果と、手で直した内容、曲ごとのコード設定</td><td>同上</td><td>曲ごとに保存されます。</td></tr><tr><td class="wrap-first">設定（テーマ、背景、バーの長さ、ループの余白、言語など）</td><td>同上</td><td>端末ごとの設定です。</td></tr></tbody></table></div>
 <div class="g-warn"><span class="g-note-title">ご注意</span><ul>
 <li>曲は<strong>ファイル名</strong>で区別されます。同じ名前のファイルは同じ曲として扱われます。ファイル名を変えると別の曲になり、マーカーは引き継がれません。</li>
 <li>ブラウザの「サイトデータの削除」や、プライベートブラウズでの利用では、データが消えることがあります。</li>
@@ -37,7 +37,7 @@
 </ul></div>
 
 <h2 id="backup">バックアップとインポート</h2>
-<p>Settings の下の「More」にある <strong>バックアップ</strong> と <strong>インポート</strong> で、曲と設定をファイルに保存し、戻せます。端末の引っ越しや、データ消去への備えになります。</p>
+<p>Settings の一覧にある <strong>バックアップ</strong> と <strong>インポート</strong> で、曲と設定をファイルに保存し、戻せます。端末の引っ越しや、データ消去への備えになります。</p>
 <h3>バックアップ（保存）</h3>
 <ol>
   <li>Settings → バックアップ を開きます。</li>
@@ -68,7 +68,7 @@
 <p>画面右上の「Google でログイン」からログインできます。ログインすると、プランの状態がアカウントに紐づき、同期と転送（Transfer）が使えるようになります。</p>
 <h3>Library 同期</h3>
 <p>同じアカウントでログインした端末どうしで、曲ごとの情報をそろえます。</p>
-<div class="g-table-wrap"><table><thead><tr><th>同期する</th><th>同期しない</th></tr></thead><tbody><tr><td class="wrap-first">曲名、アーティスト、ON/OFF、お気に入り</td><td>MP3 などの音声ファイル本体</td></tr><tr><td class="wrap-first">フォルダと、曲・フォルダの並び順</td><td>アプリの設定（音量、テーマ、EQ など）</td></tr><tr><td class="wrap-first">マーカー、A-B ループ、テキスト</td><td>フォルダの開閉状態</td></tr></tbody></table></div>
+<div class="g-table-wrap"><table><thead><tr><th>同期する</th><th>同期しない</th></tr></thead><tbody><tr><td class="wrap-first">曲名、アーティスト、ON/OFF、お気に入り</td><td>MP3 などの音声ファイル本体</td></tr><tr><td class="wrap-first">フォルダと、曲・フォルダの並び順</td><td>アプリの設定（音量、テーマ、EQ など）</td></tr><tr><td class="wrap-first">マーカー、A-B ループ、テキスト</td><td>フォルダの開閉状態</td></tr><tr><td class="wrap-first"></td><td>マーカーのロックと1小節の拍数、コード・拍の解析結果</td></tr></tbody></table></div>
 <ul>
   <li>同じ曲かどうかは、ファイル名とファイルサイズで判定します。名前かサイズが違うと、別の曲になります。</li>
   <li>別の端末にあって、この端末に音声ファイルが無い曲は、Library の下部に「未インポート」として出ます。同じファイルをこの端末に追加するか、転送で受け取ると、マーカーなどが自動で付きます。</li>

@@ -31,7 +31,9 @@
     // 共通(マイク)
     "マイクを使えません（HTTPSで開いてください）": "Cannot use the microphone (open the page over HTTPS)",
     "マイクが見つかりません": "Microphone not found",
-    "マイクへのアクセスが許可されませんでした": "Microphone access was not allowed",
+    "このブラウザではマイクを使えません（Safariで開くと使えることがあります）": "This browser cannot use the microphone (it may work in Safari)",
+    "マイクが許可されていません（端末の設定で、このブラウザのマイクを許可してください）": "Microphone access is not allowed (allow it for this browser in the device settings)",
+    "マイクを使えません（他のアプリが使用中の可能性があります）": "Cannot use the microphone (another app may be using it)",
     "読み込みに失敗しました": "Failed to load",
     "保存に失敗しました": "Failed to save",
     "削除に失敗しました": "Failed to delete",
@@ -156,6 +158,7 @@
   });
 
   QNI18N.addRules([
+    [/マイクを開始できませんでした（(\w+)）/g, "Could not start the microphone ($1)"],
     [/再生できませんでした\(エラーコード: (\d+)\)/g, "Could not play (error code: $1)"],
     [/取得できませんでした\((\d+)\)/g, "Could not fetch ($1)"],
     [/(\d+)件をLibraryに追加しました/g, "Added $1 to Library"],

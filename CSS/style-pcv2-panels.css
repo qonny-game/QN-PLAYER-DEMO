@@ -87,7 +87,7 @@
 
 .panel-fab-btn.active,
 .panel-fab-btn.active:hover {
-  background: var(--text-pure-white, #fff);
+  background: var(--text-pure-white, var(--bg-ffffff));
   color: var(--accent-primary);
 }
 
@@ -189,7 +189,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.24);
+  border: 1.5px solid rgba(var(--ov), 0.24);
   background: none;
   color: transparent;
   font-size: 0;
@@ -362,7 +362,7 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  border: 1.5px solid rgba(var(--ov), 0.28);
   background: transparent;
   position: relative;
 }
@@ -381,8 +381,8 @@
   top: 2px;
   width: 5px;
   height: 9px;
-  border-right: 2px solid var(--text-pure-white, #fff);
-  border-bottom: 2px solid var(--text-pure-white, #fff);
+  border-right: 2px solid var(--text-pure-white, var(--bd-ffffff));
+  border-bottom: 2px solid var(--text-pure-white, var(--bd-ffffff));
   transform: rotate(45deg);
 }
 
@@ -609,13 +609,13 @@
 
 
 #pcV2PanelBody::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(var(--ov), 0.14);
   border-radius: 4px;
 }
 
 
 #pcV2PanelBody::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.24);
+  background: rgba(var(--ov), 0.24);
 }
 
 
@@ -647,7 +647,7 @@
 
 
 #pcV2PanelBody.pcv2-panel-text .note-textarea:read-write {
-  background: #1c1c24;
+  background: var(--bg-1c1c24);
   border-color: var(--border-subtle);
 }
 

@@ -9,6 +9,7 @@
 | `snap.py` ＋ `compare_snap.py` | 全要素の計算済みスタイルを書き出し、前後で比較（見た目を変えない作業の確認） |
 | `i18n_check.py` | 英語表示にして、日本語が残っている文言とページエラーを洗い出す |
 | `qnbrowser.py` | ブラウザ確認の共通土台（サーバー起動・PC/SP・無料版解除・言語指定・テスト音声生成・外部遮断・エラー収集・スクショ）。新しい確認スクリプトはこれを使って書く |
+| `guide_shots.py` | **ガイド用スクショの撮り直し**（`python3 -I md/tools/guide_shots.py <src> [出力先] [画像名...]`）。デモ曲3つ・フォルダ Band・マーカー5個を投入し、日本語UIで PC(1440x860@1.5)/SP(390x780@2) を撮って guide/img/*.webp に書く。pc-overview と sp-overview-ann は番号バッジ付き（ガイドの表と対応）。UI変更後はこれを回す |
 | `qa.py` | **出荷前チェックの一括実行**（smoke4画面＋i18n＋md_audit＋js_unused＋css_audit＋release checkを並列で）。結果は1項目1行、NGだけ詳細。`--quick`=smokeをPC/SP-Sだけ・約20秒（作業の途中確認用）。`--ship 版 "一言"`=全部OKならそのまま`release.py ship`→パッチZIPの中身をツリーと照合。全チェックは約2分(2コア)なので、ツール呼び出しのtimeoutは300秒にする |
 | `try.py` | **画面の動作確認を1コマンドで**（その場でPlaywrightスクリプトを書かない）。`--app tuner --mic --size pc sp --panel X --click css --mic-set tone=0.001,noise=0.002 --eval "js" --shot 名前`。PC/SP複数サイズを一度に、eval結果・ページエラー・スクショ(/tmp/qnshots/)を出力。`--mic`は擬似マイク(qnbrowser.pyの擬似マイク定義) |
 | `where.py` | **用語・ID・文言がどのmd/guide/コードにあるか**を一覧（mdとguideは該当行、コードは件数）。名前やUIを変えた時の、直すべきドキュメントの拾い漏れ防止 |
@@ -24,3 +25,8 @@
 - `md/release_manifest.json` に、渡した版ごとの全ファイルのSHA-256を直近3版ぶん持つ。`ship`が自動で更新し、パッチZIPにも入る。パッチを適用すると基準も一緒に進む。
 - 記録が無い場合（別の経路で渡した版など）は、その版の状態で `release.py record` を1回実行してから `ship` する。`--since 版` で基準の版を指定できる。
 - 納品ルール（変更ファイルだけ・フォルダ構造維持・`PATCH_FILES.txt`なし・名前固定）はスクリプトが守る。ZIPに入れてよいファイルの許可リストは `release.py` の `ALLOW_*`。
+
+## 調整用(必要な時だけ)
+| 道具 | 何をするか |
+|---|---|
+| `chord_pos.js` | `node md/tools/chord_pos.js <ルート> <モノf32le> <sr>`。コードの区切りが拍・小節頭にどれだけ乗っているか、snap有無の区間数・当てはまり(conf)・一致率を出す。`HEAD_MUL`/`BEAT_MUL`/`SW_MID`/`SN_OFF`などを環境変数で振れる。解析結果は`/tmp/ccache_*`に保存して2回目以降を速くする |

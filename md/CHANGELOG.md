@@ -153,3 +153,17 @@
 - 4.42.0 Click offset and Exact seek switch (per-device)
 - 4.42.1 Exact seek: prepare WAV right after load
 - 4.43.0 Odd bars and per-marker beats per bar, click timing trim
+- 4.44.0 Chords side panel for per-track chord/beat settings
+- 4.45.0 Settings hierarchy (General), marker list lock, View tap-cycle, Edit hidden on Wave, 2-row marker popup, removed +Audio/+Marker
+- 4.46.0 Light backgrounds (gray/beige) via colour tokens, guide/terms/privacy refresh for chords/grid/lock/settings
+- 4.47.0 Time stretch engine setting (Auto uses browser stretching when key is unchanged, fixes sliced slow playback on phones)
+- 4.48.0 Chord boundaries follow beats/bar heads, SP click/snap toggles, white text on accent buttons in light modes
+- 4.49.0 Cleanup: stale comments/docs, md updates for light modes, chord placement, time stretch, tools
+- 4.49.1 Release tool allows md/tools/*.js (chord_pos.js)
+- 4.50.0 Guide screenshots re-shot with demo data (md/tools/guide_shots.py), Chords panel image added
+- 4.50.1 Marker labels on the waveform are no longer translated (Solo stayed katakana)
+- 4.51.0 Lyrics under the seek bar: tap-sync line times on the Text memo, local only, 10000-char memo limit
+- 4.52.0 Stem recording: multiple clips per track (newer recording replaces overlap), clip move/delete, show a recording's waveform on the seek bar, 10-min limit per song, WAV export
+- 4.52.1 PITCH/TUNER mic errors now say the actual cause (permission, in use, unsupported browser, error name)
+- 4.53.0 Rec is now its own panel (works without Stem, also on phone width); Stem stays PC only
+- 4.53.1 iPhoneで別アプリ切替(画面下スワイプ)から戻った時に、Speed/Keyを入れ直して音程のずれを防止(原因はiOSのAudioContext一時停止→再開と推定)

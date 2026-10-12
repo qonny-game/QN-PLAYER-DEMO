@@ -2,7 +2,7 @@
    見た目はアプリの共通トークン(角丸=--radius-popup/--radius-pill、文字=--fs-*)に揃える。SP幅(≤900px)は下から出るシート */
 .qn-ce {
   position: fixed; z-index: 1200; width: 320px; max-height: min(78vh, 560px); overflow-y: auto; box-sizing: border-box;
-  padding: 12px 14px 14px; background: #16161b; border: 1px solid var(--border-strong); border-radius: var(--radius-popup);
+  padding: 12px 14px 14px; background: var(--bg-16161b); border: 1px solid var(--border-strong); border-radius: var(--radius-popup);
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55); color: var(--text-bright); font-family: var(--font-body), sans-serif;
 }
 .qn-ce[hidden] { display: none; }
@@ -46,5 +46,8 @@
 .qn-chord-handle.is-drag { background: var(--accent-primary); border-color: var(--text-pure-white); }
 .qn-chord-handle.is-drag::after {
   content: attr(data-t); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 3px; padding: 1px 6px;
-  font-size: var(--fs-micro); font-weight: 600; white-space: nowrap; color: var(--text-pure-white); background: #16161b; border: 1px solid var(--border-strong); border-radius: var(--radius-pill);
+  font-size: var(--fs-micro); font-weight: 600; white-space: nowrap; color: var(--text-pure-white); background: var(--bg-16161b); border: 1px solid var(--border-strong); border-radius: var(--radius-pill);
 }
+
+/* Chords panel (per-track settings): detected tempo / meter / key line */
+.qn-chords-info { font-size: 13px; line-height: 1.5; color: var(--text-bright, var(--fg-e8e8f0)); padding: 2px 0; }

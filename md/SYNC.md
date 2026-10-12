@@ -48,6 +48,9 @@ service cloud.firestore {
 ## いつ同期するか
 ログイン時／保存の1.5秒後／ウィンドウに戻った時・オンライン復帰・YouTubeアプリを開いた時（前回から20秒以上空いていれば）。Libraryの「☁ 同期済み HH:MM ↻」が状態表示で、**タップすると今すぐ同期（手動同期）**。失敗時は赤字・タップで再試行。リアルタイム購読（onSnapshot）は入れていない。
 
+## 同期しないもの
+歌詞の行の時刻(`mp3_lyt_*`)は端末だけ。キー接頭辞を`player-sync.js`の監視対象に入れていない(入れると同期されてしまう)。
+
 ## ローカルデータ
 - `qn_yt_items`の各動画に`updatedAt`。変更検知は`saveItems()`内の署名比較（個別の保存箇所は直さなくてよい）。
 - `qn_yt_sync_meta`：`{tomb, orderAt, lastSync}`。
@@ -117,3 +120,6 @@ service cloud.firestore {
 
 ## 他端末の未インポート(v4.10.0〜)
 `users/{uid}/sync/lib_devices`: `{d:{<devId>:{l:端末種別,u:更新時刻,m:[MP3が無い曲のhash]}}}`。各端末が同期の最後(`devicesStep`)に、自分のghost一覧が変わった時(または3日ごと)に書く。読む側は30日以内の端末だけ数え、自分がMP3を持っている曲を集計してLibraryに「他の端末にMP3が無い曲: N曲」+Sendボタンを出す。devIdは`qn_libsync_meta_v1.devId`。補助情報なので失敗しても同期は成功扱い。反映は相手端末が同期した後、自分の次の同期から。
+
+## 同期しない項目の追加(v4.43〜)
+- マーカーの`locked`(ロック)と`bpb`(1小節の拍数)、コード・拍の解析結果は、`cleanState`(player-sync.js)に含めない(端末内のみ)。バックアップには含まれる。

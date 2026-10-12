@@ -4,6 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>QNPLAYER</title>
+<script>
+// 背景モード(dark / gray / beige)。描画前に適用してちらつきを防ぐ。設定はSettings > General > Background(QNBg)
+window.QNBg = (function () {
+  var KEY = "qn_bg", OPTIONS = ["dark", "gray", "beige"];
+  function get() { try { var v = localStorage.getItem(KEY); return OPTIONS.indexOf(v) >= 0 ? v : "dark"; } catch (e) { return "dark"; } }
+  function apply(v) { if (v === "dark") document.documentElement.removeAttribute("data-qn-bg"); else document.documentElement.setAttribute("data-qn-bg", v); }
+  function set(v) { if (OPTIONS.indexOf(v) < 0) return; try { localStorage.setItem(KEY, v); } catch (e) {} apply(v); document.dispatchEvent(new CustomEvent("qn-bg-change", { detail: v })); }
+  apply(get());
+  return { get: get, set: set, OPTIONS: OPTIONS };
+})();
+</script>
 <link rel="icon" type="image/x-icon" href="favicon/favicon.ico">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
@@ -12,6 +23,7 @@
 <link rel="icon" type="image/png" sizes="512x512" href="favicon/android-chrome-512x512.png">
 
 <link rel="stylesheet" href="CSS/style-core.css">
+<link rel="stylesheet" href="CSS/style-modes.css">
 <link rel="stylesheet" href="CSS/style-playlist.css">
 <link rel="stylesheet" href="CSS/style-markers.css">
 <link rel="stylesheet" href="CSS/style-control-eq.css">
@@ -24,6 +36,7 @@
 <link rel="stylesheet" href="CSS/style-pcv2-panels.css">
 <link rel="stylesheet" href="CSS/style-bars.css">
 <link rel="stylesheet" href="CSS/style-chords.css">
+<link rel="stylesheet" href="CSS/style-lyrics.css">
 <link rel="stylesheet" href="CSS/style-settings.css">
 <link rel="stylesheet" href="CSS/style-stem.css">
 <link rel="stylesheet" href="CSS/style-quickpop.css">
@@ -36,7 +49,7 @@
 <link rel="stylesheet" href="CSS/style-pitch.css">
 <script>
   // アプリバージョン一元管理(QN_APP_VERSION)。<title>はここで即更新、#splashVersion/#appVersionは各要素直後のinline scriptが反映
-  window.QN_APP_VERSION = "4.43.0";
+  window.QN_APP_VERSION = "4.53.1";
   document.title = "QNPLAYER " + window.QN_APP_VERSION;
 
   window.QN_SHORTCUTS = [
@@ -138,7 +151,7 @@
 
 <div id="authContainer">
   <button id="btnLoginGoogle" title="Googleでログイン">
-    <svg viewBox="0 0 24 24"><path fill="#fff" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81z"/></svg>
+    <svg viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81z"/></svg>
     <span>Googleでログイン</span>
   </button>
 
@@ -278,13 +291,13 @@
       </div>
       <div class="control-list">
         <div class="control-card">
-          <label>Volume <span id="controlVolumeDisplay" style="color:#fff;">0.80</span></label>
+          <label>Volume <span id="controlVolumeDisplay" style="color:var(--text-pure-white);">0.80</span></label>
           <input type="range" id="controlVolume" min="0" max="1" step="0.01" value="0.8">
         </div>
 
         <div class="control-card" id="controlSpeedCard">
           <label>
-            Speed <span id="controlSpeedDisplay" style="color:#fff;">1.00</span>x
+            Speed <span id="controlSpeedDisplay" style="color:var(--text-pure-white);">1.00</span>x
             <button class="mini-reset-btn" id="controlSpeedResetBtn" title="Reset speed to 1.00x">Reset</button>
             <button type="button" class="glow-switch control-effect-toggle" id="controlSpeedEnableToggle" role="switch" aria-checked="true" title="Speed effect on/off"><span class="glow-switch-knob"></span></button>
           </label>
@@ -338,7 +351,7 @@
 
         <div class="control-card key-control-card">
           <label>
-            Key <span id="controlKeyDisplay" style="color:#fff;">0</span> st
+            Key <span id="controlKeyDisplay" style="color:var(--text-pure-white);">0</span> st
             <button class="mini-reset-btn" id="controlKeyResetBtn" title="Reset key to 0">Reset</button>
             <button type="button" class="glow-switch control-effect-toggle" id="controlKeyEnableToggle" role="switch" aria-checked="true" title="Key effect on/off"><span class="glow-switch-knob"></span></button>
           </label>
@@ -625,6 +638,7 @@
 <script src="JS/player-controls.js"></script>
 <script src="JS/qn-settings-ui.js"></script>
 <script src="JS/player-text.js"></script>
+<script src="JS/player-lyrics.js"></script>
 <script src="JS/player-stem.js"></script>
 <script src="JS/player-ui-pc-v2.js"></script>
 <script src="JS/player-quickpop.js"></script>

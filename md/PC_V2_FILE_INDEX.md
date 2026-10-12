@@ -21,7 +21,7 @@
 ### パネル開閉・切替
 - `handleIconClick(item)` — アイコン押下の分岐（`"action"`=Add File、`"close"`、他は`openPanelOverlay`）。
 - `openPanelOverlay(panelId)` / `closePanelOverlay()` — パネルの開閉（SP幅はオーバーレイ）。
-- `switchPanel(panelId)` — **最大の関数。** パネル中身をControl/Markers/Library/Text/Stem/Backup/Import/Transfer/Settings/Keyboard/Colorへ切替。新しいパネル種別はここに分岐を足す。Backup/Importは`qnBackupMount`で借りる（`build()`は部品を`qnBackupParts()`で取得）。
+- `switchPanel(panelId)` — **最大の関数。** パネル中身をgeneral(Settings直下の一覧から入る。`generalBody`)/chords(曲ごとの設定)/Control/Markers/Library/Text/Stem/Backup/Import/Transfer/Settings/Keyboard/Colorへ切替。新しいパネル種別はここに分岐を足す。Backup/Importは`qnBackupMount`で借りる（`build()`は部品を`qnBackupParts()`で取得）。
 - `getPanelStash()` / `stashPanelContents(panelBody)` — 切替時、使い回す実体を`#pcV2PanelStash`へ退避（パネルに新しい実体を足したら対象に加える）。
 - `buildPanelFab(panelId)` — 右下FAB（ADD AUDIO/ADD MARKER/EDIT/Delete）。
 

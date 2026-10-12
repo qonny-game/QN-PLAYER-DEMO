@@ -359,6 +359,7 @@ async function runTrackBackup() {
           trackData.abA = storedAB.a;
           trackData.abB = storedAB.b;
           trackData.noteText = loadStoredNoteTextFor(track.name);
+          if (window.QNLyrics) trackData.lyricTimes = window.QNLyrics.exportFor(track.name);
           // 【v3.24.0】所属フォルダは名前で持つ(idは端末ごと)。未分類=null。古い版は無視、古いバックアップ(キー無し)は読み込み側で触らない
           const folderNameForExport = typeof trackFolderId === "function" && typeof getPlaylistFolder === "function" && trackFolderId(track) ? getPlaylistFolder(track.folder).name : null;
           trackData.folder = folderNameForExport;
@@ -917,6 +918,7 @@ function applyImportedMarkersAndText(name, trackData) {
     const b = typeof trackData.abB === "number" ? trackData.abB : null;
     try { localStorage.setItem("mp3_ab_" + name, JSON.stringify({ a: a, b: b })); } catch (e) {}
   }
+  if (Array.isArray(trackData.lyricTimes) && window.QNLyrics) window.QNLyrics.importFor(name, trackData.lyricTimes);
   if (typeof trackData.noteText === "string") {
     try {
       localStorage.setItem("mp3_text_" + name, trackData.noteText);

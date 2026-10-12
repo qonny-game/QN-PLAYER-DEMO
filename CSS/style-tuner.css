@@ -51,7 +51,7 @@
 .qn-tn[data-panel="keyboard"] .qn-tn-sec-keyboard { display: block; }
 
 .qn-tn .control-card[hidden] { display: none; }
-.qn-tn-white { color: #fff; }
+.qn-tn-white { color: var(--fg-ffffff); }
 .qn-tn-sub { font-size: var(--fs-small); color: var(--icon-muted); }
 
 /* チップ(プリセット/チューニング): 文字入りボタン=pill・--fs-btn・--btn-h。ONはテーマ色 */
@@ -136,7 +136,7 @@
   width: 100%;
   padding: 14px;
   border-radius: var(--radius-popup);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(var(--ov), 0.04);
   border: 1px solid var(--border-subtle);
   color: var(--text-bright);
   font-family: inherit;
@@ -153,7 +153,7 @@
   width: 92px;
   height: 52px;
   border-radius: var(--radius-field);
-  background: #111116;
+  background: var(--bg-111116);
   border: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
@@ -161,11 +161,11 @@
   overflow: hidden;
 }
 .qn-tn-dchoice-pv svg { width: 84%; height: 84%; }
-.qn-tn-pv-track { fill: none; stroke: rgba(255, 255, 255, 0.1); stroke-width: 6; stroke-linecap: round; }
+.qn-tn-pv-track { fill: none; stroke: rgba(var(--ov), 0.1); stroke-width: 6; stroke-linecap: round; }
 .qn-tn-pv-in { fill: none; stroke: var(--qn-tn-just); stroke-width: 6; stroke-linecap: round; opacity: 0.8; }
 .qn-tn-pv-needle { stroke: var(--text-bright); stroke-width: 2.5; stroke-linecap: round; }
 .qn-tn-pv-hub { fill: var(--text-bright); }
-.qn-tn-pv-dot { fill: rgba(255, 255, 255, 0.2); }
+.qn-tn-pv-dot { fill: rgba(var(--ov), 0.2); }
 .qn-tn-pv-dot.center { fill: var(--qn-tn-just); }
 .qn-tn-dchoice-label { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .qn-tn-dchoice-title { font-family: var(--font-display, 'Instrument Sans'), sans-serif; font-size: var(--fs-body); font-weight: 700; }
@@ -203,22 +203,22 @@
 .qn-tn-display { margin: auto; width: 100%; display: flex; justify-content: center; }
 .qn-tn-prompt { margin-bottom: 0; }
 /* メーター直下の大きなMIC ON/OFFボタン(下段バーのMicと同じ状態) */
-.qn-tn-bigmic { flex: none; align-self: center; margin: 12px 0 4px; display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-width: 220px; height: 60px; padding: 0 28px; border-radius: 30px; border: 1px solid var(--border-subtle, #2a2a34); background: transparent; color: var(--text-bright); font-family: var(--font-display, 'Instrument Sans'), sans-serif; font-size: var(--fs-heading); font-weight: 700; letter-spacing: 1px; cursor: pointer; }
+.qn-tn-bigmic { flex: none; align-self: center; margin: 12px 0 4px; display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-width: 220px; height: 60px; padding: 0 28px; border-radius: 30px; border: 1px solid var(--border-subtle, var(--bd-2a2a34)); background: transparent; color: var(--text-bright); font-family: var(--font-display, 'Instrument Sans'), sans-serif; font-size: var(--fs-heading); font-weight: 700; letter-spacing: 1px; cursor: pointer; }
 .qn-tn-bigmic svg { width: 26px; height: 26px; fill: currentColor; }
 .qn-tn-bigmic.is-active { background: var(--accent-primary); border-color: var(--accent-primary); color: #fff; }
-@media (hover: hover) and (pointer: fine) { .qn-tn-bigmic:not(.is-active):hover { background: rgba(255, 255, 255, 0.06); } }
+@media (hover: hover) and (pointer: fine) { .qn-tn-bigmic:not(.is-active):hover { background: rgba(var(--ov), 0.06); } }
 
 /* メーター: 3段階色分け(data-state=just/close/far)。しきい値はJSのtuningState()と一致させる */
 .qn-tn-meter { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; max-width: 1000px; }
 /* ゲージ幅: 画面幅いっぱい、ただし縦に収まる大きさまで(音名・MICボタン分を引いた高さ×1.75) */
 .qn-tn-gauge { position: relative; width: min(100%, 960px, calc((100vh - 440px) * 1.8)); min-width: 280px; }
 .qn-tn-gauge-svg { width: 100%; height: auto; overflow: visible; }
-.qn-tn-g-track { fill: none; stroke: rgba(255, 255, 255, 0.08); stroke-width: 12; stroke-linecap: round; }
+.qn-tn-g-track { fill: none; stroke: rgba(var(--ov), 0.08); stroke-width: 12; stroke-linecap: round; }
 .qn-tn-g-flat, .qn-tn-g-sharp { fill: none; stroke: var(--danger, #ef4444); stroke-width: 12; stroke-linecap: round; opacity: 0.4; }
 .qn-tn-g-in { fill: none; stroke: var(--qn-tn-just); stroke-width: 12; stroke-linecap: round; }
-.qn-tn-tick { stroke: rgba(255, 255, 255, 0.18); stroke-width: 1.5; stroke-linecap: round; }
-.qn-tn-tick.minor { stroke: rgba(255, 255, 255, 0.14); stroke-width: 1; }
-.qn-tn-tick.major { stroke: rgba(255, 255, 255, 0.34); stroke-width: 2.5; }
+.qn-tn-tick { stroke: rgba(var(--ov), 0.18); stroke-width: 1.5; stroke-linecap: round; }
+.qn-tn-tick.minor { stroke: rgba(var(--ov), 0.14); stroke-width: 1; }
+.qn-tn-tick.major { stroke: rgba(var(--ov), 0.34); stroke-width: 2.5; }
 .qn-tn-tick.zero { stroke: var(--qn-tn-just); stroke-width: 3.5; }
 .qn-tn-needle { transform-origin: 150px 150px; transition: transform 0.08s var(--ease-snap, ease); }
 .qn-tn-needle line { stroke: var(--text-bright); stroke-width: 3.5; stroke-linecap: round; }
@@ -278,10 +278,10 @@
 }
 /* 81本(1.25¢刻み)。幅いっぱいに均等割り。5¢ごと(.q)・10¢ごと(.m)は背を高く */
 .qn-tn-gm-meter { display: flex; align-items: flex-end; gap: 2px; width: 100%; height: clamp(72px, 14vh, 120px); }
-.qn-tn-dot { flex: 1 1 0; min-width: 1px; height: 36%; border-radius: 2px; background: rgba(255, 255, 255, 0.1); }
+.qn-tn-dot { flex: 1 1 0; min-width: 1px; height: 36%; border-radius: 2px; background: rgba(var(--ov), 0.1); }
 .qn-tn-dot.q { height: 52%; }
 .qn-tn-dot.m { height: 68%; }
-.qn-tn-dot.center { flex: 2 1 0; height: 100%; background: rgba(255, 255, 255, 0.16); }
+.qn-tn-dot.center { flex: 2 1 0; height: 100%; background: rgba(var(--ov), 0.16); }
 .qn-tn-dot.active { background: var(--danger, #ef4444); }
 .qn-tn-gm-freq { font-size: var(--fs-heading); font-weight: 500; color: var(--icon-muted); }
 .qn-tn-gm[data-state="just"] .qn-tn-dot.active { background: var(--qn-tn-just); box-shadow: 0 0 12px var(--qn-tn-just-glow); }
@@ -302,7 +302,7 @@
   gap: 4px;
   padding: 10px 12px;
   min-height: 80px;
-  background: var(--bg-base, #0a0a0c);
+  background: var(--bg-base, var(--bg-0a0a0c));
   border-top: 1px solid var(--border-subtle);
   overflow-x: auto;
   overflow-y: hidden;
@@ -372,8 +372,8 @@
 .qn-tn-panel-scroll, .qn-tn-stage { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.18) transparent; }
 .qn-tn-panel-scroll::-webkit-scrollbar, .qn-tn-stage::-webkit-scrollbar { width: 8px; }
 .qn-tn-panel-scroll::-webkit-scrollbar-track, .qn-tn-stage::-webkit-scrollbar-track { background: transparent; }
-.qn-tn-panel-scroll::-webkit-scrollbar-thumb, .qn-tn-stage::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.14); border-radius: 4px; }
-.qn-tn-panel-scroll::-webkit-scrollbar-thumb:hover, .qn-tn-stage::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.24); }
+.qn-tn-panel-scroll::-webkit-scrollbar-thumb, .qn-tn-stage::-webkit-scrollbar-thumb { background: rgba(var(--ov), 0.14); border-radius: 4px; }
+.qn-tn-panel-scroll::-webkit-scrollbar-thumb:hover, .qn-tn-stage::-webkit-scrollbar-thumb:hover { background: rgba(var(--ov), 0.24); }
 
 /* ---------- SP幅: メイン表示(縦いっぱい)+下段バー。パネルを開くと全面(ステージ・下段バーは隠す) ---------- */
 @media screen and (max-width: 900px) {

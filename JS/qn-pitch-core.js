@@ -119,7 +119,20 @@
     return { startFromMic: startFromMic, stop: stop, state: state, get stream() { return stream; } };
   }
 
+  // マイクを開けなかった時の表示文。原因ごとに分ける(iOSのChromeなどで何が起きたか分かるように、想定外はエラー名を添える)
+  function micErrorText(err) {
+    var name = err && err.name, msg = err && err.message;
+    if (msg === "nomedia") {
+      return window.isSecureContext === false ? "マイクを使えません（HTTPSで開いてください）" : "このブラウザではマイクを使えません（Safariで開くと使えることがあります）";
+    }
+    if (name === "NotFoundError" || name === "OverconstrainedError") return "マイクが見つかりません";
+    if (name === "NotAllowedError" || name === "SecurityError") return "マイクが許可されていません（端末の設定で、このブラウザのマイクを許可してください）";
+    if (name === "NotReadableError" || name === "AbortError") return "マイクを使えません（他のアプリが使用中の可能性があります）";
+    return "マイクを開始できませんでした（" + (name || "unknown") + "）";
+  }
+
   window.QNPitchCore = {
+    micErrorText: micErrorText,
     NOTE_NAMES: NOTE_NAMES, A4: A4,
     freqToMidi: freqToMidi, freqToNote: freqToNote, noteToFreq: noteToFreq, midiToNoteName: midiToNoteName,
     autoCorrelate: autoCorrelate, createAnalysisSession: createAnalysisSession

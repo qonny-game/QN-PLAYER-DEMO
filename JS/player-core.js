@@ -540,14 +540,21 @@ let eqFilters = [];
 let soundTouchNode = null;
 let pitchShiftAvailable = false;
 
-// Speedの伸縮エンジン。既定"st"=SoundTouchが時間伸縮(audio要素は音程を保たず再生速度だけ変える)。"native"=従来のブラウザ標準の伸縮(iOSでは伸びずに隙間が空く)。切替: URLに ?stretch=native / ?stretch=st を付けて開くと端末に保存
+// Speedの伸縮エンジン。既定"auto"(上のIS_IOSの注記)。"st"=SoundTouchが時間伸縮(audio要素は音程を保たず再生速度だけ変える)。"native"=従来のブラウザ標準の伸縮(iOSでは伸びずに隙間が空く)。切替: URLに ?stretch=native / ?stretch=st を付けて開くと端末に保存
 function getStretchEngine() {
   try {
     const q = new URLSearchParams(location.search).get("stretch");
-    if (q === "native" || q === "st") localStorage.setItem("qn_stretch_engine", q);
-    return localStorage.getItem("qn_stretch_engine") === "native" ? "native" : "st";
-  } catch (e) { return "st"; }
+    if (q === "native" || q === "st" || q === "auto") localStorage.setItem("qn_stretch_engine", q);
+    const v = localStorage.getItem("qn_stretch_engine");
+    return v === "native" || v === "st" ? v : "auto";
+  } catch (e) { return "auto"; }
 }
+function setStretchEngine(v) {
+  try { localStorage.setItem("qn_stretch_engine", v === "native" || v === "st" ? v : "auto"); } catch (e) {}
+  if (typeof updatePlaybackRate === "function") updatePlaybackRate();
+}
+// auto: キーを動かしていない間は、ブラウザ標準の伸縮(軽くて滑らか。SoundTouchは処理が間に合わないとスマホで音がスライスされる)。キー変更中とiOS(標準だと隙間が空く)はSoundTouch
+const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const STRETCH_PARAMS = { sequenceMs: 120, seekWindowMs: 30, overlapMs: 20 }; // 遅い再生向けに窓を長め(既定より滑らか)
 function setElementPreservesPitch(on) {
   audio.preservesPitch = on; audio.webkitPreservesPitch = on; audio.mozPreservesPitch = on;
@@ -635,13 +642,14 @@ function updatePlaybackRate() {
   const effectiveSpeed = speedEffectEnabled ? currentSpeed : 1.0;
   const effectiveKeySemitones = keyEffectEnabled ? currentKeySemitones : 0;
   if (pitchShiftAvailable && soundTouchNode) {
-    const native = getStretchEngine() === "native";
-    // st: audio要素は音程そのまま(preservesPitch=false)で速度だけ変え、SoundTouchが「playbackRate分の速度差」を伸縮で埋める(pitch=1)。native: 要素側で伸縮(pitch=speedで相殺)
-    setElementPreservesPitch(native);
+    const eng = getStretchEngine();
+    const bypass = eng === "native" || (eng === "auto" && !IS_IOS && effectiveKeySemitones === 0);
+    // bypass: 要素側で伸縮(preservesPitch)し、SoundTouchは素通し(rate/pitch=1)。st: audio要素は音程そのまま(preservesPitch=false)で速度だけ変え、SoundTouchが「playbackRate分の速度差」を伸縮で埋める(pitch=1)
+    setElementPreservesPitch(bypass);
     audio.playbackRate = effectiveSpeed;
     try {
-      soundTouchNode.playbackRate.value = effectiveSpeed;
-      soundTouchNode.pitch.value = native ? effectiveSpeed : 1;
+      soundTouchNode.playbackRate.value = bypass ? 1 : effectiveSpeed;
+      soundTouchNode.pitch.value = 1;
       const clampedSemitones = Math.max(-24, Math.min(24, effectiveKeySemitones));
       soundTouchNode.pitchSemitones.value = clampedSemitones;
     } catch (e) {

@@ -11,12 +11,15 @@ window.QN_ROW_ACT = (function () {
     del: '<path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>',
     ok: '<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>',
     skipNext: '<path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>',
-    play: '<path d="M8 5v14l11-7z"/>'
+    play: '<path d="M8 5v14l11-7z"/>',
+    lock: '<path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>',
+    unlock: '<path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z"/>'
   };
   function info(kind, on) {
     if (kind === "edit") return { icon: icons.edit, label: "Edit" };
     if (kind === "del") return { icon: icons.del, label: "Delete" };
     if (kind === "hide") return { icon: on ? icons.eyeOn : icons.eyeOff, label: on ? "Show" : "Hide" };
+    if (kind === "lock") return { icon: on ? icons.lock : icons.unlock, label: on ? "Unlock" : "Lock" };
     if (kind === "mskip") return { icon: on ? icons.play : icons.skipNext, label: on ? "Play" : "Skip" };
     return { icon: on ? icons.eyeOn : icons.eyeOff, label: on ? "Play" : "Skip" };
   }
@@ -599,6 +602,18 @@ function renderPinList() {
       savePins();
     };
     actCell.appendChild(toggleBtn);
+    // Lock: ロック中のマーカーは動かせず削除もできない(波形側のLKと同じ)。ONの時はアクセント色(is-onの薄表示は使わない)
+    const lockBtn = makeActBtn("lock", !!pinObj.locked, "pin-lock-btn" + (pinObj.locked ? " is-locked" : ""), pinObj.locked ? "Locked: click to unlock" : "Click to lock (no move / delete)");
+    lockBtn.classList.remove("is-on");
+    lockBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (typeof window.markersHasSelectedItems === "function" && window.markersHasSelectedItems()) return;
+      hapticTap();
+      pinObj.locked = !pinObj.locked;
+      if (!pinObj.locked) delete pinObj.locked;
+      refreshAfterPinChange();
+    };
+    actCell.appendChild(lockBtn);
     actCell.appendChild(editBtn); // 【v3.52.0】並びはSKIP/HIDE/編集(編集はEDITモードのみ表示)。その右が削除選択タイル(.pin-del-zone)
     div.appendChild(actCell);
 
@@ -798,11 +813,11 @@ function showPinPopup(t, barEl, clientX, pinObj, abKind) {
   }
   pop.hidden = false;
   const rect = barEl.getBoundingClientRect();
-  const w = pop.offsetWidth, h = pop.offsetHeight, gap = 10;
+  const w = pop.offsetWidth, h = pop.offsetHeight, gap = 26; // マーカーから少し離す
   const left = Math.min(Math.max(clientX - w / 2, 8), window.innerWidth - w - 8);
   let top = rect.top - h - gap;
   const below = top < 8;
-  if (below) top = rect.bottom + gap;
+  if (below) top = Math.min(rect.bottom + gap, Math.max(8, window.innerHeight - h - 8));
   pop.classList.toggle("is-below", below);
   pop.style.left = left + "px";
   pop.style.top = top + "px";

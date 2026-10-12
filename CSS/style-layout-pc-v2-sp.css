@@ -63,12 +63,12 @@
 
   .pcv2-anchor-tab:hover {
     color: var(--text-bright);
-    border-color: rgba(255, 255, 255, 0.24);
+    border-color: rgba(var(--ov), 0.24);
   }
 
   .pcv2-anchor-tab:active {
     transform: scale(0.94);
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(var(--ov), 0.06);
   }
 
   /* シートの開閉アニメ中もボタン群(下段バー・アイコンバー)の背面に潜るよう、パネル(z-index:100)より前面+不透明背景 */
@@ -76,7 +76,7 @@
   #pcV2IconBar {
     position: relative;
     z-index: 110;
-    background: #0a0a0c;
+    background: var(--bg-0a0a0c);
   }
 
   #pcV2BottomBar {
@@ -200,7 +200,7 @@
     width: 44px;
     padding-right: 4px;
     pointer-events: none;
-    background: linear-gradient(to right, transparent, #0a0a0c 65%);
+    background: linear-gradient(to right, transparent, var(--bg-0a0a0c) 65%);
     opacity: 0;
     transition: opacity 0.2s ease;
     z-index: 2;
@@ -213,7 +213,7 @@
   #pcV2IconBarScrollHint svg {
     width: 20px;
     height: 20px;
-    fill: var(--icon-muted, #8b8b9e);
+    fill: var(--icon-muted, var(--fg-8b8b9e));
     /* 【v2.16.3】無限アニメ禁止(再計算)。数回で止める(GOTCHAS.md) */
     animation: pcv2-scroll-hint-nudge 1.6s ease-in-out 3;
   }
@@ -283,7 +283,7 @@
     z-index: 100;
     width: 100%;
     border-right: none;
-    background: #0a0a0c;
+    background: var(--bg-0a0a0c);
     /* 開いている目印: 上端アクセント線+上向きの影+角丸+つまみ */
     border-top: 2px solid var(--accent-primary);
     border-radius: 16px 16px 0 0;
@@ -343,12 +343,12 @@
   padding: 0;
   border-radius: 50%;
   border: 1px solid var(--border-strong);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(var(--ov), 0.04);
   color: var(--text-bright);
   cursor: pointer;
 }
 .qn-sheet-close svg { width: 26px; height: 26px; fill: currentColor; }
-.qn-sheet-close:active { transform: scale(0.92); background: rgba(255, 255, 255, 0.1); }
+.qn-sheet-close:active { transform: scale(0.92); background: rgba(var(--ov), 0.1); }
 
 
 /* scrollbar-gutter: stable(縦スクロールバーの出没で全体が左右にガタつくのを防ぐ) */
@@ -387,14 +387,13 @@ html {
     flex-shrink: 0;
     position: relative;
     z-index: 110;
-    background: #0a0a0c;
+    background: var(--bg-0a0a0c);
     border-top: 1px solid var(--border-subtle);
     padding: 6px 6px 4px;
     gap: 2px;
   }
   #pcV2BottomBarAnchorTabs { display: none; }
   #pcV2Root:not(.qn-sp-more-open) #pcV2BottomBar { display: none; }
-  #pcV2WaveFabRow #pcV2WaveAddMarkerBtn { display: none; }
   .pcv2-dock-btn {
     display: flex;
     flex-direction: column;
@@ -413,7 +412,7 @@ html {
   }
   .pcv2-dock-btn svg { width: 28px; height: 28px; fill: currentColor; display: block; }
   .pcv2-dock-btn span { font-size: 11px; line-height: 1; white-space: nowrap; }
-  .pcv2-dock-btn:active { background: rgba(255, 255, 255, 0.06); }
+  .pcv2-dock-btn:active { background: rgba(var(--ov), 0.06); }
   .pcv2-dock-loop.is-active, .pcv2-dock-more.is-open { color: var(--accent-primary); }
   .pcv2-dock-add { color: var(--accent-primary); }
   .pcv2-dock-add svg { width: 32px; height: 32px; }
@@ -505,7 +504,7 @@ html {
   /* 【v4.21.1】Moreは波形を縮めず、ドックの上に重ねて開く(外枠は高さ0・中身を上方向へ張り出す) */
   #pcV2MorePanel { order: 2; flex-shrink: 0; height: 0; padding: 0; position: relative; z-index: 105; }
   #pcV2Root.qn-sp-more-open #pcV2MorePanel { display: block; }
-  #pcV2MorePanel .pcv2-more-inner { position: absolute; left: 0; right: 0; bottom: 0; background: #0a0a0c; border-top: 1px solid var(--border-subtle); padding: 8px 14px; }
+  #pcV2MorePanel .pcv2-more-inner { position: absolute; left: 0; right: 0; bottom: 0; background: var(--bg-0a0a0c); border-top: 1px solid var(--border-subtle); padding: 8px 14px; }
   #pcV2SpDock { order: 3; }
   /* 下段バーの中身は全て他へ移した(再生/マーカー系はドック、トラック/リピートはヘッダー、A/BはAudioの隣、-10s/+10sは廃止)。操作元のボタンはDOMに残す(ドック等が.click()で中継するため) */
   #pcV2BottomBar, #pcV2Root.qn-sp-more-open #pcV2BottomBar { display: none !important; }
@@ -515,17 +514,15 @@ html {
   #pcV2WaveHeadBtns { display: flex; align-items: center; gap: 2px; grid-column: 2; grid-row: 1 / span 2; }
   .pcv2-head-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; background: none; border: none; border-radius: 10px; color: var(--icon-muted); cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .pcv2-head-btn svg { width: 26px; height: 26px; fill: currentColor; display: block; }
-  .pcv2-head-btn:active { background: rgba(255, 255, 255, 0.08); }
+  .pcv2-head-btn:active { background: rgba(var(--ov), 0.08); }
   .pcv2-head-btn.is-active { color: var(--accent-primary); }
 
-  /* Audioは小さく、空いた所にA/B */
+  /* 空いた所にA/B */
   #pcV2WaveFabRow .pcv2-wave-fab-btns { display: flex; gap: 8px; align-items: stretch; }
-  #pcV2WaveFabRow #pcV2WaveAddAudioBtn { flex: 0 0 auto; height: 36px; padding: 0 14px; font-size: 12px; gap: 6px; }
-  #pcV2WaveFabRow #pcV2WaveAddAudioBtn svg { width: 15px; height: 15px; }
-  #pcV2WaveFabRow .pcv2-fab-ab { display: flex; flex: 0 0 auto; width: 34px; justify-content: center; align-items: center; height: 36px; padding: 0; background: none; border: 1px solid var(--border-strong, rgba(255,255,255,0.2)); color: var(--icon-muted); box-shadow: none; }
+  #pcV2WaveFabRow .pcv2-fab-ab { display: flex; flex: 0 0 auto; width: 34px; justify-content: center; align-items: center; height: 36px; padding: 0; background: none; border: 1px solid var(--border-strong, rgba(var(--ov),0.2)); color: var(--icon-muted); box-shadow: none; }
   #pcV2WaveFabRow .pcv2-fab-ab svg { width: 20px; height: 20px; fill: currentColor; }
   #pcV2WaveFabRow .pcv2-fab-ab .pcv2-ab-t { display: none; }
-  /* View(Wave/Chord/Degree)とEditは+Audioの右(JSのsyncMoreExtrasが移す)。入りきらない時はA/Bが次の段へ */
+  /* View(Wave/Chord/Degree)とEditはA/Bの左(JSのsyncMoreExtrasが移す)。入りきらない時はA/Bが次の段へ */
   #pcV2WaveFabRow .pcv2-wave-fab-btns { flex-wrap: wrap; row-gap: 8px; }
   #pcV2WaveFabRow .qn-set-inline-item { pointer-events: auto; flex: 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 0; border: 0; order: 0; min-width: 0; }
   #pcV2WaveFabRow .qn-view-item .qn-set-inline-label { display: none; }
@@ -534,18 +531,18 @@ html {
   #pcV2WaveFabRow .qn-set-inline-item .qn-stepper-btn svg { width: 18px; height: 18px; }
   #pcV2WaveFabRow .qn-set-inline-item .qn-stepper-val { min-width: 44px; padding: 0 2px; }
   #pcV2WaveFabRow .pcv2-wave-fab-btns { gap: 6px; }
-  #pcV2WaveFabRow #pcV2WaveAddAudioBtn { padding: 0 11px; }
+  #pcV2WaveFabRow .qn-set-inline-item .qn-stepper.is-tap .qn-stepper-btn { width: auto; min-width: 54px; padding: 0 6px; }
   #pcV2WaveFabRow .pcv2-fab-ab.has-point { color: var(--accent-primary); border-color: var(--accent-primary); }
   #pcV2WaveFabRow .pcv2-fab-ab:hover { background: none; }
 
   /* More: 設定帯の下にミキサー(Volume=全幅、Speed/Key=2列)。PC下部バーのミキサーと同じ部品・同じ操作 */
   #pcV2MorePanel .qn-wave-bar-strip { margin-bottom: 8px; }
-  #pcV2MorePanel #pcV2BarMixer { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; padding: 10px 16px 12px; background: #0e0e13; border: 1px solid var(--border-subtle); border-radius: var(--radius-popup); }
+  #pcV2MorePanel #pcV2BarMixer { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; padding: 10px 16px 12px; background: var(--bg-0e0e13); border: 1px solid var(--border-subtle); border-radius: var(--radius-popup); }
   #pcV2MorePanel #pcV2BarMixer .pcv2-mix-item { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
   #pcV2MorePanel #pcV2BarMixer .pcv2-mix-item[data-mix="vol"] { grid-column: 1 / -1; }
   #pcV2MorePanel #pcV2BarMixer .pcv2-mix-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
   #pcV2MorePanel #pcV2BarMixer .pcv2-mix-label { font-size: 12px; color: var(--icon-muted); user-select: none; }
-  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-val { font-size: 13px; color: var(--text-bright, #fff); font-variant-numeric: tabular-nums; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-val { font-size: 13px; color: var(--text-bright, var(--fg-ffffff)); font-variant-numeric: tabular-nums; }
   #pcV2MorePanel #pcV2BarMixer .pcv2-mix-range { width: 100%; height: 32px; margin: 0; accent-color: var(--accent-primary, #3b82f6); }
   #pcV2MorePanel #pcV2BarMixer .pcv2-mix-volrow { display: flex; align-items: center; gap: 8px; }
   #pcV2MorePanel #pcV2BarMixer .pcv2-mix-mute { flex: 0 0 auto; width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; border-radius: 8px; background: none; color: var(--icon-muted); }
@@ -568,11 +565,11 @@ html {
     -webkit-appearance: none; appearance: none; height: 18px; background: transparent; outline: none; border: none; box-shadow: none; cursor: pointer; touch-action: pan-y; -webkit-tap-highlight-color: transparent;
   }
   #pcV2MorePanel #pcV2BarMixer .pcv2-mix-range:focus, #pcV2MorePanel #pcV2BarMixer .pcv2-mix-range:focus-visible { outline: none; }
-  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-range::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--accent-primary) var(--p, 0%), #2a2a34 var(--p, 0%)); border: none; }
-  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-range::-moz-range-track { height: 4px; border-radius: 2px; background: #2a2a34; border: none; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-range::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--accent-primary) var(--p, 0%), var(--bg-2a2a34) var(--p, 0%)); border: none; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-range::-moz-range-track { height: 4px; border-radius: 2px; background: var(--bg-2a2a34); border: none; }
   #pcV2MorePanel #pcV2BarMixer .pcv2-mix-range::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--accent-primary); }
-  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; margin-top: -6px; border-radius: 50%; background: var(--text-bright, #fff); border: none; box-shadow: none; }
-  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--text-bright, #fff); border: none; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; margin-top: -6px; border-radius: 50%; background: var(--text-bright, var(--bg-ffffff)); border: none; box-shadow: none; }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--text-bright, var(--bg-ffffff)); border: none; }
   #pcV2MorePanel #pcV2BarMixer .pcv2-mix-item[data-mix="key"] { width: 112px; }
   #pcV2MorePanel #pcV2BarMixer .pcv2-mix-keyval { min-width: 28px; font-size: 14px; }
   .pcv2-head-btn { position: relative; }
@@ -594,11 +591,11 @@ html {
   -webkit-appearance: none; appearance: none; height: 18px; background: transparent; outline: none; border: none; box-shadow: none; cursor: pointer; touch-action: pan-y; -webkit-tap-highlight-color: transparent;
 }
 #pcV2BarMixer .pcv2-mix-range:focus, #pcV2BarMixer .pcv2-mix-range:focus-visible { outline: none; }
-#pcV2BarMixer .pcv2-mix-range::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--accent-primary) var(--p, 0%), #2a2a34 var(--p, 0%)); border: none; }
-#pcV2BarMixer .pcv2-mix-range::-moz-range-track { height: 4px; border-radius: 2px; background: #2a2a34; border: none; }
+#pcV2BarMixer .pcv2-mix-range::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--accent-primary) var(--p, 0%), var(--bg-2a2a34) var(--p, 0%)); border: none; }
+#pcV2BarMixer .pcv2-mix-range::-moz-range-track { height: 4px; border-radius: 2px; background: var(--bg-2a2a34); border: none; }
 #pcV2BarMixer .pcv2-mix-range::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--accent-primary); }
-#pcV2BarMixer .pcv2-mix-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; margin-top: -6px; border-radius: 50%; background: var(--text-bright, #fff); border: none; box-shadow: none; }
-#pcV2BarMixer .pcv2-mix-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--text-bright, #fff); border: none; }
+#pcV2BarMixer .pcv2-mix-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; margin-top: -6px; border-radius: 50%; background: var(--text-bright, var(--bg-ffffff)); border: none; box-shadow: none; }
+#pcV2BarMixer .pcv2-mix-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--text-bright, var(--bg-ffffff)); border: none; }
 
 /* v4.11.3: ミキサーの見出し「ラベル 値」をBar length/Rows(.qn-set-inline)と同じ表示に統一(左寄せで密着・同サイズ・値は太字白。Keyの値も見出し側へ) */
 #pcV2Layout #pcV2BarMixer .pcv2-mix-head { display: flex; align-items: baseline; justify-content: flex-start; gap: 6px; }
@@ -617,7 +614,7 @@ html {
 @media (max-width: 900px) {
   #pcV2MorePanel #pcV2BarMixer .pcv2-mix-reset { flex: 0 0 auto; width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; border-radius: 8px; background: none; color: var(--icon-muted); -webkit-tap-highlight-color: transparent; }
   #pcV2MorePanel #pcV2BarMixer .pcv2-mix-reset svg { width: 22px; height: 22px; fill: currentColor; }
-  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-reset:active { background: rgba(255, 255, 255, 0.08); color: var(--accent-primary, #3b82f6); }
+  #pcV2MorePanel #pcV2BarMixer .pcv2-mix-reset:active { background: rgba(var(--ov), 0.08); color: var(--accent-primary, #3b82f6); }
   #pcV2MorePanel #pcV2BarMixer .pcv2-mix-volrow { gap: 4px; }
   #pcV2MorePanel #pcV2BarMixer { grid-template-columns: 1fr 1fr; gap: 8px 12px; }
 }

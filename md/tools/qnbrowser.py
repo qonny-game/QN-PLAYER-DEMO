@@ -77,10 +77,10 @@ class QNBrowser:
 
     # ---- ページ ----
     def new_page(self, width=1280, height=800, unlock=True, lang=None, storage=None,
-                 block_external=True, init_script=None, accept_downloads=True, mic=False):
+                 block_external=True, init_script=None, accept_downloads=True, mic=False, dpr=1):
         """storage: 起動前に入れるlocalStorageの辞書。unlock=Trueで無料版の制限を外す。lang: 'ja'|'en'|'auto'"""
         ctx = self.browser.new_context(viewport={"width": width, "height": height},
-                                       accept_downloads=accept_downloads)
+                                       accept_downloads=accept_downloads, device_scale_factor=dpr)
         items = dict(storage or {})
         if unlock:
             items["qnplayer_unlock_until"] = "-1"

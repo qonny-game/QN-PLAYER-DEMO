@@ -69,7 +69,7 @@
   bottom: 0;
   left: 0;
   width: var(--row-frac, 100%);
-  background: #111;
+  background: var(--bg-111111);
   z-index: 0;
   pointer-events: none;
 }

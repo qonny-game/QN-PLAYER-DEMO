@@ -472,9 +472,7 @@
     } catch (err) {
       starting = false;
       session.stop();
-      var name = err && err.name;
-      setHint((err && err.message === "nomedia") ? "マイクを使えません（HTTPSで開いてください）"
-        : (name === "NotFoundError" ? "マイクが見つかりません" : "マイクへのアクセスが許可されませんでした"), false);
+      setHint(core.micErrorText(err), false);
       updateButtons();
       return;
     }

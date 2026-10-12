@@ -66,9 +66,23 @@
       if (ctx && ctx.state !== "running") ctx.resume().catch(function () {});
     } catch (e) {}
   }
-  document.addEventListener("visibilitychange", keepAudioAlive);
+  // 復帰時(別アプリから戻る/ホームバースワイプ等): iOSはAudioContextを一瞬止めて再開するため、SoundTouchの速度/キーを入れ直して音程のずれを防ぐ
+  function reapplyRate() {
+    try { if (document.visibilityState === "visible" && typeof updatePlaybackRate === "function") updatePlaybackRate(); } catch (e) {}
+  }
+  function onBack() {
+    keepAudioAlive();
+    reapplyRate();
+    setTimeout(reapplyRate, 300);
+  }
+  document.addEventListener("visibilitychange", onBack);
   window.addEventListener("pagehide", keepAudioAlive);
-  window.addEventListener("pageshow", keepAudioAlive);
+  window.addEventListener("pageshow", onBack);
+  window.addEventListener("focus", onBack);
+  try {
+    var ac = window.__qnAudioCtx;
+    if (ac && ac.addEventListener) ac.addEventListener("statechange", function () { if (ac.state === "running") reapplyRate(); });
+  } catch (e) {}
 
   window.QNWake = { set: set };
   if (!hookAudio()) document.addEventListener("DOMContentLoaded", hookAudio);

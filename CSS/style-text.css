@@ -5,7 +5,7 @@
   width: 100%;
   min-height: 320px;
   box-sizing: border-box;
-  background: #1c1c24;
+  background: var(--bg-1c1c24);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-field);
   padding: 14px 16px;
@@ -16,7 +16,7 @@
   resize: vertical;
 }
 .note-textarea::placeholder {
-  color: #6b6b7b;
+  color: var(--fg-6b6b7b);
 }
 .note-textarea:focus {
   outline: none;
@@ -29,7 +29,7 @@
   height: 26px;
   border-radius: var(--radius-round);
   border: 1px solid var(--border-subtle);
-  background: #1c1c24;
+  background: var(--bg-1c1c24);
   color: var(--icon-muted);
   font-size: 13px;
   line-height: 1;
@@ -45,7 +45,7 @@
   fill: currentColor;
 }
 .tab-icon-btn:hover {
-  background: #252530;
+  background: var(--bg-252530);
   color: var(--text-bright);
   border-color: var(--accent-primary);
 }
@@ -64,7 +64,7 @@
   padding-top: calc(20px + env(safe-area-inset-top, 0px));
   padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
-  background: #0d0d0f;
+  background: var(--bg-0d0d0f);
 }
 .text-fullscreen-overlay.open {
   display: flex;

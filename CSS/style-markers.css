@@ -31,7 +31,7 @@
 }
 
 .pinItem:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(var(--ov), 0.03);
 }
 
 .pinItem.disabled {
@@ -138,7 +138,7 @@
   grid-template-columns: repeat(5, 1fr);
   gap: 8px;
   padding: 12px;
-  background: #16161b;
+  background: var(--bg-16161b);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-popup);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
@@ -163,7 +163,7 @@
 }
 
 .marker-color-swatch.marker-color-none {
-  background: #2a2a35;
+  background: var(--bg-2a2a35);
   position: relative;
 }
 
@@ -192,7 +192,7 @@
   font-size: var(--fs-body);
   font-weight: 500;
   color: var(--text-bright);
-  background: #14141a;
+  background: var(--bg-14141a);
   border: 1px solid var(--accent-primary);
   border-radius: var(--radius-field);
   padding: 5px 8px;
@@ -211,7 +211,7 @@
   gap: 6px;
   max-width: min(340px, calc(100vw - 16px));
   padding: 10px;
-  background: #16161b;
+  background: var(--bg-16161b);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-popup);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
@@ -226,8 +226,8 @@
   font-size: var(--fs-btn);
   font-weight: 600;
   color: var(--text-bright);
-  background: #1f1f26;
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: var(--bg-1f1f26);
+  border: 1px solid rgba(var(--ov), 0.10);
   border-radius: var(--radius-pill);
   padding: 8px 11px;
   cursor: pointer;
@@ -293,7 +293,7 @@
 }
 
 .pinItem.disabled .toggle-btn {
-  color: #55555f;
+  color: var(--fg-55555f);
 }
 
 .pinItem button:hover {
@@ -336,7 +336,7 @@
 }
 
 .playlistItem.disabled .toggle-btn {
-  color: #55555f;
+  color: var(--fg-55555f);
 }
 
 .del-btn {
@@ -409,7 +409,7 @@
   margin: 0;
   padding: 0;
   border: none;
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  border-left: 1px solid rgba(var(--ov), 0.12);
   border-radius: 0;
   background: transparent;
   color: var(--icon-muted);
@@ -427,8 +427,8 @@
 /* ON(SKIP中/HIDE中)はアイコンとラベルを薄暗く */
 :is(#pcV2PanelBody #pinList, .qn-yt .qn-yt-pinbox) .pin-act-cell .pin-act-btn.is-on svg,
 :is(#pcV2PanelBody #pinList, .qn-yt .qn-yt-pinbox) .pin-act-cell .pin-act-btn.is-on span { opacity: 0.35; }
-:is(#pcV2PanelBody #pinList, .qn-yt .qn-yt-pinbox) .pin-act-cell .pin-act-btn:hover { background: rgba(255, 255, 255, 0.06); }
-:is(#pcV2PanelBody #pinList, .qn-yt .qn-yt-pinbox) .pin-act-cell .pin-act-btn:active { background: rgba(255, 255, 255, 0.12); }
+:is(#pcV2PanelBody #pinList, .qn-yt .qn-yt-pinbox) .pin-act-cell .pin-act-btn:hover { background: rgba(var(--ov), 0.06); }
+:is(#pcV2PanelBody #pinList, .qn-yt .qn-yt-pinbox) .pin-act-cell .pin-act-btn:active { background: rgba(var(--ov), 0.12); }
 :is(#pcV2PanelBody #pinList, .qn-yt .qn-yt-pinbox) .pin-act-cell .pin-act-btn:disabled { opacity: 0.35; cursor: not-allowed; background: transparent; }
 /* 編集ボタンはEDITモードのみ。背景付き */
 :is(#pcV2PanelBody #pinList, .qn-yt .qn-yt-pinbox) .pin-act-cell .pin-edit-btn { display: none; }
@@ -445,8 +445,8 @@
   align-self: center;
   margin: -10px -12px -10px 0;
   padding: 0;
-  background: #3a2328;
-  color: #fff;
+  background: var(--bg-3a2328);
+  color: var(--fg-ffffff);
   box-sizing: border-box;
 }
 :is(#pcV2PanelBody.markers-edit-mode #pinList, .qn-yt[data-edit="markers"] .qn-yt-pinbox) .pin-del-zone .del-btn { display: none; }
@@ -498,7 +498,7 @@
   margin: 0;
   padding: 0;
   border: none;
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  border-left: 1px solid rgba(var(--ov), 0.12);
   border-radius: 0;
   background: transparent;
   color: var(--icon-muted);
@@ -513,8 +513,8 @@
 :is(#pcV2PanelBody #playlistBox, .qn-yt .qn-yt-libbox, #pcV2HeadRow) .playlist-act-btn span { color: inherit; font-size: 9px; line-height: 1; }
 :is(#pcV2PanelBody #playlistBox, .qn-yt .qn-yt-libbox, #pcV2HeadRow) .playlist-act-btn.is-on svg,
 :is(#pcV2PanelBody #playlistBox, .qn-yt .qn-yt-libbox, #pcV2HeadRow) .playlist-act-btn.is-on span { opacity: 0.35; }
-:is(#pcV2PanelBody #playlistBox, .qn-yt .qn-yt-libbox, #pcV2HeadRow) .playlist-act-btn:hover { background: rgba(255, 255, 255, 0.06); }
-:is(#pcV2PanelBody #playlistBox, .qn-yt .qn-yt-libbox, #pcV2HeadRow) .playlist-act-btn:active { background: rgba(255, 255, 255, 0.12); }
+:is(#pcV2PanelBody #playlistBox, .qn-yt .qn-yt-libbox, #pcV2HeadRow) .playlist-act-btn:hover { background: rgba(var(--ov), 0.06); }
+:is(#pcV2PanelBody #playlistBox, .qn-yt .qn-yt-libbox, #pcV2HeadRow) .playlist-act-btn:active { background: rgba(var(--ov), 0.12); }
 :is(#pcV2PanelBody #playlistBox, .qn-yt .qn-yt-libbox, #pcV2HeadRow) .playlist-act-btn:disabled { opacity: 0.35; cursor: not-allowed; background: transparent; }
 /* スキップ中の曲: 行全体を薄くせず、つまみ/サムネ/タイトル/時間だけ薄くする(Skipボタンは常に読める) */
 :is(#pcV2PanelBody #playlistBox, .qn-yt .qn-yt-libbox) .playlistItem.disabled { opacity: 1; }
@@ -528,7 +528,7 @@
   align-self: center;
   margin: -9px -12px -9px 0;
   padding: 0;
-  background: #3a2328;
+  background: var(--bg-3a2328);
   box-sizing: border-box;
 }
 :is(#pcV2PanelBody.playlist-edit-mode #playlistBox, .qn-yt[data-edit="library"] .qn-yt-libbox) .playlist-del-zone .del-btn { display: none; }
@@ -555,3 +555,6 @@
 :is(#playlistBox, .qn-yt-libbox) .playlist-del-tile .sel-on { display: none; }
 :is(#pcV2PanelBody.playlist-edit-mode #playlistBox, .qn-yt[data-edit="library"] .qn-yt-libbox) .del-btn.pcv2-selected + .playlist-del-tile .sel-on { display: block; }
 :is(#pcV2PanelBody.playlist-edit-mode #playlistBox, .qn-yt[data-edit="library"] .qn-yt-libbox) .del-btn.pcv2-selected + .playlist-del-tile .sel-off { display: none; }
+
+/* マーカー行のLockボタン: ロック中はアクセント色(他のボタンの.is-on=薄表示とは逆) */
+:is(#pcV2PanelBody #pinList, .qn-yt .qn-yt-pinbox) .pin-act-cell .pin-act-btn.pin-lock-btn.is-locked { color: var(--accent-primary); }

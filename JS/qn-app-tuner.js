@@ -328,10 +328,8 @@
     } catch (err) {
       micStarting = false;
       session.stop();
-      var name = err && err.name;
       if (err && err.message === "suspended") { updateMicUi(); return; }
-      refs.micError.textContent = (err && err.message === "nomedia") ? "マイクを使えません（HTTPSで開いてください）"
-        : (name === "NotFoundError" ? "マイクが見つかりません" : "マイクへのアクセスが許可されませんでした");
+      refs.micError.textContent = core.micErrorText(err);
       updateMicUi();
       return;
     }

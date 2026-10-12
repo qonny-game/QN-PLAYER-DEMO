@@ -1,0 +1,47 @@
+/* style-lyrics.css — 歌詞表示(JSは player-lyrics.js)。Textパネルの行一覧/タップ打ちと、シークバー下の現在行(#pcV2Lyrics)。色はトークンのみ */
+
+/* ---- シークバー下 ---- */
+#pcV2Lyrics {
+  flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center; gap: 2px;
+  min-height: 0; padding: 6px 4px 2px; text-align: center; overflow: hidden; pointer-events: none;
+}
+#pcV2Lyrics[hidden] { display: none; }
+.qn-lyd-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.35; min-height: 1.35em; }
+.qn-lyd-line.is-cur { font-size: clamp(16px, 2.2vw, 22px); font-weight: 700; color: var(--text-bright); }
+.qn-lyd-line.is-side { font-size: var(--fs-small); color: var(--icon-muted); opacity: 0.75; }
+#pcV2Lyrics.is-pre .qn-lyd-line.is-side { opacity: 0.55; }
+@media (max-width: 900px) {
+  #pcV2Lyrics .qn-lyd-line.is-side:first-child { display: none; } /* 狭い幅は現在行+次の行だけ */
+  .qn-lyd-line.is-cur { font-size: 16px; }
+}
+
+/* ---- Textパネル ---- */
+#qnLyBox { display: none; flex-direction: column; flex: 1; min-height: 0; gap: 8px; }
+.qn-ly-view #qnLyBox { display: flex; }
+.qn-ly-view .note-textarea { display: none; }
+.qn-ly-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 0 2px; }
+.qn-ly-switch { display: inline-flex; align-items: center; gap: 6px; margin-right: auto; font-size: var(--fs-small); color: var(--icon-muted); cursor: pointer; }
+.qn-ly-switch input { accent-color: var(--accent-primary); }
+.qn-ly-btn {
+  height: 30px; padding: 0 14px; border-radius: var(--radius-pill); border: 1px solid var(--border-strong); background: none;
+  color: var(--text-bright); font: inherit; font-size: var(--fs-small); cursor: pointer;
+}
+.qn-ly-btn:active { background: var(--bg-hover-subtle); }
+.qn-ly-btn.is-on { background: var(--accent-primary); border-color: transparent; color: #fff; }
+#qnLyList { flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 96px; }
+.qn-ly-row { display: flex; align-items: baseline; gap: 10px; padding: 7px 8px; border-radius: 8px; line-height: 1.45; color: var(--text-bright); cursor: pointer; }
+.qn-ly-row.is-plain { color: var(--icon-muted); cursor: default; }
+.qn-ly-row.is-blank { padding: 0; min-height: 10px; }
+.qn-ly-t { flex: none; width: 3.4em; text-align: right; font-variant-numeric: tabular-nums; font-size: var(--fs-small); color: var(--icon-muted); }
+.qn-ly-row.is-timed .qn-ly-t { color: var(--accent-primary); }
+.qn-ly-s { min-width: 0; overflow-wrap: anywhere; }
+.qn-ly-row.is-ptr { background: var(--bg-hover-subtle); box-shadow: inset 3px 0 0 var(--accent-primary); }
+.qn-ly-empty { padding: 24px 8px; color: var(--icon-muted); font-size: var(--fs-small); }
+.qn-ly-tapbar { position: absolute; left: 16px; right: 150px; bottom: 20px; display: flex; gap: 10px; z-index: 6; }
+.qn-ly-tapbar[hidden] { display: none; }
+.qn-ly-tap {
+  flex: 1; height: 52px; border-radius: var(--radius-pill); border: 0; background: var(--accent-primary); color: #fff;
+  font: inherit; font-size: var(--fs-heading); font-weight: 700; cursor: pointer;
+}
+.qn-ly-tap:active { filter: brightness(0.85); }
+.qn-ly-undo { height: 52px; padding: 0 20px; background: var(--bg-16161b); }

@@ -123,6 +123,17 @@ var QNChords = (function () {
     return pins.filter(p => p && p.enabled !== false && isFinite(p.t) && (anchorMode === "all" || p.locked)).map(p => ({ t: p.t, m: p.bpb | 0 }));
   }
   let anchorSig = "";
+  // 小節頭の時刻(コードの区切りを小節頭に寄せるため)。マーカーの小節頭指定も反映する。拍・小節が取れなければnull
+  function headTimes(bi, dur) {
+    if (!window.QNChordCore || !bi || !bi.times || bi.times.length < 4) return null;
+    try {
+      const an = anchorTimes();
+      const g = QNChordCore.bars(bi, null, an.length ? Object.assign({}, bt, { anchors: an }) : bt, dur);
+      const H = [];
+      for (let i = 0; i < g.times.length; i++) if (g.bar[i] === 0) H.push(g.times[i]);
+      return H.length > 1 ? Float32Array.from(H) : null;
+    } catch (e) { return null; }
+  }
   function computeGrid() {
     const an = anchorTimes();
     anchorSig = an.map(x => r3(x.t) + "/" + x.m).join(",");
@@ -207,7 +218,7 @@ var QNChords = (function () {
     if (!c || !window.QNChordCore) return;
     if (c.bi) beatInfo = c.bi;
     const bi = beatInfo;
-    const grid = snap && bi && bi.times && bi.times.length > 8 && bi.mid && bi.mid.length === bi.times.length ? { times: bi.times, mid: bi.mid, on: bi.on, period: bi.period } : null;
+    const grid = snap && bi && bi.times && bi.times.length > 8 && bi.mid && bi.mid.length === bi.times.length ? { times: bi.times, mid: bi.mid, on: bi.on, period: bi.period, heads: headTimes(bi, c.dur) } : null;
     result = QNChordCore.classify(c.ch, c.dur, { detail: detail, key: keyOverride(), grid: grid });
     compose();
     computeGrid();

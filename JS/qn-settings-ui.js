@@ -8,6 +8,7 @@ window.QNSettingsUI = (function () {
   var CHEV_R = '<svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>';
 
   var ICONS = {
+    general: '<path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>',
     backup: '<path d="M6 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13zM8 13h8v2H8v-2zm0 4h5v2H8v-2z"/>',
     import: '<path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>',
     color: '<path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10c1.38 0 2.5-1.12 2.5-2.5 0-.61-.23-1.2-.64-1.67-.08-.09-.13-.21-.13-.33 0-.28.22-.5.5-.5H16c3.31 0 6-2.69 6-6 0-4.96-4.49-9-10-9zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 8 6.5 8 8 8.67 8 9.5 7.33 11 6.5 11zm3-4C8.67 7 8 6.33 8 5.5S8.67 4 9.5 4s1.5.67 1.5 1.5S10.33 7 9.5 7zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 4 14.5 4s1.5.67 1.5 1.5S15.33 7 14.5 7zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 8 17.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>',
@@ -15,7 +16,7 @@ window.QNSettingsUI = (function () {
     transfer: '<path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/>',
     guide: '<path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/>'
   };
-  var LABELS = { backup: "Backup", import: "Import", color: "Color", keyboard: "Keyboard", transfer: "Transfer", guide: "Guide" };
+  var LABELS = { general: "General", backup: "Backup", import: "Import", color: "Color", keyboard: "Keyboard", transfer: "Transfer", guide: "Guide" };
 
   function haptic() { if (typeof hapticTap === "function") { try { hapticTap(); } catch (e) {} } }
 
@@ -23,6 +24,11 @@ window.QNSettingsUI = (function () {
     var t = document.createElement("div");
     t.innerHTML = html.trim();
     return t.firstChild;
+  }
+
+  // tap: 「‹ 値 ›」ではなく値のボタン1つ。押すたびに次の値へ(リピートボタンと同じ挙動。波形エリアの帯のView用)
+  function tapStepper() {
+    return make('<div class="qn-stepper is-tap"><button type="button" class="qn-stepper-btn qn-stepper-tap" data-d="1"><span class="qn-stepper-val"></span></button></div>');
   }
 
   function stepper() {
@@ -35,8 +41,9 @@ window.QNSettingsUI = (function () {
     if (d.type === "stepper") {
       var vals = d.values(), cur = d.get();
       i.ctl.querySelector(".qn-stepper-val").textContent = d.fmt ? d.fmt(cur) : String(cur);
-      i.ctl.querySelector('[data-d="-1"]').disabled = vals.length < 2; // 端でループするので無効にしない(v3.61.0)
-      i.ctl.querySelector('[data-d="1"]').disabled = vals.length < 2;
+      var bp = i.ctl.querySelector('[data-d="-1"]'), bn = i.ctl.querySelector('[data-d="1"]');
+      if (bp) bp.disabled = vals.length < 2; // 端でループするので無効にしない(v3.61.0)
+      if (bn) bn.disabled = vals.length < 2;
     } else if (d.type === "slider") {
       var sv = d.values(), sc = Math.max(0, sv.indexOf(d.get())), inp = i.ctl.querySelector("input");
       inp.min = "0"; inp.max = String(Math.max(0, sv.length - 1)); inp.step = "1";
@@ -54,6 +61,7 @@ window.QNSettingsUI = (function () {
       i.ctl.setAttribute("aria-checked", on ? "true" : "false");
     }
     if (d.disabledWhen) i.row.classList.toggle("is-disabled", !!d.disabledWhen());
+    if (d.hiddenWhen) i.row.style.display = d.hiddenWhen() ? "none" : "";
   }
 
   // 連続値バーの見た目(値の表示とつまみ位置の塗り)
@@ -86,7 +94,7 @@ window.QNSettingsUI = (function () {
   }
 
   function newControl(r) {
-    if (r.type === "stepper") return stepper();
+    if (r.type === "stepper") return r.tap ? tapStepper() : stepper();
     if (r.type === "slider") return make('<div class="qn-set-slider"><input type="range" class="qn-set-range" aria-label=""><span class="qn-set-slider-val"></span></div>');
     if (r.type === "switch") return make('<button type="button" class="qn-set-switch" role="switch" aria-checked="false"><span></span></button>');
     return null;
@@ -208,8 +216,9 @@ window.QNSettingsUI = (function () {
   }
 
   // 階層に入る行の一覧(Backup/Import/Color/Keyboard/Transfer/Guide)。onPick(id)。Guideだけは別タブでguide/index.htmlを開く(再生を止めない。onPickは呼ばない)
-  function list(ids, onPick) {
-    var wrap = make('<div class="qn-set-sec"><div class="qn-set-sec-title">More</div><div class="qn-set-list"></div></div>');
+  function list(ids, onPick, title) {
+    var wrap = make('<div class="qn-set-sec"><div class="qn-set-sec-title"></div><div class="qn-set-list"></div></div>');
+    if (title === "") wrap.querySelector(".qn-set-sec-title").remove(); else wrap.querySelector(".qn-set-sec-title").textContent = title || "More";
     var host = wrap.querySelector(".qn-set-list");
     ids.forEach(function (id) {
       var b = make('<button type="button" class="qn-set-list-item" data-panel-id="' + id + '"><svg class="qn-set-list-ico" viewBox="0 0 24 24">' + ICONS[id] + '</svg><span></span><svg class="qn-set-list-chev" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg></button>');

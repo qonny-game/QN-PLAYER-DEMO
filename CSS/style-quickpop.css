@@ -5,7 +5,7 @@
   min-width: 260px;
   max-width: calc(100vw - 16px);
   padding: 4px 16px 6px;
-  background: #16161b;
+  background: var(--bg-16161b);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-popup);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
@@ -58,5 +58,5 @@
 /* 波形のマーカー/A/Bポップアップ: 時刻の左右に±0.1s微調整 */
 .qn-pp-timerow { display: flex; align-items: center; justify-content: center; gap: 6px; }
 .qn-pp-timerow.is-static .qn-pp-nudge { display: none; }
-.qn-pp-nudge { width: 28px; height: 28px; padding: 0; border: 0; border-radius: 6px; background: rgba(255,255,255,0.08); color: var(--icon-muted, #aaa); font-size: 14px; line-height: 1; cursor: pointer; }
-.qn-pp-nudge:hover { background: rgba(255,255,255,0.16); color: #fff; }
+.qn-pp-nudge { width: 28px; height: 28px; padding: 0; border: 0; border-radius: 6px; background: rgba(var(--ov),0.08); color: var(--icon-muted, var(--fg-aaaaaa)); font-size: 14px; line-height: 1; cursor: pointer; }
+.qn-pp-nudge:hover { background: rgba(var(--ov),0.16); color: var(--fg-ffffff); }

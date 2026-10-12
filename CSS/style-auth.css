@@ -15,9 +15,9 @@
   gap: 8px;
   padding: 8px 16px;
   border-radius: var(--radius-pill);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text-bright, #f5f5f7);
+  border: 1px solid rgba(var(--ov), 0.14);
+  background: rgba(var(--ov), 0.04);
+  color: var(--text-bright, var(--fg-f5f5f7));
   font-size: var(--fs-btn);
   font-weight: 600;
   cursor: pointer;
@@ -25,7 +25,7 @@
 }
 
 #btnLoginGoogle:hover {
-  background: rgba(255, 255, 255, 0.09);
+  background: rgba(var(--ov), 0.09);
   border-color: color-mix(in srgb, var(--accent-primary) 55%, transparent);
 }
 
@@ -57,7 +57,7 @@
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid color-mix(in srgb, var(--accent-primary, #3b82f6) 65%, transparent);
-  background: #1a1a1e;
+  background: var(--bg-1a1a1e);
   transition: transform 0.15s ease, border-color 0.15s ease;
 }
 
@@ -71,8 +71,8 @@
   top: calc(100% + 10px);
   right: 0;
   width: 220px;
-  background: #18181c;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--bg-18181c);
+  border: 1px solid rgba(var(--ov), 0.12);
   border-radius: var(--radius-popup);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   padding: 12px;
@@ -100,13 +100,13 @@
 
 .user-dropdown-header {
   padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(var(--ov), 0.08);
 }
 
 #userName {
   font-size: var(--fs-small);
   font-weight: 700;
-  color: #f5f5f7;
+  color: var(--fg-f5f5f7);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -127,11 +127,11 @@
 }
 
 .user-dropdown-label {
-  color: #8a8a95;
+  color: var(--fg-8a8a95);
 }
 
 .user-dropdown-val {
-  color: #d8d8de;
+  color: var(--fg-d8d8de);
   font-weight: 600;
 }
 
@@ -139,16 +139,16 @@
   display: inline-block;
   padding: 2px 8px;
   border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: var(--text-bright, #f5f5f7);
+  background: rgba(var(--ov), 0.08);
+  border: 1px solid rgba(var(--ov), 0.15);
+  color: var(--text-bright, var(--fg-f5f5f7));
   font-size: var(--fs-micro);
   font-weight: 600;
 }
 
 .user-dropdown-footer {
   padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(var(--ov), 0.08);
 }
 
 #btnLogout {

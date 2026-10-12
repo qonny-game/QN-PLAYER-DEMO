@@ -9,8 +9,8 @@
 }
 
 #qnMenuBtn {
-  background: #18181b;
-  border: 1px solid #27272a;
+  background: var(--bg-18181b);
+  border: 1px solid var(--bd-27272a);
   color: var(--text-bright);
   width: 40px;
   height: 40px;
@@ -24,7 +24,7 @@
 }
 #qnMenuBtn:hover,
 #qnMenuBtn.active {
-  background: #27272a;
+  background: var(--bg-27272a);
   border-color: var(--accent-primary, #3b82f6);
   box-shadow: 0 0 12px var(--accent-glow, rgba(59, 130, 246, 0.35));
 }
@@ -42,8 +42,8 @@
   width: 300px;
   max-height: calc(100vh - 32px);
   overflow-y: auto;
-  background: #121215;
-  border: 1px solid #27272a;
+  background: var(--bg-121215);
+  border: 1px solid var(--bd-27272a);
   border-radius: var(--radius-popup);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.6);
   padding: 16px;
@@ -92,7 +92,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  border-bottom: 1px solid #27272a;
+  border-bottom: 1px solid var(--bd-27272a);
   padding-bottom: 14px;
 }
 .qn-menu-section:last-child {
@@ -105,7 +105,7 @@
   font-weight: 600;
   letter-spacing: 0.6px;
   text-transform: none;
-  color: #6b6b7b;
+  color: var(--fg-6b6b7b);
 }
 
 /* ---------- Color swatches & glow switch ---------- */
@@ -120,7 +120,7 @@
   height: 31px;
   border-radius: 50%;
   aspect-ratio: 1 / 1;
-  border: 2px solid rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(var(--ov), 0.15);
   cursor: pointer;
   transition: transform 130ms cubic-bezier(0.2, 0, 0, 1), border-color 130ms cubic-bezier(0.2, 0, 0, 1), box-shadow 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -129,7 +129,7 @@
   border-color: var(--text-pure-white);
 }
 .qn-theme-swatch.active {
-  border: 2px solid #ffffff;
+  border: 2px solid var(--bd-ffffff);
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
   transform: scale(1.05);
   transition: transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1), border-color 130ms cubic-bezier(0.2, 0, 0, 1), box-shadow 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -151,7 +151,7 @@
   width: 40px;
   height: 22px;
   border-radius: var(--radius-pill);
-  background: #2a2a35;
+  background: var(--bg-2a2a35);
   border: 1px solid var(--border-subtle);
   cursor: pointer;
   padding: 0;
@@ -200,7 +200,7 @@
 .qn-shortcut-table td {
   padding: 7px 8px;
   text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(var(--ov), 0.04);
 }
 .qn-shortcut-table th {
   color: var(--icon-muted);
@@ -213,8 +213,8 @@
   color: var(--text-bright);
 }
 .qn-shortcut-table kbd {
-  background: #252530;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-252530);
+  border: 1px solid rgba(var(--ov), 0.1);
   border-radius: 4px;
   padding: 2px 6px;
   font-family: monospace;
@@ -230,7 +230,7 @@
   gap: 8px;
   margin-top: 14px;
   padding-top: 16px;
-  border-top: 1px solid #27272a;
+  border-top: 1px solid var(--bd-27272a);
 }
 .qn-marker-preset-colors-title {
   font-size: var(--fs-heading);
@@ -239,7 +239,7 @@
 }
 .qn-marker-preset-colors-desc {
   font-size: var(--fs-small);
-  color: #6b6b7b;
+  color: var(--fg-6b6b7b);
   margin-bottom: 4px;
 }
 .qn-marker-preset-color-rows {
@@ -267,13 +267,13 @@
   padding: 5px 8px;
   font: inherit;
   font-size: var(--fs-body);
-  color: var(--text-bright, #f0f0f3);
+  color: var(--text-bright, var(--fg-f0f0f3));
   background: transparent;
-  border: 1px dashed #3a3a48;
+  border: 1px dashed var(--bd-3a3a48);
   border-radius: 6px;
   user-select: text;
 }
-.qn-marker-custom-input::placeholder { color: #6b6b7b; }
+.qn-marker-custom-input::placeholder { color: var(--fg-6b6b7b); }
 .qn-marker-custom-input:focus {
   outline: none;
   border-style: solid;
@@ -287,7 +287,7 @@
   padding: 0;
   line-height: 1;
   font-size: 16px;
-  color: #6b6b7b;
+  color: var(--fg-6b6b7b);
   background: transparent;
   border: none;
   border-radius: 50%;
@@ -303,7 +303,7 @@
 .qn-marker-reset-btn {
   height: var(--btn-h, 28px);
   padding: 0 var(--btn-pad-x, 12px);
-  background: #1c1c24;
+  background: var(--bg-1c1c24);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-pill);
   color: var(--text-bright);
@@ -312,4 +312,4 @@
   font-weight: 600;
   cursor: pointer;
 }
-.qn-marker-reset-btn:hover { background: #24242e; }
+.qn-marker-reset-btn:hover { background: var(--bg-24242e); }

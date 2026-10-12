@@ -16,7 +16,7 @@ body.pc-v2-active {
   height: 100dvh; /* dvh: Android ChromeのURLバー等でビューポート実寸が変わっても下端(アイコンバー)が隠れないよう実高さに追従 */
   box-sizing: border-box;
   overflow: hidden;
-  background: #0a0a0c;
+  background: var(--bg-0a0a0c);
   padding: 0;
 }
 
@@ -87,7 +87,7 @@ body.pc-v2-active > .app-container {
 
 .pcv2-icon-item:hover {
   color: var(--text-bright);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(var(--ov), 0.03);
 }
 
 
@@ -258,7 +258,7 @@ body.pc-v2-active > .app-container {
 
 #pcV2TimeRow #timeDisplay .time-sep, #pcV2WaveHead #timeDisplay .time-sep {
   font-size: 11px;
-  color: #55555f;
+  color: var(--fg-55555f);
 }
 
 
@@ -274,7 +274,7 @@ body.pc-v2-active > .app-container {
   height: auto;
   min-height: 24px;
   max-height: 180px;
-  background: #111;
+  background: var(--bg-111111);
   border: none;
   border-radius: 0;
   overflow: visible;
@@ -325,7 +325,7 @@ body.pc-v2-active > .app-container {
 
 
 #pcV2WaveArea .vbar-line.disabled::before {
-  background-color: #6b6b7b;
+  background-color: var(--bg-6b6b7b);
   opacity: 0.5;
 }
 
@@ -362,7 +362,7 @@ body.pc-v2-active > .app-container {
   margin-left: 6px;
   font-size: 11px;
   font-weight: 500;
-  color: #b0b0b8;
+  color: var(--fg-b0b0b8);
   opacity: 1;
   top: 4px;
 }
@@ -665,7 +665,7 @@ body.pc-v2-active #appVersion {
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.3px;
-  color: #55555f;
+  color: var(--fg-55555f);
   white-space: nowrap;
   margin-left: 6px;
 }
@@ -682,7 +682,7 @@ body.pc-v2-active #qnMenuMount {
 
 
 .pcv2-qn-loading {
-  color: #6b6b7b;
+  color: var(--fg-6b6b7b);
   font-size: var(--fs-small);
   padding: 8px 0;
 }
@@ -703,7 +703,7 @@ body.pc-v2-active #qnMenuMount {
     border-radius: 10px;
   }
   #pcV2BottomBar .tripleNavBtn-third:hover,
-  #pcV2BottomBar .loopbtn:hover { background: rgba(255, 255, 255, 0.05); }
+  #pcV2BottomBar .loopbtn:hover { background: rgba(var(--ov), 0.05); }
   #pcV2BottomBar .tripleNavBtn-center { min-width: 76px; }
   #pcV2BottomBar .tripleNavBtn-third:not(.tripleNavBtn-center) svg, #pcV2BottomBar .loopbtn svg { width: 22px; height: 22px; }
   #pcV2BottomBar .pcv2-ctrl-divider { margin: 0 28px; height: 32px; }
@@ -717,13 +717,13 @@ body.pc-v2-active #qnMenuMount {
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-key .pcv2-mix-label,
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-item[data-mix="speed"] .pcv2-mix-val,
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-keyval { cursor: pointer; }
-  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-val { font-size: 12px; color: var(--text-bright, #fff); font-variant-numeric: tabular-nums; }
+  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-val { font-size: 12px; color: var(--text-bright, var(--fg-ffffff)); font-variant-numeric: tabular-nums; }
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-range { width: 100%; height: 18px; margin: 0; }
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-key { width: 104px; }
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-item[data-mix="vol"] { width: 144px; }
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-volrow { display: flex; align-items: center; gap: 6px; }
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-mute { flex: 0 0 auto; width: 30px; height: 30px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; border-radius: 8px; background: none; color: var(--icon-muted); cursor: pointer; }
-  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-mute:hover { color: var(--text-bright, #fff); background: rgba(255, 255, 255, 0.06); }
+  #pcV2BottomBar #pcV2BarMixer .pcv2-mix-mute:hover { color: var(--text-bright, var(--fg-ffffff)); background: rgba(var(--ov), 0.06); }
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-mute svg { width: 20px; height: 20px; fill: currentColor; }
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-mute .pcv2-mix-ico-off, #pcV2BottomBar #pcV2BarMixer .pcv2-mix-mute.is-muted .pcv2-mix-ico-on { display: none; }
   #pcV2BottomBar #pcV2BarMixer .pcv2-mix-mute.is-muted .pcv2-mix-ico-off { display: block; }

@@ -4,7 +4,7 @@
   margin: 0 0 14px;
   font-family: var(--font-body, 'Instrument Sans'), sans-serif;
   font-size: var(--fs-small);
-  color: #6b6b7b;
+  color: var(--fg-6b6b7b);
 }
 
 .eq-inline-divider,
@@ -100,12 +100,12 @@
   pointer-events: none;
   background: linear-gradient(
     to right,
-    #2a2a35 0%,
-    #2a2a35 min(50%, var(--range-progress, 50) * 1%),
+    var(--bg-2a2a35) 0%,
+    var(--bg-2a2a35) min(50%, var(--range-progress, 50) * 1%),
     var(--accent-primary) min(50%, var(--range-progress, 50) * 1%),
     var(--accent-primary) max(50%, var(--range-progress, 50) * 1%),
-    #2a2a35 max(50%, var(--range-progress, 50) * 1%),
-    #2a2a35 100%
+    var(--bg-2a2a35) max(50%, var(--range-progress, 50) * 1%),
+    var(--bg-2a2a35) 100%
   );
 }
 
@@ -115,7 +115,7 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: var(--text-bright, #fff);
+  background: var(--text-bright, var(--bg-ffffff));
   cursor: pointer;
 }
 
@@ -124,7 +124,7 @@
   height: 14px;
   border: none;
   border-radius: 50%;
-  background: var(--text-bright, #fff);
+  background: var(--text-bright, var(--bg-ffffff));
   cursor: pointer;
 }
 
@@ -132,7 +132,7 @@
   font-family: var(--font-display, 'Instrument Sans'), sans-serif;
   font-size: var(--fs-micro);
   font-weight: 500;
-  color: #6b6b7b;
+  color: var(--fg-6b6b7b);
   white-space: nowrap;
 }
 
@@ -156,7 +156,7 @@
   border-radius: 50%;
   font-size: 9px;
   line-height: 1;
-  color: #6b6b7b;
+  color: var(--fg-6b6b7b);
   opacity: 0.7;
 }
 

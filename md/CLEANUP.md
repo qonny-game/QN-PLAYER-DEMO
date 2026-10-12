@@ -81,3 +81,4 @@
 - 4.0.2：未使用JS関数3つ(`clearAB`/`openMarkerColorPicker`/`canHover`)、`keyStepperFill`関連、死んでいたCSS(旧下段バー`.pcv2-ctrl-btn`・旧ヘッダーナビ・`.key-stepper*`・旧トグル系id・`.qn-yt-btn.danger`等)、未使用id2つを削除。見た目の差分0を確認(同版で追加した「操作ガイド」「波形右下のバー設定の帯」「`.vbar`の幅修正」は見た目が変わる別件)。
 - 4.0.3：旧Transferモーダルの専用CSS(`.qn-p2p-modal`系)を削除(パネル化に伴う)。
 - 4.22.1：旧Export機能の残りCSS(`.export-format-*`/`.export-marker-*`/`.export-checkbox-row`ほか)、旧ミキサーの`.pcv2-mix-btn`/`.pcv2-mix-keyrow`、`.av-toggle-btn`、`.qn-yt-mix-head/-label`、`.skip-off`、Auto Nextスコープボタン一式(JS・CSS)を削除。計算済みスタイルの前後比較は差分0（PC1280/SP390、初期表示＋全パネル）。ガイド・利用規約・プライバシーを実装に合わせて更新し、md全体の食い違いを修正、`USER_DOCS.md`と`md/tools/`を追加。
+- 4.49.0：撤去した＋Audio/＋Markerの残り(CSS・コメント・md・DOM表)、色トークン化後の未使用トークン(0件を確認)、古いmdの食い違い(区切り位置・設定の階層・背景・速度変更方式・同期しない項目)を整理。`css_audit`/`js_unused`/`md_audit`は残置リストの既知分のみ。

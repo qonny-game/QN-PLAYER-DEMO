@@ -160,6 +160,7 @@ function loadTrackUserData(fileName) {
   if (noteTextAreaElForLoad) noteTextAreaElForLoad.value = noteTextForLoad;
   const noteTextAreaFsForLoad = document.getElementById("noteTextAreaFullscreen");
   if (noteTextAreaFsForLoad) noteTextAreaFsForLoad.value = noteTextForLoad;
+  if (window.QNLyrics) window.QNLyrics.load();
 }
 
 function loadFile(file) {

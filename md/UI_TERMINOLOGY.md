@@ -9,7 +9,7 @@
 | ヘッダー／ロゴ | `#appHeader`（「QNPLAYER vX.X.X」） | ページ最上部 |
 | ライブラリ | Playlistパネル（`#playlistBox`） | サイドメニューでは「Library」 |
 | 下部コントロール／コントロールバー | `#pcV2BottomBar` | PC幅＝右カラム下端（波形の真下）。幅が足りなければ横スクロール／SP幅＝アイコンバー直上の横スクロール列 |
-| サイドバー／サイドメニュー／アイコンバー | `#pcV2IconBar` | Library/Markers/Text/Stem(上段)・Control/Settings(下段)/Backup/Import/Keyboard/Color等 |
+| サイドバー／サイドメニュー／アイコンバー | `#pcV2IconBar` | Library/Markers/Text/Chords/Stem/Rec(上段。StemはPC専用、RecはSPでも使える)・Control/Settings(下段)/Backup/Import/Keyboard/Color等 |
 | 波形エリア／シークバー | `#pcV2WaveArea` / `#vbarContainer` | 曲名・シークバー（縦スクロールの行）・マーカーラベルを含む |
 | アンカータブ（PLAY/MARKER） | `.pcv2-anchor-tab`（SP幅のみ） | 下段バーの横スクロール位置へジャンプ |
 | ロゴ兼アプリ切替（V付き） | `#qnAppLogoBtn` | ヘッダー左。押すと直下に`#qnAppFlyout`（QNPLAYER/QNVIDEO/QNTUNER/QNPITCH）が開く |
@@ -33,3 +33,15 @@
 ## 「SP」「PC」「実機」
 - 「SP／スマホ／モバイル」＝画面幅が狭い状態（`@media (max-width:900px)`）。**UIの実装はPC v2だけ**で、SP幅は同じDOMをCSSで組み替えたもの（`AI_ASSISTANT_PROJECT_CONTEXT.md`§2）。「SP版を直して」と言われたら`style-layout-pc-v2-sp.css`や`player-ui-pc-v2.js`を見る。
 - 「実機」＝ユーザーが実際のiPhone等で確認したこと。モバイルSafari特有の挙動（自動再生・IndexedDB・hover）が絡む（`GOTCHAS.md`）。
+
+## v4.45〜4.48 で増えた呼び方
+| 呼び方 | 実体 | 備考 |
+|---|---|---|
+| 一般 | Settingsの一覧の先頭(`panelId "general"`、本体`#pcV2GeneralBody`) | 表示(背景)・シークバー・再生・言語・ヒント。全曲共通の設定 |
+| 背景／ライト／ダーク | `QNBg`(`qn_bg`=dark/gray/beige)、`html[data-qn-bg]` | 色トークンは`CSS/style-modes.css` |
+| Chordsパネル／この曲の設定 | `panelType "chords"`(`ensureChordsBody`) | 曲ごとに保存される設定(コードのキー・拍数・小節の頭など) |
+| ロック／鍵 | マーカーの`locked`(波形のポップアップLK、Markers一覧のLockボタン) | 移動・削除不可。同期はしない(端末内のみ) |
+| 拍数／Beats | マーカーの`bpb`(ポップアップBP) | そのマーカーから次のマーカーまでの1小節の拍数 |
+| 調整帯／FAB帯 | `.qn-wave-bar-strip` | 波形エリア右下。View/Edit/バーの長さ/行数/追従。＋Audio/＋Markerは撤去済み |
+| SPのクリック・吸着ボタン | `#pcV2FabClick` / `#pcV2FabSnap` | A/Bの右。吸着は小節と拍を同時に切り替える |
+| 速度変更の方式 | `getStretchEngine()`(`qn_stretch_engine`) | 自動/ブラウザ標準/SoundTouch |
