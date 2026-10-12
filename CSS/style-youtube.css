@@ -1350,3 +1350,12 @@
   .qn-yt-mix-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; margin-top: -6px; border-radius: 50%; background: var(--text-bright, #fff); border: none; box-shadow: none; }
   .qn-yt-mix-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--text-bright, #fff); border: none; }
 }
+
+/* Marker lock: lock glyph on the marker label, locked state on the popup nudge row */
+.vbar-label-lock { display: inline-flex; vertical-align: middle; margin-left: 3px; color: var(--icon-muted); }
+.vbar-label-lock svg { width: 11px; height: 11px; fill: currentColor; }
+#pcV2WaveArea .vbar-label-lock { display: block; text-align: center; margin: 0; line-height: 0; }
+#pcV2WaveArea .vbar-label-lock svg { width: 11px; height: 11px; margin: 2px auto 0; }
+.vbar-line.is-locked { cursor: default; }
+.qn-pp-timerow.is-locked .qn-pp-nudge { opacity: 0.35; }
+.qn-yt-seekpop-btn[data-pop="LK"] svg { width: 18px; height: 18px; fill: currentColor; }

@@ -146,7 +146,7 @@ function loadTrackUserData(fileName) {
   if (savedPins) {
     try {
       const raw = JSON.parse(savedPins);
-      pins = raw.map(p => typeof p === 'number' ? { t: p, enabled: true, memo: "", color: null } : { t: p.t, enabled: p.enabled !== false, memo: p.memo || "", color: p.color || null });
+      pins = raw.map(p => typeof p === 'number' ? { t: p, enabled: true, memo: "", color: null } : { t: p.t, enabled: p.enabled !== false, memo: p.memo || "", color: p.color || null, skip: p.skip ? true : undefined, locked: p.locked ? true : undefined });
     } catch (e) { pins = []; }
   } else {
     pins = [];

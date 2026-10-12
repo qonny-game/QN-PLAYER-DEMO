@@ -188,3 +188,9 @@ guide/                        アプリ内ガイド（静的HTML8枚＋guide.css
 ## Exact seek (4.39.0, JS/player-exact-seek.js)
 - Chromium seeks in VBR MP3 land up to ~0.8 s off and the error persists. On the first seek of a track (duration <= 1500 s) the file is decoded to 44.1 kHz PCM, wrapped as a WAV blob and swapped into the same <audio> element at the indicated time (QNExact; loadFile calls QNExact.onLoad). Later seeks are exact (measured spread <= 1.5 ms). Tracks over 1500 s keep the original source.
 - Markers placed before this version may carry per-seek errors; re-place them if they look off.
+
+## Marker snap / lock (4.40.0, JS/player-markers.js)
+- Settings: "Marker snap to bars" / "Marker snap to beats" (localStorage qn_pin_snap_bar / qn_pin_snap_beat, default off, QNPinSnap.get/set). snapPinTime(t, dir) uses QNChords.grid() (times/bar); applies to marker drag and the popup nudge (nudge jumps to the next/previous snap point). Turning snap on triggers the grid analysis (needGrid() in player-chords.js). Not applied when adding a marker.
+- Lock: pin.locked (popup "Lock" button). Locked markers cannot be dragged, nudged or deleted (popup and list); tap/seek, color, hide and skip still work. Lock glyph under the marker number. Stored with the pin in localStorage; not part of cloud sync (cleanState).
+- Loader (loadTrackUserData) now keeps pin.skip and pin.locked (skip used to be dropped on reload).
+- Bar-head grid line alpha 0.24 -> 0.55, 1 px wider.

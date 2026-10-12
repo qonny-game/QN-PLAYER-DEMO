@@ -148,3 +148,4 @@
 - 4.38.0 Settings>Grid click: 再生中、縦線の位置で小節頭(高)・拍(低)のクリック音を鳴らす(グリッド確認用、ON/OFFのみ)。
 - 4.38.1 Grid click: 再生時計の対応を8msごとの測定で取り直し(シーク・再生開始のたびにずれる不具合の修正)。クリックをSoundTouchの入口へ入れて曲との遅延差を解消。
 - 4.39.0 Exact seek: decode to WAV on first seek so seeking is sample-accurate
+- 4.40.0 Bar-head lines darker, marker snap to bars/beats, marker lock

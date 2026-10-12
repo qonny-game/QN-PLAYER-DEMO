@@ -347,11 +347,11 @@ const QNBars = (function () {
     const lw = Math.max(1, Math.round(g.dpr));
     for (let pass = 0; pass < 2; pass++) {       // 0: 拍(薄い) 1: 小節頭(少し濃い)
       if (pass === 0 && mode !== "beat") continue;
-      cx.fillStyle = pass ? "rgba(255,255,255,0.24)" : "rgba(255,255,255,0.09)";
+      cx.fillStyle = pass ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.09)";
       for (let i = lo; i < ts.length && ts[i] < t1; i++) {
         if ((bar[i] === 0) !== (pass === 1)) continue;
         const x = Math.round((ts[i] - t0) / sec * W - lw / 2);
-        cx.fillRect(x, 0, pass ? lw + (g.dpr > 1.5 ? 1 : 0) : lw, H);
+        cx.fillRect(x, 0, pass ? lw + 1 : lw, H);
       }
     }
   }

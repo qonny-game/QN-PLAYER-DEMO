@@ -60,8 +60,11 @@ var QNChords = (function () {
     listeners.forEach(fn => { try { fn(kind); } catch (e) {} });
   }
   // 解析を走らせたい状態か: コード/ディグリー表示、または縦線(Grid)がON
+  function needGrid() {
+    return gridMode !== "off" || gridClick || !!(window.QNPinSnap && (QNPinSnap.get("bar") || QNPinSnap.get("beat")));
+  }
   function wanted() {
-    return gridMode !== "off" || gridClick || (typeof QNBars !== "undefined" && QNBars.getViewMode && QNBars.getViewMode() !== "wave");
+    return needGrid() || (typeof QNBars !== "undefined" && QNBars.getViewMode && QNBars.getViewMode() !== "wave");
   }
 
   function downmix(buf) {
@@ -307,7 +310,7 @@ var QNChords = (function () {
       const h = hydrate(saved);
       if (h) {
         result = h; compose(); computeGrid(); phase = "ready"; progress = 1; ver++; notify("state");
-        if (!beatInfo && (gridMode !== "off" || gridClick)) run();       // 古い保存(拍なし)でGridがON: 拍だけ足りないので解析し直す
+        if (!beatInfo && needGrid()) run();       // 古い保存(拍なし)でGridがON: 拍だけ足りないので解析し直す
         return;
       }
     }
@@ -322,7 +325,7 @@ var QNChords = (function () {
   // コードモードに切り替えた時: 未解析なら解析を始める
   function ensure() {
     if (!pending) return;
-    if (phase === "queued" || ((gridMode !== "off" || gridClick) && !beatInfo && phase !== "analyzing")) run();
+    if (phase === "queued" || (needGrid() && !beatInfo && phase !== "analyzing")) run();
   }
 
   function setDetail(d) {

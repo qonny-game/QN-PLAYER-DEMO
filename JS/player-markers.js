@@ -116,6 +116,33 @@ if (nextMarkerBtn) nextMarkerBtn.onclick = jumpToNextMarker;
 let draggingPinIndex = -1;
 let draggingABKind = null;
 
+// ---- Marker snap (drag / nudge): bar heads and beats of the analysed grid. Off by default ----
+const PINSNAP_KEYS = { bar: "qn_pin_snap_bar", beat: "qn_pin_snap_beat" };
+const pinSnapOn = { bar: false, beat: false };
+try { pinSnapOn.bar = localStorage.getItem(PINSNAP_KEYS.bar) === "1"; pinSnapOn.beat = localStorage.getItem(PINSNAP_KEYS.beat) === "1"; } catch (e) {}
+window.QNPinSnap = {
+  get: k => pinSnapOn[k],
+  set: (k, on) => { pinSnapOn[k] = !!on; try { localStorage.setItem(PINSNAP_KEYS[k], on ? "1" : "0"); } catch (e) {} if (on && window.QNChords && QNChords.ensure) QNChords.ensure(); }
+};
+// Nearest snap point to t. dir (+1/-1) = nearest point strictly after/before t (used by nudge). Returns t when snapping is off or there is no grid
+function snapPinTime(t, dir) {
+  if (!pinSnapOn.bar && !pinSnapOn.beat) return t;
+  const gd = window.QNChords && QNChords.grid ? QNChords.grid() : null;
+  if (!gd || !gd.times || !gd.times.length) return t;
+  const T = gd.times, B = gd.bar, ok = i => pinSnapOn.beat || B[i] === 0;
+  let lo = 0, hi = T.length;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (T[m] < t) lo = m + 1; else hi = m; }
+  if (dir) {
+    if (dir > 0) { for (let i = lo; i < T.length; i++) if (ok(i) && T[i] > t + 0.004) return T[i]; }
+    else { for (let i = Math.min(lo, T.length - 1); i >= 0; i--) if (ok(i) && T[i] < t - 0.004) return T[i]; }
+    return t;
+  }
+  let best = t, bd = 1e9;
+  for (let i = lo - 1; i >= 0 && i >= lo - 8; i--) if (ok(i)) { bd = Math.abs(T[i] - t); best = T[i]; break; }
+  for (let i = lo; i < T.length && i <= lo + 8; i++) if (ok(i)) { const d = Math.abs(T[i] - t); if (d < bd) { bd = d; best = T[i]; } break; }
+  return best;
+}
+
 function createPinLine(pinObj, i) {
   const t = pinObj.t;
   const x = QNBars.pctInRow(t);
@@ -126,6 +153,7 @@ function createPinLine(pinObj, i) {
     line.classList.add("disabled");
   }
   if (pinObj.skip) line.classList.add("is-skip");
+  if (pinObj.locked) line.classList.add("is-locked");
   const isLockedMarker = typeof isUnlocked === "function" && !isUnlocked() && i >= SW_LIMITS.MARKER_MAX_ACTIVE;
   if (isLockedMarker) {
     line.classList.add("sw-locked");
@@ -149,6 +177,12 @@ function createPinLine(pinObj, i) {
   numSpan.className = "vbar-label-num";
   numSpan.textContent = `${i + 1}`;
   label.appendChild(numSpan);
+  if (pinObj.locked) {
+    const lk = document.createElement("span");
+    lk.className = "vbar-label-lock";
+    lk.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6z"/></svg>';
+    label.appendChild(lk);
+  }
   if (pinObj.memo) {
     const memoSpan = document.createElement("span");
     memoSpan.className = "vbar-label-memo";
@@ -176,7 +210,7 @@ function createPinLine(pinObj, i) {
   line.onclick = handleMarkerTapOrDrag;
 
   // ドラッグ移動はstartDragPin(mouse/touch共通)。無料版ロック中マーカーはドラッグ不可
-  if (!isLockedMarker) {
+  if (!isLockedMarker && !pinObj.locked) {
     label.onmousedown = startDragPin(i);
     line.onmousedown = startDragPin(i);
     label.ontouchstart = startDragPin(i);
@@ -363,7 +397,7 @@ function startDragPin(index) {
       const t = QNBars.timeFromPoint(clientX, clientY);
       if (t === null) return;
 
-      pins[index].t = Math.max(0, Math.min(dur, t));
+      pins[index].t = Math.max(0, Math.min(dur, snapPinTime(t)));
 
       if (lineEl) {
         placeLineAt(pins[index].t);
@@ -574,6 +608,7 @@ function renderPinList() {
     delBtn.style.color = "#ef4444";
     delBtn.onclick = (e) => {
       e.stopPropagation();
+      if (pinObj.locked) { hapticWarning(); return; }
       if (delBtn.classList.contains("confirm")) {
         hapticWarning();
         pins.splice(i, 1);
@@ -645,6 +680,7 @@ function ensurePinPopup() {
       '<button type="button" class="qn-yt-seekpop-btn qn-yt-seekpop-del" data-pop="D" title="このマーカーを削除" hidden><b>－</b><span>Marker</span></button>' +
       '<button type="button" class="qn-yt-seekpop-btn" data-pop="C" title="マーカーの色を変える" hidden><b><i class="qn-yt-seekpop-dot"></i></b><span>Color</span></button>' +
       '<button type="button" class="qn-yt-seekpop-btn" data-pop="K" title="このマーカーから次のマーカーまでを再生中に飛ばす" hidden><b><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></b><span>Skip</span></button>' +
+      '<button type="button" class="qn-yt-seekpop-btn" data-pop="LK" title="Lock: prevent moving or deleting this marker" hidden><b></b><span>Lock</span></button>' +
       '<button type="button" class="qn-yt-seekpop-btn" data-pop="H" title="マーカーのON/OFF" hidden><b></b><span>Hide</span></button>' +
     '</div>';
   document.body.appendChild(pinPopEl);
@@ -662,6 +698,7 @@ function ensurePinPopup() {
     else if (k === "C") pinPopColor();
     else if (k === "H") pinPopToggle();
     else if (k === "K") pinPopSkip();
+    else if (k === "LK") pinPopLock();
     else if (k === "NL") pinPopNudge(-0.1);
     else if (k === "NR") pinPopNudge(0.1);
   });
@@ -678,7 +715,12 @@ function ensurePinPopup() {
 // 微調整: マーカー/A点/B点の位置を±0.1sずらす
 function pinPopNudge(d) {
   if (!audio.duration) return;
-  const nt = Math.round(Math.max(0, Math.min(audio.duration, pinPopTime + d)) * 10) / 10;
+  if (pinPopPin && pinPopPin.locked) { if (typeof hapticWarning === "function") hapticWarning(); resetPinPopTimer(); return; }
+  let nt = Math.round(Math.max(0, Math.min(audio.duration, pinPopTime + d)) * 10) / 10;
+  if (pinPopPin) {
+    const sn = snapPinTime(pinPopTime, d > 0 ? 1 : -1);
+    if (sn !== pinPopTime) nt = Math.max(0, Math.min(audio.duration, sn));
+  }
   if (pinPopPin) {
     pinPopPin.t = nt;
     if (Array.isArray(pins)) pins.sort((a, b) => a.t - b.t);
@@ -731,7 +773,7 @@ function showPinPopup(t, barEl, clientX, pinObj, abKind) {
   const loopOn = loopEnabled && loopMode === "sec";
   pop.querySelector('[data-pop="L"]').classList.toggle("is-set", loopOn);
   pop.querySelector('[data-pop="L"] span').textContent = loopOn ? "Loop ON" : "Loop";
-  ["D", "C", "H", "K"].forEach(k => { pop.querySelector(`[data-pop="${k}"]`).hidden = !pinObj; });
+  ["D", "C", "H", "K", "LK"].forEach(k => { pop.querySelector(`[data-pop="${k}"]`).hidden = !pinObj; });
   pop.querySelector('[data-pop="A"]').classList.toggle("is-set", abA !== null && Math.abs(abA - pinPopTime) <= AB_SNAP_SEC);
   pop.querySelector('[data-pop="B"]').classList.toggle("is-set", abB !== null && Math.abs(abB - pinPopTime) <= AB_SNAP_SEC);
   if (pinObj) {
@@ -743,6 +785,11 @@ function showPinPopup(t, barEl, clientX, pinObj, abKind) {
     const kb = pop.querySelector('[data-pop="K"]');
     kb.classList.toggle("is-set", !!pinObj.skip);
     kb.querySelector("span").textContent = pinObj.skip ? "Skip ON" : "Skip";
+    const lb = pop.querySelector('[data-pop="LK"]');
+    lb.classList.toggle("is-set", !!pinObj.locked);
+    lb.querySelector("b").innerHTML = PINPOP_LOCK;
+    lb.querySelector("span").textContent = pinObj.locked ? "Locked" : "Lock";
+    pop.querySelector(".qn-pp-timerow").classList.toggle("is-locked", !!pinObj.locked);
   }
   pop.hidden = false;
   const rect = barEl.getBoundingClientRect();
@@ -970,8 +1017,20 @@ function pinPopAdd() {
   refreshAfterPinChange();
 }
 
+const PINPOP_LOCK = '<svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6z"/></svg>';
+function pinPopLock() {
+  const pin = pinPopPin;
+  if (!pin) return;
+  hidePinPopup();
+  hapticTap();
+  pin.locked = !pin.locked;
+  if (!pin.locked) delete pin.locked;
+  refreshAfterPinChange();
+}
+
 function pinPopDelete() {
   if (!pinPopPin) return;
+  if (pinPopPin.locked) { hapticWarning(); resetPinPopTimer(); return; }
   if (!pinPopDelArmed) { hapticTap(); armPinPopDel(true); resetPinPopTimer(); return; }
   const i = pins.indexOf(pinPopPin);
   hidePinPopup();
