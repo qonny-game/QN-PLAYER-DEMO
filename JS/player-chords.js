@@ -12,6 +12,7 @@ var QNChords = (function () {
   const ALTS_KEY = "qn_chord_alts";
   const SNAP_KEY = "qn_chord_snap";
   const GRID_KEY = "qn_grid";
+  const CLICK_KEY = "qn_grid_click";
   const SAVE_PREFIX = "qn_chords_";
   const SAVE_MAX_CHARS = 400000;   // 1曲あたりの保存サイズの上限(超えたら保存しない)
   const CACHE_MAX = 3;
@@ -22,6 +23,7 @@ var QNChords = (function () {
   let showAlts = true;
   let snap = true;            // コードの切り替わりを拍(と裏拍)に合わせる
   let gridMode = "beat";      // 背景の縦線: off | bar(小節頭だけ) | beat(拍と小節頭)
+  let gridClick = false;      // 縦線の位置で小節頭/拍のクリック音を鳴らす(確認用。鳴らす処理はplayer-grid-click.js)
   let keySel = "auto";        // "auto" か "M<0-11>"(長調) / "m<0-11>"(短調)
   try {
     const v = localStorage.getItem(DETAIL_KEY);
@@ -30,6 +32,7 @@ var QNChords = (function () {
     snap = localStorage.getItem(SNAP_KEY) !== "0";
     const gm = localStorage.getItem(GRID_KEY);
     if (gm === "off" || gm === "bar" || gm === "beat") gridMode = gm;
+    gridClick = localStorage.getItem(CLICK_KEY) === "1";
   } catch (e) {}
 
   let gen = 0;               // 曲が変わるたびに増やす。古いWorkerの返事を捨てる印
@@ -58,7 +61,7 @@ var QNChords = (function () {
   }
   // 解析を走らせたい状態か: コード/ディグリー表示、または縦線(Grid)がON
   function wanted() {
-    return gridMode !== "off" || (typeof QNBars !== "undefined" && QNBars.getViewMode && QNBars.getViewMode() !== "wave");
+    return gridMode !== "off" || gridClick || (typeof QNBars !== "undefined" && QNBars.getViewMode && QNBars.getViewMode() !== "wave");
   }
 
   function downmix(buf) {
@@ -304,7 +307,7 @@ var QNChords = (function () {
       const h = hydrate(saved);
       if (h) {
         result = h; compose(); computeGrid(); phase = "ready"; progress = 1; ver++; notify("state");
-        if (!beatInfo && gridMode !== "off") run();       // 古い保存(拍なし)でGridがON: 拍だけ足りないので解析し直す
+        if (!beatInfo && (gridMode !== "off" || gridClick)) run();       // 古い保存(拍なし)でGridがON: 拍だけ足りないので解析し直す
         return;
       }
     }
@@ -319,7 +322,7 @@ var QNChords = (function () {
   // コードモードに切り替えた時: 未解析なら解析を始める
   function ensure() {
     if (!pending) return;
-    if (phase === "queued" || (gridMode !== "off" && !beatInfo && phase !== "analyzing")) run();
+    if (phase === "queued" || ((gridMode !== "off" || gridClick) && !beatInfo && phase !== "analyzing")) run();
   }
 
   function setDetail(d) {
@@ -515,6 +518,15 @@ var QNChords = (function () {
     barRange: barRange,
     setChordRange: setChordRange,
     splitBars: splitBars,
+    getClick() { return gridClick; },
+    setClick(on) {
+      on = !!on;
+      if (on === gridClick) return;
+      gridClick = on;
+      try { localStorage.setItem(CLICK_KEY, on ? "1" : "0"); } catch (e) {}
+      notify("click");
+      if (on) ensure();
+    },
     getGridMode() { return gridMode; },
     setGridMode: setGridMode,
     getBt(k) { return bt[k]; },

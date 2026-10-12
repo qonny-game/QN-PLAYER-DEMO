@@ -220,6 +220,8 @@
     "Align chord changes to beats. A small triangle marks a chord that comes in on an off-beat (syncopation)": "コードの切り替わりを拍に合わせる。裏拍で入るコード（シンコペ）には左下に小さな三角を表示",
     "Grid": "拍・小節線",
     "Faint vertical lines for bars and beats behind the wave / chords. Needs a one-time analysis": "波形・コードの背景に小節と拍の薄い縦線を表示（初回のみ解析が必要）",
+    "Grid click": "拍・小節のクリック音",
+    "Click on each bar start (high) and beat (low) while playing, to check the grid by ear. Needs a one-time analysis": "再生中、小節の頭（高い音）と拍（低い音）の位置でクリック音を鳴らす。グリッドを耳で確認する用（初回のみ解析が必要）",
     "Bars": "小節",
     "Bars + beats": "小節＋拍",
     "Beats per bar": "1小節の拍数",

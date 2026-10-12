@@ -25,6 +25,7 @@ JS/
   qn-chord-worker.js          上のchroma()をWorkerで実行(重いのでメインスレッド外)
   player-chords.js            コード解析の窓口QNChords(offer/ensure/segments/setDetail/手動修正setChord・splitAt・mergeNext・reset/保存。コードモードの時だけ解析。CHORD_MODE.md)
   player-chord-edit.js        コード修正ポップアップQNChordEdit(Editモードでブロックをタップ)
+  player-grid-click.js        Grid click(再生中、縦線の位置で小節頭=高音・拍=低音を鳴らす確認用。ON/OFFはSettings>Grid click、QNChords.getClick/setClick)
   player-id3.js               ID3v2タグ（Title/Artist）
   player-playlist.js          ライブラリ：追加/削除/並び替え/お気に入り/フォルダ見出し・Auto Next範囲
   player-track-backup.js      Backup/Import（本体・YouTube・PITCH共通の画面。qnBackupMount/qnBackupMountInto/qnBackupParts）
@@ -72,7 +73,7 @@ guide/                        アプリ内ガイド（静的HTML8枚＋guide.css
 
 **読み込み順（`index.html`）。順序で上書きが決まる／グローバルでつながるので変えない：**
 - CSS：core → playlist → markers → control-eq → controls → export → text → layout-sp → layout-pc-v2 → **layout-pc-v2-sp** → pcv2-panels → **bars** → settings → stem → quickpop → auth → shareware → theme → apps → **youtube** → tuner → pitch
-- JS：qn-i18n → qn-i18n-apps → qn-i18n-ja → jszip.min → player-shareware → qn-marker-core → player-core → **player-bars** → player-ui-shared → player-normalize → **qn-chord-core → player-chords → player-chord-edit** → player-id3 → player-playlist → player-track-backup → player-sync → player-p2p → player-markers → **player-marker-presets** → player-control-eq → player-controls → qn-settings-ui → player-text → player-stem → player-ui-pc-v2 → player-quickpop → qn-wakelock → qn-apps → player-swipe → qn-app-youtube → qn-pitch-core → qn-app-tuner → qn-pitch-filters → qn-app-pitch → player-theme → player-auth
+- JS：qn-i18n → qn-i18n-apps → qn-i18n-ja → jszip.min → player-shareware → qn-marker-core → player-core → **player-bars** → player-ui-shared → player-normalize → **qn-chord-core → player-chords → player-chord-edit → player-grid-click** → player-id3 → player-playlist → player-track-backup → player-sync → player-p2p → player-markers → **player-marker-presets** → player-control-eq → player-controls → qn-settings-ui → player-text → player-stem → player-ui-pc-v2 → player-quickpop → qn-wakelock → qn-apps → player-swipe → qn-app-youtube → qn-pitch-core → qn-app-tuner → qn-pitch-filters → qn-app-pitch → player-theme → player-auth
 
 新しい関数を他ファイルから使う時は「呼ぶ側より前に定義されているか」を確認する。共通ヘルパーは`player-core.js`が定位置。
 `player-ui-pc-v2.js`と`qn-app-youtube.js`は、それぞれ1つのIIFEの中で多数の変数を共有している。**ファイル分割はしない**（変数の持ち方から作り直しになるため）。
