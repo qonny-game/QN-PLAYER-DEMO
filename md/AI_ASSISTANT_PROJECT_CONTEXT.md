@@ -204,3 +204,6 @@ guide/                        アプリ内ガイド（静的HTML8枚＋guide.css
 ## Phone sync controls (4.42.0)
 - Settings "Click offset" (QNClickOffset, localStorage qn_click_offset, ms, per device, added to the Grid click mapping; + = later) for output-latency differences (Bluetooth, phones). Settings "Exact seek" (QNExact.getEnabled/setEnabled, qn_exact_seek, default on) turns the WAV swap off per device (iOS may block play() after the async swap).
 - Not verifiable here: only desktop Chromium is available; phone behaviour needs the user's report.
+
+## Exact seek, eager prep (4.42.1)
+- The WAV is now prepared ~1.2 s after a track loads (not at the first jump), because decode+encode can take 10+ s on a phone and the jumps in that window were still inexact. A ready WAV is swapped in at once if paused, otherwise inside the next 'seeking' event. Encoding uses an Int16Array (much faster than per-sample DataView).

@@ -151,3 +151,4 @@
 - 4.40.0 Bar-head lines darker, marker snap to bars/beats, marker lock
 - 4.41.0 Grid follows markers (locked/all), tempo 3:2 confusion fix
 - 4.42.0 Click offset and Exact seek switch (per-device)
+- 4.42.1 Exact seek: prepare WAV right after load
