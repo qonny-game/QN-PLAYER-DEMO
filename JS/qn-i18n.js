@@ -269,13 +269,14 @@
     ".pcv2-anchor-tab, .mobile-tab-btn, .qn-flyout-item, .qn-yt-fab-folder, .panel-fab-btn, .qn-mic-pill, #splashLogo, .av-toggle-btn-label, " +
     "#noteTextFullscreenBtn, .pcv2-bar-page, .qn-yt-panel-header, .qn-tn-panel-header, .qn-pt-panel-header";
   var DATA_SEL = ".pin-memo-preset-chip:not(.qn-qp-act), .pin-memo, .pin-memo-text, .playlist-editable-display, .playlist-editable-field, " +
-    ".qn-yt-item-title, .qn-pt-rec-title, .qn-marker-preset-colors-list";
+    ".qn-yt-item-title, .qn-pt-rec-title, .qn-marker-preset-colors-list, .vbar-label-memo, .pin-info";
 
+  var ATTR_DATA_SEL = ".pin-info, .vbar-label-memo, .pin-memo, .pin-memo-text, .qn-yt-item-title, .qn-pt-rec-title";
   var cur = "ja";
   function tr(s) { return cur === "en" ? trEn(s) : trJa(s); }
   function skipEl(el, isAttr) {
     if (cur !== "ja" || !el || !el.closest) return false;
-    if (isAttr) return false;
+    if (isAttr) return !!(el.matches && el.matches(ATTR_DATA_SEL)); // titleがユーザー入力そのもの(マーカーのメモ等)の要素だけ除外
     return !!el.closest(KEEP_SEL + ", " + DATA_SEL);
   }
 
