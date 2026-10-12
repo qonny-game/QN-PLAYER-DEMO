@@ -120,12 +120,12 @@ var QNChords = (function () {
   // 縦線の元データ。小節頭の推定にはコード変化(自動判定ぶん。手動修正では動かさない)を使う
   function anchorTimes() {
     if (anchorMode === "off" || typeof pins === "undefined" || !Array.isArray(pins)) return [];
-    return pins.filter(p => p && p.enabled !== false && isFinite(p.t) && (anchorMode === "all" || p.locked)).map(p => p.t);
+    return pins.filter(p => p && p.enabled !== false && isFinite(p.t) && (anchorMode === "all" || p.locked)).map(p => ({ t: p.t, m: p.bpb | 0 }));
   }
   let anchorSig = "";
   function computeGrid() {
     const an = anchorTimes();
-    anchorSig = an.map(r3).join(",");
+    anchorSig = an.map(x => r3(x.t) + "/" + x.m).join(",");
     const b2 = an.length ? Object.assign({}, bt, { anchors: an }) : bt;
     gridData = beatInfo && beatInfo.times && beatInfo.times.length > 3 && window.QNChordCore ? QNChordCore.bars(beatInfo, result ? result.segments : null, b2, curDur) : null;
     gridVer++;
@@ -133,7 +133,7 @@ var QNChords = (function () {
   // マーカーが変わった(player-core.jsのsavePins)ら、縦線を作り直す。対象のマーカーが変わらなければ何もしない
   function pinsChanged() {
     if (!gridData) return;
-    const sig = anchorTimes().map(r3).join(",");
+    const sig = anchorTimes().map(x => r3(x.t) + "/" + x.m).join(",");
     if (sig === anchorSig) return;
     computeGrid();
     ver++;

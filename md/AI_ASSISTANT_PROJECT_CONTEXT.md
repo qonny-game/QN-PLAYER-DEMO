@@ -207,3 +207,9 @@ guide/                        アプリ内ガイド（静的HTML8枚＋guide.css
 
 ## Exact seek, eager prep (4.42.1)
 - The WAV is now prepared ~1.2 s after a track loads (not at the first jump), because decode+encode can take 10+ s on a phone and the jumps in that window were still inexact. A ready WAV is swapped in at once if paused, otherwise inside the next 'seeking' event. Encoding uses an Int16Array (much faster than per-sample DataView).
+
+## Odd bars and meter changes (4.43.0)
+- applyAnchors (qn-chord-core.js) takes anchors as seconds or {t, m}. Beats between two anchors = the number of DETECTED beats in the span (falls back to span/period rounded to whole bars when the count is >1.5 beats off). A remainder of <= half a bar is appended to the last bar (e.g. a 5-beat bar); a larger remainder makes a short bar (3 beats).
+- Marker popup "Beats" button sets pin.bpb (-, 2..7): beats per bar from that marker until the next marker that has its own value (inherits the previous one; the first uses the auto-detected meter). Only used while the marker is an anchor (Grid follows markers: locked / all). Kept by the loader; local only (not synced).
+- Grid click latency trim changed from +15 ms to -3 ms (measured click-vs-grid error now ~1 ms on desktop Chromium, was ~+19 ms).
+- Optional local beat refinement exists behind LOCALREF (default off): gain was marginal (mean beat-to-onset error 7.8 -> 7.1 ms on one song, worse on another).

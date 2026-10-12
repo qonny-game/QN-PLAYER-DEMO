@@ -152,3 +152,4 @@
 - 4.41.0 Grid follows markers (locked/all), tempo 3:2 confusion fix
 - 4.42.0 Click offset and Exact seek switch (per-device)
 - 4.42.1 Exact seek: prepare WAV right after load
+- 4.43.0 Odd bars and per-marker beats per bar, click timing trim

@@ -583,7 +583,25 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
     const keep = [];
     for (let i = end; i >= 0; i = link[i]) { keep.push(i); if (link[i] < 0) break; }
     keep.reverse();
-    out.times = Float32Array.from(keep, i => (i * hop + N / 2) / sr - B_LAT);
+    // 局所の追従: 各拍を、すぐ近くの立ち上がりの山へ寄せる(テンポの揺れ・ライブ演奏のズレに、線を合わせる)。寄せる量は前後2拍の中央値(1拍だけの外れ値や裏拍のシンコペには引っ張られない)、最大でも拍の幅の約18%
+    let fr = keep;
+    if (envF("LOCALREF", 0) && keep.length > 6) {
+      const wv = Math.max(1, Math.round(p * envF("LRW", 0.18))), dd = new Float64Array(keep.length);
+      for (let n = 0; n < keep.length; n++) {
+        const k = keep[n]; let bi = k, bv = -1;
+        for (let j = Math.max(1, k - wv); j <= Math.min(F - 2, k + wv); j++) if (loc[j] > bv) { bv = loc[j]; bi = j; }
+        // 放物線補間で端数に
+        const y0 = loc[bi - 1], y1 = loc[bi], y2 = loc[bi + 1], dn = y0 - 2 * y1 + y2;
+        dd[n] = bi - k + (dn < 0 ? 0.5 * (y0 - y2) / dn : 0);
+      }
+      const adj = keep.map((k, n) => {
+        const w = []; for (let m = Math.max(0, n - 2); m <= Math.min(keep.length - 1, n + 2); m++) w.push(dd[m]);
+        w.sort((x, y) => x - y);
+        return k + Math.max(-wv, Math.min(wv, w[w.length >> 1]));
+      });
+      fr = adj;                                                      // 端数のフレーム(時刻だけに使う。下の強さの計算は整数のkeepのまま)
+    }
+    out.times = Float32Array.from(fr, i => (i * hop + N / 2) / sr - B_LAT);
     out.low = Float32Array.from(keep, i => { let m = 0; for (let k = -4; k <= 4; k++) { const j = i + k; if (j >= 0 && j < F && oLow[j] > m) m = oLow[j]; } return m; });
     // 拍の位置と、拍と拍の真ん中(8分音符の裏)の立ち上がりの強さ(シンコペ判定用)
     const pk = (c) => { let m = 0; const i0 = Math.round(c); for (let k = -3; k <= 3; k++) { const j = i0 + k; if (j >= 0 && j < F && o1[j] > m) m = o1[j]; } return m; };
@@ -607,34 +625,42 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
   function applyAnchors(r, anchors, dur) {
     const n = r.times.length;
     if (n < 4) return r;
-    const M = r.m || 4, tt = Array.from(r.times);
+    const M0 = r.m || 4, tt = Array.from(r.times);
     const gAll = (tt[n - 1] - tt[0]) / (n - 1);
     const local = (a, b) => {
       const d = []; for (let i = 1; i < n; i++) if (tt[i - 1] >= a - 1e-6 && tt[i] <= b + 1e-6) d.push(tt[i] - tt[i - 1]);
       if (d.length < 3) return gAll;
       d.sort((x, y) => x - y); return d[d.length >> 1];
     };
-    let A = anchors.filter(x => isFinite(x) && x >= 0).sort((x, y) => x - y), keep = [];
+    // anchors: 秒 か {t, m}(m=その小節頭から次の手動の小節頭までの1小節の拍数。0/未指定は直前の指定を引き継ぐ。最初は自動で決めた拍子)
+    let A = anchors.map(x => typeof x === "number" ? { t: x, m: 0 } : { t: +x.t, m: x.m | 0 }).filter(x => isFinite(x.t) && x.t >= 0).sort((x, y) => x.t - y.t), keep = [];
     for (const x of A) {
       if (!keep.length) { keep.push(x); continue; }
       const prev = keep[keep.length - 1];
-      if (x - prev >= 0.75 * M * local(prev, x)) keep.push(x);
+      if (x.t - prev.t >= 0.75 * (prev.m >= 2 ? prev.m : M0) * local(prev.t, x.t)) keep.push(x);
     }
     A = keep;
     if (!A.length) return r;
+    let cur = M0; A.forEach(x => { if (x.m >= 2) cur = x.m; x.M = cur; });
     const T = [], B = [], end = Math.max(dur || 0, tt[n - 1] + gAll);
-    const put = (x, k) => { if (x >= -1e-6 && x <= end + 1e-6) { T.push(x); B.push(((k % M) + M) % M); } };
-    const pFirst = A.length > 1 ? local(A[0], A[1]) : local(A[0], A[0] + 20 * gAll);
-    const pLast = A.length > 1 ? local(A[A.length - 2], A[A.length - 1]) : pFirst;
-    const backs = []; for (let k = 1; A[0] - k * pFirst >= -1e-6; k++) backs.push([A[0] - k * pFirst, -k]);
-    backs.reverse().forEach(v => put(v[0], v[1]));
+    const put = (x, k, M) => { if (x >= -1e-6 && x <= end + 1e-6) { T.push(x); B.push(k < 0 ? ((k % M) + M) % M : k); } };
+    const a0 = A[0].t, pFirst = A.length > 1 ? local(a0, A[1].t) : local(a0, a0 + 20 * gAll);
+    const pLast = A.length > 1 ? local(A[A.length - 2].t, A[A.length - 1].t) : pFirst;
+    const backs = []; for (let k = 1; a0 - k * pFirst >= -1e-6; k++) backs.push([a0 - k * pFirst, -k]);
+    backs.reverse().forEach(v => put(v[0], v[1], A[0].M));
     for (let i = 0; i < A.length; i++) {
-      const a = A[i];
+      const a = A[i].t, M = A[i].M;
       if (i + 1 < A.length) {
-        const b = A[i + 1], per = local(a, b), bars = Math.max(1, Math.round((b - a) / (M * per))), cnt = bars * M, step = (b - a) / cnt;
-        for (let k = 0; k < cnt; k++) put(a + k * step, k);
+        // 間の拍数は、検出した拍の数で決める(「5拍の小節」「ブレイクで1拍増える」も拾える)。数えた値が時間/間隔から1.5拍以上外れる(検出が怪しい)時は、小節数×拍子に丸める
+        const b = A[i + 1].t, per = local(a, b), span = (b - a) / per;
+        let cnt = 0; for (let q = 0; q < n; q++) if (tt[q] >= a - 0.5 * per && tt[q] < b - 0.5 * per) cnt++;
+        if (cnt < 1 || Math.abs(cnt - span) > 1.5) cnt = Math.max(1, Math.round(span / M)) * M;
+        const step = (b - a) / cnt, full = Math.floor(cnt / M), rem = cnt % M;
+        // 端数の拍: 少なければ最後の小節に足して長い小節(5拍など)に、多ければ短い小節(3拍など)にする。小節頭は常に区間の先頭と各小節の先頭
+        const joinLast = rem > 0 && full > 0 && rem <= Math.floor(M / 2), lastStart = (full - 1) * M;
+        for (let k = 0; k < cnt; k++) put(a + k * step, joinLast && k >= lastStart ? k - lastStart : (k >= full * M ? k - full * M : k % M), M);
       } else {
-        for (let k = 0; a + k * pLast <= end + 1e-6; k++) put(a + k * pLast, k);
+        for (let k = 0; a + k * pLast <= end + 1e-6; k++) put(a + k * pLast, k % M, M);
       }
     }
     r.times = Float32Array.from(T); r.bar = Uint8Array.from(B); r.phase = 0; r.manual = 3;

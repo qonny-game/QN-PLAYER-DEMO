@@ -15,7 +15,7 @@
     get: () => Math.round(userOffset * 1000),
     set: ms => { userOffset = Math.max(-500, Math.min(500, ms | 0)) / 1000; try { localStorage.setItem(OFFSET_KEY, String(Math.round(userOffset * 1000))); } catch (e) {} if (timer) reset(); }
   };
-  const TRIM = 0.015;          // 実測の微調整(秒)。Chromiumで実測した「クリックが10〜36ms先に鳴る」の中間あたりを打ち消す
+  const TRIM = -0.003;         // 実測の微調整(秒)。Chromiumで実測した「クリックが10〜36ms先に鳴る」の中間あたりを打ち消す
   let timer = 0, sampler = 0, last = -1, lastGridVer = -1;
   let ring = [];               // [ctx時刻, off候補]
   let calibFrom = 0;           // 取り直しを始めたctx時刻

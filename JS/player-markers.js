@@ -680,6 +680,7 @@ function ensurePinPopup() {
       '<button type="button" class="qn-yt-seekpop-btn qn-yt-seekpop-del" data-pop="D" title="このマーカーを削除" hidden><b>－</b><span>Marker</span></button>' +
       '<button type="button" class="qn-yt-seekpop-btn" data-pop="C" title="マーカーの色を変える" hidden><b><i class="qn-yt-seekpop-dot"></i></b><span>Color</span></button>' +
       '<button type="button" class="qn-yt-seekpop-btn" data-pop="K" title="このマーカーから次のマーカーまでを再生中に飛ばす" hidden><b><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></b><span>Skip</span></button>' +
+      '<button type="button" class="qn-yt-seekpop-btn" data-pop="BP" title="Beats per bar from this marker (needs Grid follows markers). Auto keeps the previous setting" hidden><b>-</b><span>Beats</span></button>' +
       '<button type="button" class="qn-yt-seekpop-btn" data-pop="LK" title="Lock: prevent moving or deleting this marker" hidden><b></b><span>Lock</span></button>' +
       '<button type="button" class="qn-yt-seekpop-btn" data-pop="H" title="マーカーのON/OFF" hidden><b></b><span>Hide</span></button>' +
     '</div>';
@@ -699,6 +700,7 @@ function ensurePinPopup() {
     else if (k === "H") pinPopToggle();
     else if (k === "K") pinPopSkip();
     else if (k === "LK") pinPopLock();
+    else if (k === "BP") pinPopBeats();
     else if (k === "NL") pinPopNudge(-0.1);
     else if (k === "NR") pinPopNudge(0.1);
   });
@@ -773,7 +775,7 @@ function showPinPopup(t, barEl, clientX, pinObj, abKind) {
   const loopOn = loopEnabled && loopMode === "sec";
   pop.querySelector('[data-pop="L"]').classList.toggle("is-set", loopOn);
   pop.querySelector('[data-pop="L"] span').textContent = loopOn ? "Loop ON" : "Loop";
-  ["D", "C", "H", "K", "LK"].forEach(k => { pop.querySelector(`[data-pop="${k}"]`).hidden = !pinObj; });
+  ["D", "C", "H", "K", "LK", "BP"].forEach(k => { pop.querySelector(`[data-pop="${k}"]`).hidden = !pinObj; });
   pop.querySelector('[data-pop="A"]').classList.toggle("is-set", abA !== null && Math.abs(abA - pinPopTime) <= AB_SNAP_SEC);
   pop.querySelector('[data-pop="B"]').classList.toggle("is-set", abB !== null && Math.abs(abB - pinPopTime) <= AB_SNAP_SEC);
   if (pinObj) {
@@ -790,6 +792,9 @@ function showPinPopup(t, barEl, clientX, pinObj, abKind) {
     lb.querySelector("b").innerHTML = PINPOP_LOCK;
     lb.querySelector("span").textContent = pinObj.locked ? "Locked" : "Lock";
     pop.querySelector(".qn-pp-timerow").classList.toggle("is-locked", !!pinObj.locked);
+    const bb = pop.querySelector('[data-pop="BP"]');
+    bb.classList.toggle("is-set", pinObj.bpb >= 2);
+    bb.querySelector("b").textContent = pinObj.bpb >= 2 ? String(pinObj.bpb) : "-";
   }
   pop.hidden = false;
   const rect = barEl.getBoundingClientRect();
@@ -1018,6 +1023,20 @@ function pinPopAdd() {
 }
 
 const PINPOP_LOCK = '<svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6z"/></svg>';
+const PIN_BPB_STEPS = [0, 2, 3, 4, 5, 6, 7];
+function pinPopBeats() {
+  const pin = pinPopPin;
+  if (!pin) return;
+  const cur = pin.bpb >= 2 ? pin.bpb : 0, nx = PIN_BPB_STEPS[(PIN_BPB_STEPS.indexOf(cur) + 1) % PIN_BPB_STEPS.length];
+  hapticTap();
+  if (nx) pin.bpb = nx; else delete pin.bpb;
+  const b = pinPopEl.querySelector('[data-pop="BP"]');
+  b.classList.toggle("is-set", nx >= 2);
+  b.querySelector("b").textContent = nx ? String(nx) : "-";
+  resetPinPopTimer();
+  savePins();
+}
+
 function pinPopLock() {
   const pin = pinPopPin;
   if (!pin) return;
