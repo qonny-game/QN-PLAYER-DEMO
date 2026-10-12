@@ -8,6 +8,13 @@
   const TICK_MS = 40, SAMPLE_MS = 8;
   const CALIB = 0.3;           // 再生開始/シーク後、対応を取り直すのに使う秒数(この間は鳴らさない)
   const WINDOW = 0.8;          // 対応(off)を求める時に見る直近の秒数
+  const OFFSET_KEY = "qn_click_offset";   // 端末ごとの手動の補正(ms)。Bluetoothなど出力の遅れが端末で違う時に、耳で合わせる
+  let userOffset = 0;
+  try { userOffset = (parseInt(localStorage.getItem(OFFSET_KEY), 10) || 0) / 1000; } catch (e) {}
+  window.QNClickOffset = {
+    get: () => Math.round(userOffset * 1000),
+    set: ms => { userOffset = Math.max(-500, Math.min(500, ms | 0)) / 1000; try { localStorage.setItem(OFFSET_KEY, String(Math.round(userOffset * 1000))); } catch (e) {} if (timer) reset(); }
+  };
   const TRIM = 0.015;          // 実測の微調整(秒)。Chromiumで実測した「クリックが10〜36ms先に鳴る」の中間あたりを打ち消す
   let timer = 0, sampler = 0, last = -1, lastGridVer = -1;
   let ring = [];               // [ctx時刻, off候補]
@@ -70,7 +77,7 @@
     if (!ring.length || now - calibFrom < CALIB) return;          // 対応を取り直し中
     let off = Infinity;
     for (let i = 0; i < ring.length; i++) if (ring[i][1] < off) off = ring[i][1];
-    off += TRIM;
+    off += TRIM + userOffset;
     const rate = audio.playbackRate > 0 ? audio.playbackRate : 1;
     const cur = (now - off) * rate;                                // 今、曲のどこが入口を通っているか
     if (QNChords.gridVersion() !== lastGridVer) { lastGridVer = QNChords.gridVersion(); last = cur - 0.001; }

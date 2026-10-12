@@ -150,3 +150,4 @@
 - 4.39.0 Exact seek: decode to WAV on first seek so seeking is sample-accurate
 - 4.40.0 Bar-head lines darker, marker snap to bars/beats, marker lock
 - 4.41.0 Grid follows markers (locked/all), tempo 3:2 confusion fix
+- 4.42.0 Click offset and Exact seek switch (per-device)

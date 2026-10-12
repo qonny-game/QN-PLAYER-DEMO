@@ -200,3 +200,7 @@ guide/                        アプリ内ガイド（静的HTML8枚＋guide.css
 - App: setting "Grid follows markers" (QNChords.getAnchorMode/setAnchorMode, localStorage qn_grid_anchor): off | locked (default; only pins with locked=true) | all (every enabled pin). savePins() calls QNChords.pinsChanged(), which rebuilds the grid only when the anchor set changed.
 - Tempo fix: the autocorrelation is now computed from half of the lowest lag, so the half-lag term exists for tempi above 120 BPM. METRO ESCAPE was read as 179 BPM (3:2 confusion with ~89 BPM, doubled); now ~134 BPM (true 133.3). Other test songs and the 13 synthetic songs are unchanged.
 - Known limit: METRO ESCAPE sections can still sit half a beat off automatically (syncopated 8ths); use locked markers there.
+
+## Phone sync controls (4.42.0)
+- Settings "Click offset" (QNClickOffset, localStorage qn_click_offset, ms, per device, added to the Grid click mapping; + = later) for output-latency differences (Bluetooth, phones). Settings "Exact seek" (QNExact.getEnabled/setEnabled, qn_exact_seek, default on) turns the WAV swap off per device (iOS may block play() after the async swap).
+- Not verifiable here: only desktop Chromium is available; phone behaviour needs the user's report.

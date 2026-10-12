@@ -5,6 +5,8 @@
   "use strict";
   var MAX_SEC = 1500;      // longer tracks stay on the original source (WAV is ~10 MB/min)
   var RATE = 44100;
+  var KEY = "qn_exact_seek";
+  function enabled() { try { return localStorage.getItem(KEY) !== "0"; } catch (e) { return true; } }
   var st = { file: null, token: 0, preparing: false, swapped: false, wavUrl: null, wav: null, target: null };
 
   function clear() {
@@ -74,13 +76,15 @@
   }
 
   audio.addEventListener("seeking", function () {
-    if (st.swapped || !st.file) return;
+    if (st.swapped || !st.file || !enabled()) return;
     prepare();
   });
 
   window.QNExact = {
     onLoad: function (file) { clear(); st.file = file; },
     prepare: prepare,
-    isExact: function () { return st.swapped; }
+    isExact: function () { return st.swapped; },
+    getEnabled: enabled,
+    setEnabled: function (on) { try { localStorage.setItem(KEY, on ? "1" : "0"); } catch (e) {} }
   };
 })();
