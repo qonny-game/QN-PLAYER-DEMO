@@ -122,7 +122,7 @@ var QNChords = (function () {
     if (!curId || !curName) return;
     try {
       if (!result && !user.length && !beatInfo) { localStorage.removeItem(saveKey()); return; }
-      const o = { v: 2, dur: Math.round(curDur * 100) / 100, user: user.map(u => [r3(u.t0), r3(u.t1), u.root, u.q, u.bass]) };
+      const o = { v: 3, dur: Math.round(curDur * 100) / 100, user: user.map(u => [r3(u.t0), r3(u.t1), u.root, u.q, u.bass]) };
       if (result) {
         o.detail = result.detail;
         o.keySel = keySel;
@@ -147,7 +147,7 @@ var QNChords = (function () {
       const raw = localStorage.getItem(saveKey());
       if (!raw) return null;
       const o = JSON.parse(raw);
-      if (!o || (o.v !== 1 && o.v !== 2) || Math.abs((o.dur || 0) - curDur) > 0.6) return null;
+      if (!o || (o.v !== 1 && o.v !== 2 && o.v !== 3) || Math.abs((o.dur || 0) - curDur) > 0.6) return null;
       return o;
     } catch (e) { return null; }
   }
@@ -295,7 +295,7 @@ var QNChords = (function () {
     user = saved && Array.isArray(saved.user) ? saved.user.map(a => ({ t0: a[0], t1: a[1], root: a[2], q: a[3], bass: a[4] })) : [];
     if (saved && saved.keySel) keySel = saved.keySel;
     if (saved && saved.bt) bt = { tempo: saved.bt[0] | 0, bpb: saved.bt[1] | 0, shift: saved.bt[2] | 0, anchor: typeof saved.bt[3] === "number" ? saved.bt[3] : -1 };
-    const stale = !!saved && saved.v < 2;       // 旧い解析器の結果(拍・コード)は捨てて解析し直す。手動編集(user)と拍の設定(bt)は引き継ぐ
+    const stale = !!saved && saved.v < 3;       // 旧い解析器の結果(拍・コード)は捨てて解析し直す。手動編集(user)と拍の設定(bt)は引き継ぐ
     if (stale) bt = { tempo: 0, bpb: bt.bpb, shift: 0, anchor: bt.anchor };   // 古い拍に合わせた補正(ずらし・倍/半)は新しい拍には合わない
     beatInfo = saved && !stale ? hydrateBeats(saved) : null;
     if (cache.has(id)) { classifyNow(); return; }

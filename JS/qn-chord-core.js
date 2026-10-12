@@ -460,6 +460,9 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
   const B_N = 512, B_HOP = 80;      // 8kHzで64ms窓・10msごと
   const B_TIGHT = 1000;              // 拍の間隔がテンポからずれることへの罰の強さ(大きいほど等間隔)
   const B_LOWW = 1.0;               // 低音の立ち上がりを拍の手がかりに足す重み
+  const B_BPM_MAX = 240;             // 拍として取るテンポの上限(BPM)。速い8ビートの曲は拍=8分音符側で取る
+  const B_DBL_BELOW = 120;           // この値より遅いテンポは、倍(1拍=半分の長さ)で取る(1小節=4拍=スネア2回=8ビートの定義に合わせる)
+  const B_DBL_RATIO = 0.7;           // 倍にする条件: 半分の間隔での自己相関が、元の間隔の自己相関の何割以上あるか
   const B_LAT = 0.001;              // フレームの位置→実際の音の立ち上がりの時刻の補正(合成音源で測った値)
 
   function beats(mono, sr, onProgress) {
@@ -513,7 +516,8 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
     const o1 = Float32Array.from(oB, (v, i) => v + LW * oLow[i]);   // 拍の手がかり = 全帯域 + 低音(キック/ベース)。裏拍のコードやハットに引っ張られにくくする
 
     // テンポ: 自己相関(60〜200BPM)。120BPM付近を好む事前分布と、倍/半のテンポも足し合わせて拍子の階層を拾う
-    const lagMin = Math.round(fps * 60 / 200), lagMax = Math.round(fps * 60 / 60);
+    const envF = function (k, d) { return +(typeof process !== "undefined" && process.env[k] || d); };   // Nodeでの検証用
+    const lagMin = Math.round(fps * 60 / B_BPM_MAX), lagMax = Math.round(fps * 60 / 60);
     const ac = new Float64Array(lagMax * 2 + 2);
     for (let l = lagMin; l <= lagMax * 2; l++) {
       let s = 0;
@@ -527,10 +531,16 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
       const v = (ac[l] + 0.5 * ac[2 * l] + 0.25 * (ac[Math.round(l / 2)] || 0)) * prior;
       if (v > bestV) { bestV = v; bestL = l; }
     }
+    // 遅いテンポ(120BPM未満)は倍で取る: 半分の間隔にも同じくらい周期があれば、1拍をその半分にする(上限240BPM)
+    const dblBelow = envF("DBLBELOW", B_DBL_BELOW), dblRatio = envF("DBLRATIO", B_DBL_RATIO);
+    if (60 * fps / bestL < dblBelow) {
+      const h = Math.round(bestL / 2);
+      if (h >= lagMin && ac[h] >= dblRatio * ac[bestL]) { let bh = h; for (let l = h - 1; l <= h + 1; l++) if (l >= lagMin && ac[l] > ac[bh]) bh = l; bestL = bh; }
+    }
     // 放物線補間で端数のラグへ
     const y0 = ac[bestL - 1], y1 = ac[bestL], y2 = ac[bestL + 1];
     const den = y0 - 2 * y1 + y2;
-    const p = bestL + (den < 0 ? 0.5 * (y0 - y2) / den : 0);       // 拍の間隔(フレーム)
+    let p = bestL + (den < 0 ? 0.5 * (y0 - y2) / den : 0);       // 拍の間隔(フレーム)
 
     // 拍追跡(動的計画法): 各フレームの得点 = 立ち上がりの強さ(少しぼかす) + 直前の拍からの最良の累積。間隔がpから外れるほど罰
     const loc = new Float32Array(F);
@@ -538,6 +548,18 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
       let s = 0;
       for (let k = -3; k <= 3; k++) { const j = i + k; if (j >= 0 && j < F) s += o1[j] * Math.exp(-0.5 * k * k / 2.25); }
       loc[i] = s;
+    }
+    // テンポの精密化: 自己相関は10ms刻みなので、曲全体で「等間隔の櫛」が立ち上がりに最も重なる間隔を±3%・0.02%刻みで探す(端数フレーム。誤差が累積して数秒ずれるのを防ぐ)
+    if (envF("REFINE", 1)) {
+      const R = envF("RSPAN", 0.03), RS = envF("RSTEP", 0.0002);
+      const interp = (x) => { const i = Math.floor(x); if (i < 0 || i + 1 >= F) return 0; const fr = x - i; return loc[i] * (1 - fr) + loc[i + 1] * fr; };
+      let bestS = -1, bestP = p;
+      for (let q = p * (1 - R); q <= p * (1 + R); q += p * RS) {
+        let bs = 0;
+        for (let ph = 0; ph < q; ph += 0.5) { let sc = 0; for (let x = ph; x < F - 1; x += q) sc += interp(x); if (sc > bs) bs = sc; }
+        if (bs > bestS) { bestS = bs; bestP = q; }
+      }
+      p = bestP;
     }
     const cum = new Float64Array(F), link = new Int32Array(F).fill(-1);
     const TIGHT = +(typeof process !== "undefined" && process.env.TIGHT || B_TIGHT), wMin = Math.max(1, Math.round(p / 2)), wMax = Math.round(p * 2);
