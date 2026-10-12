@@ -194,3 +194,9 @@ guide/                        アプリ内ガイド（静的HTML8枚＋guide.css
 - Lock: pin.locked (popup "Lock" button). Locked markers cannot be dragged, nudged or deleted (popup and list); tap/seek, color, hide and skip still work. Lock glyph under the marker number. Stored with the pin in localStorage; not part of cloud sync (cleanState).
 - Loader (loadTrackUserData) now keeps pin.skip and pin.locked (skip used to be dropped on reload).
 - Bar-head grid line alpha 0.24 -> 0.55, 1 px wider.
+
+## Grid follows markers (4.41.0)
+- Core: bars() = barsBase() + applyAnchors() when bt.anchors is given. Each anchor is a bar start; between two anchors the bar count is round(span / (beatsPerBar * local period)) and beats are spread evenly. Before the first / after the last anchor the neighbouring section's period is extended. Anchors closer than 0.75 bar are ignored. Fixes sections where beat tracking sat half a beat off or the tempo wobbled. The manual "Bar start point" (bt.anchor) is added to the anchor list when markers are used.
+- App: setting "Grid follows markers" (QNChords.getAnchorMode/setAnchorMode, localStorage qn_grid_anchor): off | locked (default; only pins with locked=true) | all (every enabled pin). savePins() calls QNChords.pinsChanged(), which rebuilds the grid only when the anchor set changed.
+- Tempo fix: the autocorrelation is now computed from half of the lowest lag, so the half-lag term exists for tempi above 120 BPM. METRO ESCAPE was read as 179 BPM (3:2 confusion with ~89 BPM, doubled); now ~134 BPM (true 133.3). Other test songs and the 13 synthetic songs are unchanged.
+- Known limit: METRO ESCAPE sections can still sit half a beat off automatically (syncopated 8ths); use locked markers there.

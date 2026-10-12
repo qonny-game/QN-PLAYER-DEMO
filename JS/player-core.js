@@ -660,6 +660,7 @@ function savePins() {
   if (currentFileName && currentFileName !== "No file loaded") {
     localStorage.setItem("mp3_pins_" + currentFileName, JSON.stringify(pins));
   }
+  if (window.QNChords && QNChords.pinsChanged) QNChords.pinsChanged();
 }
 
 // Textメモをファイル名キーでlocalStorage保存。ファイル未読込時は保存しない

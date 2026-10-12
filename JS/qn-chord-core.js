@@ -519,7 +519,7 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
     const envF = function (k, d) { return +(typeof process !== "undefined" && process.env[k] || d); };   // Nodeでの検証用
     const lagMin = Math.round(fps * 60 / B_BPM_MAX), lagMax = Math.round(fps * 60 / 60);
     const ac = new Float64Array(lagMax * 2 + 2);
-    for (let l = lagMin; l <= lagMax * 2; l++) {
+    for (let l = Math.max(2, Math.floor(lagMin / 2)); l <= lagMax * 2; l++) {      // 下限の半分から計算する(速い拍の「半分の間隔」の項が0になって、速いテンポが不利になるのを防ぐ)
       let s = 0;
       for (let i = 0; i + l < F; i++) s += o1[i] * o1[i + l];
       ac[l] = s / (F - l);
@@ -602,7 +602,52 @@ const BASS_MAX = 260;   // ベース音として見る上限(Hz)
 
   // テンポの倍/半の補正と、拍子・小節頭の決定。bt={tempo:-1|0|1 (÷2/自動/×2), bpb:0(自動)|2..7, shift:小節頭を拍単位でずらす}
   // segs=コード区間(自動判定ぶん。コード変化の位置が小節頭の手がかり)。戻り値: { times:Float32Array, bar:Uint8Array(拍の小節内の番号。0=小節頭), m(拍子), phase }
+  // マーカーなどの手動の小節頭(秒の配列)に合わせて縦線を作り直す。隣り合う小節頭の間は、小節数を検出テンポから決めて等間隔に割る(拍追跡が半拍ずれた区間・テンポが揺れた区間を直す)。
+  // 最初の小節頭より前と最後より後は、それぞれ隣の区間の間隔で延ばす。近すぎる小節頭(1小節足らず)は使わない
+  function applyAnchors(r, anchors, dur) {
+    const n = r.times.length;
+    if (n < 4) return r;
+    const M = r.m || 4, tt = Array.from(r.times);
+    const gAll = (tt[n - 1] - tt[0]) / (n - 1);
+    const local = (a, b) => {
+      const d = []; for (let i = 1; i < n; i++) if (tt[i - 1] >= a - 1e-6 && tt[i] <= b + 1e-6) d.push(tt[i] - tt[i - 1]);
+      if (d.length < 3) return gAll;
+      d.sort((x, y) => x - y); return d[d.length >> 1];
+    };
+    let A = anchors.filter(x => isFinite(x) && x >= 0).sort((x, y) => x - y), keep = [];
+    for (const x of A) {
+      if (!keep.length) { keep.push(x); continue; }
+      const prev = keep[keep.length - 1];
+      if (x - prev >= 0.75 * M * local(prev, x)) keep.push(x);
+    }
+    A = keep;
+    if (!A.length) return r;
+    const T = [], B = [], end = Math.max(dur || 0, tt[n - 1] + gAll);
+    const put = (x, k) => { if (x >= -1e-6 && x <= end + 1e-6) { T.push(x); B.push(((k % M) + M) % M); } };
+    const pFirst = A.length > 1 ? local(A[0], A[1]) : local(A[0], A[0] + 20 * gAll);
+    const pLast = A.length > 1 ? local(A[A.length - 2], A[A.length - 1]) : pFirst;
+    const backs = []; for (let k = 1; A[0] - k * pFirst >= -1e-6; k++) backs.push([A[0] - k * pFirst, -k]);
+    backs.reverse().forEach(v => put(v[0], v[1]));
+    for (let i = 0; i < A.length; i++) {
+      const a = A[i];
+      if (i + 1 < A.length) {
+        const b = A[i + 1], per = local(a, b), bars = Math.max(1, Math.round((b - a) / (M * per))), cnt = bars * M, step = (b - a) / cnt;
+        for (let k = 0; k < cnt; k++) put(a + k * step, k);
+      } else {
+        for (let k = 0; a + k * pLast <= end + 1e-6; k++) put(a + k * pLast, k);
+      }
+    }
+    r.times = Float32Array.from(T); r.bar = Uint8Array.from(B); r.phase = 0; r.manual = 3;
+    r.bpm = T.length > 1 ? 60 * (T.length - 1) / (T[T.length - 1] - T[0]) : r.bpm;
+    return r;
+  }
+
   function bars(bi, segs, bt, dur) {
+    const r = barsBase(bi, segs, bt, dur);
+    return bt && bt.anchors && bt.anchors.length ? applyAnchors(r, bt.anchors.concat(bt.anchor >= 0 ? [bt.anchor] : []), dur) : r;
+  }
+
+  function barsBase(bi, segs, bt, dur) {
     bt = bt || {};
     let t = Array.from(bi.times), low = Array.from(bi.low), hi = Array.from(bi.hi && bi.hi.length === bi.times.length ? bi.hi : bi.low.map(() => 0));
     // テンポの倍/半の自動補正(bt.tempo=0の時だけ)。拍だけでは決められない倍/半の取り違えを、低音の強弱の交互パターンとコードが変わる間隔(拍数)で直す

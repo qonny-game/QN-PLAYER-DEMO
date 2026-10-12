@@ -24,6 +24,7 @@ var QNChords = (function () {
   let snap = true;            // コードの切り替わりを拍(と裏拍)に合わせる
   let gridMode = "beat";      // 背景の縦線: off | bar(小節頭だけ) | beat(拍と小節頭)
   let gridClick = false;      // 縦線の位置で小節頭/拍のクリック音を鳴らす(確認用。鳴らす処理はplayer-grid-click.js)
+  let anchorMode = "locked"; // 縦線をマーカーに合わせる: off | locked(ロックしたマーカー) | all(有効なマーカー全部)。マーカー=小節頭として縦線を作り直す
   let keySel = "auto";        // "auto" か "M<0-11>"(長調) / "m<0-11>"(短調)
   try {
     const v = localStorage.getItem(DETAIL_KEY);
@@ -33,6 +34,8 @@ var QNChords = (function () {
     const gm = localStorage.getItem(GRID_KEY);
     if (gm === "off" || gm === "bar" || gm === "beat") gridMode = gm;
     gridClick = localStorage.getItem(CLICK_KEY) === "1";
+    const am = localStorage.getItem("qn_grid_anchor");
+    if (am === "off" || am === "locked" || am === "all") anchorMode = am;
   } catch (e) {}
 
   let gen = 0;               // 曲が変わるたびに増やす。古いWorkerの返事を捨てる印
@@ -115,9 +118,33 @@ var QNChords = (function () {
   }
 
   // 縦線の元データ。小節頭の推定にはコード変化(自動判定ぶん。手動修正では動かさない)を使う
+  function anchorTimes() {
+    if (anchorMode === "off" || typeof pins === "undefined" || !Array.isArray(pins)) return [];
+    return pins.filter(p => p && p.enabled !== false && isFinite(p.t) && (anchorMode === "all" || p.locked)).map(p => p.t);
+  }
+  let anchorSig = "";
   function computeGrid() {
-    gridData = beatInfo && beatInfo.times && beatInfo.times.length > 3 && window.QNChordCore ? QNChordCore.bars(beatInfo, result ? result.segments : null, bt, curDur) : null;
+    const an = anchorTimes();
+    anchorSig = an.map(r3).join(",");
+    const b2 = an.length ? Object.assign({}, bt, { anchors: an }) : bt;
+    gridData = beatInfo && beatInfo.times && beatInfo.times.length > 3 && window.QNChordCore ? QNChordCore.bars(beatInfo, result ? result.segments : null, b2, curDur) : null;
     gridVer++;
+  }
+  // マーカーが変わった(player-core.jsのsavePins)ら、縦線を作り直す。対象のマーカーが変わらなければ何もしない
+  function pinsChanged() {
+    if (!gridData) return;
+    const sig = anchorTimes().map(r3).join(",");
+    if (sig === anchorSig) return;
+    computeGrid();
+    ver++;
+    notify("state");
+  }
+  function setAnchorMode(m) {
+    if (m !== "off" && m !== "locked" && m !== "all") return;
+    if (m === anchorMode) return;
+    anchorMode = m;
+    try { localStorage.setItem("qn_grid_anchor", m); } catch (e) {}
+    if (gridData) { computeGrid(); ver++; notify("state"); }
   }
 
   // ---------- 保存 ----------
@@ -531,6 +558,9 @@ var QNChords = (function () {
       if (on) ensure();
     },
     getGridMode() { return gridMode; },
+    getAnchorMode() { return anchorMode; },
+    setAnchorMode: setAnchorMode,
+    pinsChanged: pinsChanged,
     setGridMode: setGridMode,
     getBt(k) { return bt[k]; },
     // 手動の小節頭。t=秒(拍と拍の間でも可)。null/負で解除
