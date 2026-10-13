@@ -168,3 +168,4 @@
 - 4.53.0 Rec is now its own panel (works without Stem, also on phone width); Stem stays PC only
 - 4.53.1 iPhoneで別アプリ切替(画面下スワイプ)から戻った時に、Speed/Keyを入れ直して音程のずれを防止(原因はiOSのAudioContext一時停止→再開と推定)
 - 4.53.2 マーカーのメモ(Solo等)がtitle属性だけカタカナ翻訳される不具合を修正
+- 4.54.0 Tabパネルを追加(再生中のローカル曲をBasic Pitchでブラウザ内採譜しギターTABを流す。弦フレット自動割り当て+Editで修正。SPでも使える)。詳細はTAB_MODE.md

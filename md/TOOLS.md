@@ -29,4 +29,6 @@
 ## 調整用(必要な時だけ)
 | 道具 | 何をするか |
 |---|---|
+| `tab_core_check.js` | `node md/tools/tab_core_check.js <ルート>`。`JS/qn-tab-core.js`(Tabの弦フレット割り当て・倍音除去)の確認。DOMなし |
+| `build_basic_pitch.py` | `python3 -I md/tools/build_basic_pitch.py`。`JS/basic-pitch/`(バンドルとモデル)を作り直す。npmに出られる環境が要る |
 | `chord_pos.js` | `node md/tools/chord_pos.js <ルート> <モノf32le> <sr>`。コードの区切りが拍・小節頭にどれだけ乗っているか、snap有無の区間数・当てはまり(conf)・一致率を出す。`HEAD_MUL`/`BEAT_MUL`/`SW_MID`/`SN_OFF`などを環境変数で振れる。解析結果は`/tmp/ccache_*`に保存して2回目以降を速くする |

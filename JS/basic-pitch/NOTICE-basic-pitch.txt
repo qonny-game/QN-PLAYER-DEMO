@@ -1,0 +1,7 @@
+qn-basic-pitch.js bundles the following Apache-2.0 licensed software (license text: LICENSE-basic-pitch.txt):
+
+- Basic Pitch (TypeScript) @spotify/basic-pitch 1.0.1 — Copyright 2022 Spotify AB — https://github.com/spotify/basic-pitch-ts
+  The model files in model/ are the model distributed with that package.
+- TensorFlow.js 3.21.0 (tfjs-core, tfjs-converter, tfjs-backend-cpu, tfjs-backend-webgl) — Copyright Google LLC — https://github.com/tensorflow/tfjs
+
+Rebuild: python3 -I md/tools/build_basic_pitch.py

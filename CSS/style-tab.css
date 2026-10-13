@@ -1,0 +1,10 @@
+/* style-tab.css — Tabパネル(JS/player-tab.js)。ボタン/進捗バー/注記は style-stem.css の .qn-stem-* を、行は style-settings.css を再利用。SP幅でも使える */
+.qn-tab-status { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.qn-tab-status .qn-stem-bar { align-self: stretch; }
+.qn-tab-view { border-radius: var(--radius-popup, 8px); background: var(--bg-0e0e13); border: 1px solid var(--border-subtle); overflow: hidden; }
+.qn-tab-view[hidden], .qn-tab-editbox[hidden], .qn-tab-ctl[hidden] { display: none; }
+.qn-tab-view canvas { display: block; cursor: grab; user-select: none; -webkit-user-select: none; }
+.qn-tab-view canvas:active { cursor: grabbing; }
+.qn-tab-editbox { display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid var(--border-subtle); border-radius: var(--radius-popup, 8px); background: var(--bg-1b1b23); }
+.qn-tab-selnote { font-size: var(--fs-body); color: var(--text-bright); font-variant-numeric: tabular-nums; }
+.qn-tab-btns { display: flex; gap: 8px; flex-wrap: wrap; }

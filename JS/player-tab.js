@@ -1,0 +1,480 @@
+// player-tab.js — Tabパネル(v4.54.0)。再生中のローカル曲の音をブラウザ内で採譜(Basic Pitch)し、ギターTABとして再生位置に合わせて流す。
+// 流れ: ファイルを22050Hzモノラルにデコード(メインスレッド) → Worker(player-tab-worker.js)でBasic Pitch → qn-tab-core.jsで整理・弦フレット割り当て → IndexedDB(qn_tab_db)に保存。
+// 中身はswitchPanel("tab"系 panelType:"guitartab")がQNTab.mount(host)で呼ぶ。グローバル設定(感度など)はSettings>一般の「Tab」(QNTab.settingsRows())。
+// 注意: 解析結果は曲の長さと別に持つので、Speed(再生速度)を変えても audio.currentTime(=原曲の秒)にそのまま合う。YouTube(ファイルが無い曲)は非対応。
+(function () {
+  "use strict";
+  var DB_NAME = "qn_tab_db", STORE = "tabs", REC_LIMIT = 60, MAX_SEC = 900, SR = 22050;
+  var K_SENS = "qn_tab_sens", K_MINLEN = "qn_tab_minlen", K_OVER = "qn_tab_overtone", K_ZOOM = "qn_tab_zoom", K_FOLLOW = "qn_tab_follow";
+  var SENS = { low: { onset: 0.4, frame: 0.35 }, normal: { onset: 0.25, frame: 0.25 }, high: { onset: 0.15, frame: 0.2 } };
+  var SENS_LABEL = { low: "Low", normal: "Normal", high: "High" };
+  var MINLEN = { 30: 3, 60: 5, 90: 8, 120: 10 }; // ms → フレーム数(86.13fps)
+  var ZOOMS = [30, 45, 60, 90, 135, 200];         // 1秒あたりのpx
+  var TUNING = QNTabCore.STD_TUNING, CAPO = 0;
+  var LG = 22, Y0 = 34, VIEW_H = Y0 + LG * 5 + 26; // 弦の間隔 / 1弦のy / キャンバス高さ
+  var PLAY_X = 0.3;                               // 再生位置の横位置(幅に対する割合)
+  var NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
+  function lsGet(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, String(v)); } catch (e) {} }
+
+  var st = {
+    key: "", name: "", phase: "idle", // idle | decoding | working | ready | error
+    prog: 0, backend: "", msg: "", rec: null,
+    sel: 0, edit: false,
+    follow: lsGet(K_FOLLOW, "1") !== "0",
+    zi: Math.max(0, Math.min(ZOOMS.length - 1, parseInt(lsGet(K_ZOOM, "3"), 10) || 3))
+  };
+  var view = { t: 0, free: false, until: 0 };
+  var job = null, root = null, els = null, wired = false, raf = 0, saveTimer = 0, maxD = 1;
+  var cv = null, cx = null, cw = 0, ch = VIEW_H, dpr = 1, colors = null, ro = null;
+
+  function A() { return document.getElementById("audio") || (typeof audio !== "undefined" ? audio : null); }
+  function curTrack() {
+    try { return (typeof playlist !== "undefined" && typeof currentPlaylistIndex !== "undefined" && currentPlaylistIndex >= 0) ? playlist[currentPlaylistIndex] : null; } catch (e) { return null; }
+  }
+  function keyOf(f) { return f ? [f.name || "", f.size || 0].join("|") : ""; }
+  function h(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function fmtT(s) { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2); }
+  function fmtD(s) { var d = Math.floor(Math.max(0, s) * 10); return Math.floor(d / 600) + ":" + ("0" + Math.floor(d / 10) % 60).slice(-2) + "." + (d % 10); }
+  function noteName(m) { return NAMES[m % 12] + (Math.floor(m / 12) - 1); }
+
+  // ---------- IndexedDB(解析結果。音声は入れない) ----------
+  function db() {
+    return new Promise(function (res, rej) {
+      var r = indexedDB.open(DB_NAME, 1);
+      r.onupgradeneeded = function () { r.result.createObjectStore(STORE, { keyPath: "key" }); };
+      r.onsuccess = function () { res(r.result); };
+      r.onerror = function () { rej(r.error); };
+    });
+  }
+  function idb(mode, fn) {
+    return db().then(function (d) {
+      return new Promise(function (res, rej) {
+        var tx = d.transaction(STORE, mode), out = fn(tx.objectStore(STORE));
+        tx.oncomplete = function () { d.close(); res(out && out.result); };
+        tx.onerror = tx.onabort = function () { d.close(); rej(tx.error); };
+      });
+    });
+  }
+  function recGet(key) { return idb("readonly", function (s) { return s.get(key); }).catch(function () { return null; }); }
+  function recPut(rec) {
+    rec.ts = Date.now();
+    return idb("readwrite", function (s) { return s.put(rec); }).then(trim).catch(function () {});
+  }
+  function recDel(key) { return idb("readwrite", function (s) { return s.delete(key); }).catch(function () {}); }
+  function trim() { // 古い順に捨てる(REC_LIMIT件まで)
+    return idb("readonly", function (s) { return s.getAll(); }).then(function (all) {
+      if (!all || all.length <= REC_LIMIT) return;
+      all.sort(function (a, b) { return a.ts - b.ts; });
+      var del = all.slice(0, all.length - REC_LIMIT);
+      return idb("readwrite", function (s) { del.forEach(function (r) { s.delete(r.key); }); });
+    }).catch(function () {});
+  }
+  function saveSoon() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () { if (st.rec) recPut(st.rec); }, 600);
+  }
+
+  // ---------- 解析 ----------
+  function params() {
+    var s = SENS[lsGet(K_SENS, "normal")] || SENS.normal, ml = parseInt(lsGet(K_MINLEN, "60"), 10);
+    return { onset: s.onset, frame: s.frame, minFrames: MINLEN[ml] || 5, minLenSec: (MINLEN[ml] ? ml : 60) / 1000, overtones: lsGet(K_OVER, "1") !== "0" };
+  }
+  function toMono(ab) {
+    var n = ab.length, ch0 = ab.getChannelData(0);
+    if (ab.numberOfChannels === 1) return new Float32Array(ch0); // コピー(転送で元を空にしないため)
+    var out = new Float32Array(n);
+    for (var c = 0; c < ab.numberOfChannels; c++) { var d = ab.getChannelData(c); for (var i = 0; i < n; i++) out[i] += d[i]; }
+    for (var j = 0; j < n; j++) out[j] /= ab.numberOfChannels;
+    return out;
+  }
+  function loadScript(src) {
+    return new Promise(function (res, rej) {
+      var s = document.createElement("script");
+      s.src = src; s.onload = res; s.onerror = function () { rej(new Error("Could not load the analysis engine")); };
+      document.head.appendChild(s);
+    });
+  }
+  // Workerが使えない時の予備(メインスレッドで同じ処理。重い曲では画面が固まる)
+  function runMain(j, samples, p) {
+    var frames = [], onsets = [];
+    loadScript("JS/basic-pitch/qn-basic-pitch.js").then(function () {
+      var L = window.QNBasicPitchLib;
+      return L.tf.ready().then(function () {
+        j.backend = L.tf.getBackend(); sync(j);
+        var bp = new L.BasicPitch("JS/basic-pitch/model/model.json");
+        return bp.evaluateModel(samples, function (f, o) {
+          for (var i = 0; i < f.length; i++) { frames.push(f[i]); onsets.push(o[i]); }
+        }, function (pr) { j.prog = pr; sync(j); });
+      }).then(function () {
+        var nn = L.noteFramesToTime(L.outputToNotesPoly(frames, onsets, p.onset, p.frame, p.minFrames));
+        finish(j, nn.map(function (n) { return [n.startTimeSeconds, n.durationSeconds, n.pitchMidi, n.amplitude]; }));
+      });
+    }).catch(function (e) { fail(j, e); });
+  }
+  function sync(j) { // ジョブの状態を画面へ(表示中の曲のジョブだけ)
+    if (st.key !== j.key) return;
+    st.phase = j.phase; st.prog = j.prog; st.backend = j.backend || st.backend;
+    renderStatus();
+  }
+  function fail(j, e) {
+    if (j.cancel) return;
+    job = null;
+    if (st.key === j.key) { st.phase = st.rec ? "ready" : "error"; st.msg = (e && e.message) || "Analysis failed"; render(); }
+  }
+  function finish(j, raw) {
+    if (j.cancel) return;
+    job = null;
+    var p = j.params;
+    var cl = QNTabCore.cleanup(raw.map(function (n) { return { t: n[0], d: n[1], midi: n[2], vel: Math.min(1, n[3]) }; }),
+      { tuning: TUNING, capo: CAPO, minVel: 0.1, minLen: p.minLenSec, overtones: p.overtones });
+    var fresh = cl.notes.map(function (n) { return { id: 0, t: n.t, d: n.d, midi: n.midi, vel: n.vel, string: 0, fret: 0, edited: false, hidden: false }; });
+    recGet(j.key).then(function (old) {
+      var notes = old && old.notes ? QNTabCore.mergeEdited(fresh, old.notes) : fresh;
+      notes.forEach(function (n, i) { n.id = i + 1; });
+      QNTabCore.fingering(notes, { tuning: TUNING, capo: CAPO });
+      var rec = { key: j.key, name: j.name, v: 1, dur: j.dur, params: { onset: p.onset, frame: p.frame, minFrames: p.minFrames, overtones: p.overtones },
+        tuning: TUNING, capo: CAPO, notes: notes, dropped: cl.dropped, backend: j.backend || "" };
+      recPut(rec);
+      if (st.key === j.key) { setRec(rec); st.phase = "ready"; st.msg = ""; render(); }
+    });
+  }
+  function analyze() {
+    var tr = curTrack();
+    if (job || !tr || !tr.file || !st.key) return;
+    var j = { key: st.key, name: st.name, phase: "decoding", prog: 0, backend: "", cancel: false, worker: null, params: params(), dur: 0 };
+    job = j; st.msg = ""; sync(j); render();
+    tr.file.arrayBuffer().then(function (ab) {
+      return new OfflineAudioContext(1, 1, SR).decodeAudioData(ab);
+    }).then(function (buf) {
+      if (j.cancel) return;
+      if (buf.duration > MAX_SEC) throw new Error("This track is too long for Tab (up to 15 minutes).");
+      j.dur = buf.duration;
+      var samples = toMono(buf);
+      j.phase = "working"; sync(j);
+      var w = null, got = false;
+      try { w = new Worker("JS/player-tab-worker.js"); } catch (e) { w = null; }
+      if (!w) { runMain(j, samples, j.params); return; }
+      j.worker = w;
+      w.onmessage = function (ev) {
+        var m = ev.data; got = true;
+        if (m.type === "backend") { j.backend = m.name; sync(j); }
+        else if (m.type === "progress") { j.prog = m.p; sync(j); }
+        else if (m.type === "done") { w.terminate(); j.worker = null; finish(j, m.notes); }
+        else if (m.type === "error") { w.terminate(); j.worker = null; fail(j, new Error(m.message)); }
+      };
+      // 転送するとsamplesが空になるので、Workerが起動できなかった時(メインスレッドで解析し直す)用に控えを複製しておく
+      var spare = samples.slice(0);
+      w.onerror = function (ev) {
+        w.terminate(); j.worker = null;
+        if (!got && !j.cancel) runMain(j, spare, j.params); else fail(j, new Error((ev && ev.message) || "Analysis failed"));
+      };
+      w.postMessage({ type: "run", samples: samples, params: j.params }, [samples.buffer]);
+    }).catch(function (e) { fail(j, e); });
+  }
+  function cancel() {
+    if (!job) return;
+    job.cancel = true;
+    if (job.worker) { job.worker.terminate(); job.worker = null; }
+    job = null;
+    st.phase = st.rec ? "ready" : "idle"; st.msg = "";
+    render();
+  }
+  function clearRec() {
+    if (!st.rec || job) return;
+    if (!window.confirm("Delete the Tab for this track, including your edits?")) return;
+    recDel(st.key);
+    st.rec = null; st.sel = 0; st.phase = "idle"; st.msg = "";
+    render();
+  }
+
+  function setRec(rec) {
+    st.rec = rec; st.sel = 0;
+    maxD = 1;
+    rec.notes.forEach(function (n) { if (n.d > maxD) maxD = Math.min(n.d, 12); });
+  }
+
+  // ---------- 曲の切替追従 ----------
+  function onTrackChange() {
+    var tr = curTrack(), key = tr && tr.file ? keyOf(tr.file) : "";
+    if (key === st.key) return;
+    st.key = key; st.name = tr ? (tr.name || (tr.file && tr.file.name) || "") : "";
+    st.rec = null; st.sel = 0; st.msg = ""; st.phase = "idle"; view.free = false;
+    if (job && job.key === key) { st.phase = job.phase; st.prog = job.prog; }
+    else if (key) {
+      recGet(key).then(function (rec) {
+        if (rec && st.key === key && !st.rec) { setRec(rec); if (st.phase === "idle") st.phase = "ready"; render(); }
+      });
+    }
+    render();
+  }
+  function wire() {
+    if (wired) return;
+    var m = A();
+    if (!m) return;
+    wired = true;
+    ["loadedmetadata", "emptied"].forEach(function (n) { m.addEventListener(n, function () { setTimeout(onTrackChange, 0); }); });
+    ["play", "seeked"].forEach(function (n) { m.addEventListener(n, function () { view.free = false; }); });
+  }
+
+  // ---------- 修正 ----------
+  function noteById(id) {
+    var ns = st.rec ? st.rec.notes : [];
+    for (var i = 0; i < ns.length; i++) if (ns[i].id === id) return ns[i];
+    return null;
+  }
+  function refinger() {
+    QNTabCore.fingering(st.rec.notes, { tuning: st.rec.tuning || TUNING, capo: st.rec.capo || 0 });
+    saveSoon();
+  }
+  function renderEdit() {
+    if (!els) return;
+    els.edit.textContent = "";
+    var n = st.edit && st.rec ? noteById(st.sel) : null;
+    els.edit.hidden = !n;
+    if (!n) return;
+    var cands = QNTabCore.candidates(n.midi, st.rec.tuning || TUNING, st.rec.capo || 0, QNTabCore.MAX_FRET);
+    var keyOfC = function (c) { return c.s + ":" + c.f; };
+    els.edit.appendChild(h("div", "qn-tab-selnote", noteName(n.midi) + "  ·  " + fmtD(n.t)));
+    var ui = QNSettingsUI.build([{ title: "", rows: [
+      { label: "Position", hint: "Other ways to play the same note.", type: "stepper",
+        values: function () { return cands.map(keyOfC); },
+        get: function () { return n.string + ":" + n.fret; },
+        set: function (v) {
+          var c = cands.filter(function (x) { return keyOfC(x) === v; })[0];
+          if (!c) return;
+          n.string = c.s; n.fret = c.f; n.edited = true; n.hidden = false; refinger(); renderEdit();
+        },
+        fmt: function (v) { var p = v.split(":"); return "String " + p[0] + " · Fret " + p[1]; } },
+      { label: "Hide this note", hint: "For notes that were picked up by mistake.", type: "switch",
+        get: function () { return !!n.hidden; },
+        set: function (on) { n.hidden = !!on; refinger(); renderEdit(); } }
+    ] }]);
+    els.edit.appendChild(ui.el);
+    var b = h("button", "qn-stem-btn", "Reset this note"); b.type = "button"; b.disabled = !n.edited && !n.hidden;
+    b.addEventListener("click", function () { n.edited = false; n.hidden = false; refinger(); renderEdit(); });
+    els.edit.appendChild(b);
+  }
+
+  // ---------- UI ----------
+  function render() { renderStatus(); renderEdit(); }
+  function renderStatus() {
+    if (!els) return;
+    var box = els.status, tr = curTrack();
+    box.textContent = "";
+    els.track.textContent = st.name || "—";
+    var ph = st.phase;
+    els.viewWrap.hidden = !(ph === "ready" && st.rec) && !(st.rec && (ph === "working" || ph === "decoding"));
+    els.ctl.hidden = !(st.rec && ph === "ready");
+    if (!tr || !tr.file) {
+      box.appendChild(h("p", "qn-stem-note", tr ? "Tab works with audio files added to the Library. It can't analyze YouTube tracks." : "Play a track to use Tab."));
+      return;
+    }
+    if (ph === "decoding" || ph === "working") {
+      box.appendChild(h("div", "qn-stem-label", ph === "decoding" ? "Decoding audio…" : (st.prog > 0 ? "Analyzing…" : "Loading model…")));
+      var bar = h("div", "qn-stem-bar"), fill = h("i"); fill.style.width = Math.round((ph === "decoding" ? 0.02 : st.prog) * 100) + "%"; bar.appendChild(fill); box.appendChild(bar);
+      if (ph === "working" && st.backend) box.appendChild(h("p", "qn-stem-note", st.backend === "webgl" ? "Using the GPU." : "No GPU available, so this will be slower."));
+      var cb = h("button", "qn-stem-btn", "Cancel"); cb.type = "button"; cb.addEventListener("click", cancel); box.appendChild(cb);
+      return;
+    }
+    if (st.msg) box.appendChild(h("p", "qn-stem-err", st.msg));
+    if (ph === "ready" && st.rec) {
+      var ns = st.rec.notes.filter(function (n) { return !n.hidden; }).length;
+      box.appendChild(h("p", "qn-stem-note", ns + " notes"));
+      var row = h("div", "qn-tab-btns");
+      var rb = h("button", "qn-stem-btn", "Re-analyze"); rb.type = "button"; rb.disabled = !!job; rb.addEventListener("click", analyze); row.appendChild(rb);
+      var xb = h("button", "qn-stem-btn", "Clear"); xb.type = "button"; xb.disabled = !!job; xb.addEventListener("click", clearRec); row.appendChild(xb);
+      box.appendChild(row);
+      return;
+    }
+    box.appendChild(h("p", "qn-stem-note", "Turn the notes in this track into guitar tab. Analysis runs in your browser and the audio is not uploaded."));
+    box.appendChild(h("p", "qn-stem-note", "It works best on a single guitar or a simple mix. Chords and busy mixes will have mistakes, and you can fix notes in Edit mode."));
+    var ab = h("button", "qn-stem-btn is-primary", "Analyze"); ab.type = "button"; ab.disabled = !!job;
+    ab.addEventListener("click", analyze);
+    box.appendChild(ab);
+    if (job && job.key !== st.key) box.appendChild(h("p", "qn-stem-note", "Another track is being analyzed."));
+  }
+
+  function build() {
+    root = h("div", "qn-stem qn-tab");
+    var t = h("div", "qn-stem-track"); t.appendChild(h("small", null, "Track")); var nm = h("span"); t.appendChild(nm); root.appendChild(t);
+    var status = h("div", "qn-tab-status"); root.appendChild(status);
+    var vw = h("div", "qn-tab-view"); cv = h("canvas"); vw.appendChild(cv); root.appendChild(vw);
+    var edit = h("div", "qn-tab-editbox"); root.appendChild(edit);
+    var ctl = h("div", "qn-tab-ctl");
+    var ui = QNSettingsUI.build([{ title: "", rows: [
+      { label: "Follow", hint: "Keep the playing position in view.", type: "switch",
+        get: function () { return st.follow; }, set: function (on) { st.follow = !!on; lsSet(K_FOLLOW, on ? "1" : "0"); if (on) view.free = false; } },
+      { label: "Zoom", type: "stepper", values: function () { return ZOOMS.map(function (z, i) { return i; }); },
+        get: function () { return st.zi; }, set: function (v) { st.zi = v; lsSet(K_ZOOM, v); },
+        fmt: function (v) { return "x" + (ZOOMS[v] / 90).toFixed(1).replace(/\.0$/, ""); } },
+      { label: "Edit", hint: "Tap a note to change where it is played, or hide it.", type: "switch",
+        get: function () { return st.edit; }, set: function (on) { st.edit = !!on; if (!on) st.sel = 0; renderEdit(); } }
+    ] }]);
+    ctl.appendChild(ui.el); root.appendChild(ctl);
+    els = { track: nm, status: status, viewWrap: vw, edit: edit, ctl: ctl, ui: ui };
+    cx = cv.getContext("2d");
+    cv.style.touchAction = "pan-y";
+    attachPointer();
+    if (window.ResizeObserver) { ro = new ResizeObserver(resize); ro.observe(vw); }
+    document.addEventListener("qn-bg-change", function () { colors = null; });
+  }
+  function resize() {
+    if (!els) return;
+    var w = els.viewWrap.clientWidth;
+    if (!w) return;
+    dpr = window.devicePixelRatio || 1; cw = w; ch = VIEW_H;
+    cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
+    cv.style.width = cw + "px"; cv.style.height = ch + "px";
+  }
+  function readColors() {
+    var cs = getComputedStyle(root);
+    function v(n, d) { var x = cs.getPropertyValue(n).trim(); return x || d; }
+    var ov = v("--ov", "255,255,255");
+    colors = { bg: v("--bg-0e0e13", "#0e0e13"), text: v("--text-bright", "#fff"), muted: v("--icon-muted", "#888"), accent: v("--accent-primary", "#3b82f6"),
+      line: "rgba(" + ov + ",0.22)", faint: "rgba(" + ov + ",0.09)", ov: ov };
+  }
+
+  // ---------- 描画 ----------
+  function lowerBound(ns, t) {
+    var lo = 0, hi = ns.length;
+    while (lo < hi) { var mid = (lo + hi) >> 1; if (ns[mid].t < t) lo = mid + 1; else hi = mid; }
+    return lo;
+  }
+  function visible(fn) {
+    var ns = st.rec.notes, pps = ZOOMS[st.zi], px = cw * PLAY_X, vt = view.t;
+    var t0 = vt - px / pps - 0.1, t1 = vt + (cw - px) / pps + 0.1;
+    for (var i = lowerBound(ns, t0 - maxD); i < ns.length && ns[i].t <= t1; i++) {
+      var n = ns[i];
+      if (n.hidden && !st.edit) continue;
+      if (!n.string) continue;
+      if (n.t + n.d < t0) continue;
+      fn(n, px + (n.t - vt) * pps, Y0 + (n.string - 1) * LG);
+    }
+  }
+  function draw() {
+    if (!st.rec || !cw || els.viewWrap.hidden) return;
+    if (!colors) readColors();
+    var a = A(), cur = a ? a.currentTime : 0, pps = ZOOMS[st.zi], px = cw * PLAY_X, C = colors;
+    if (view.free && view.until && Date.now() > view.until) view.free = false;
+    if (st.follow && !view.free) view.t = cur; // 追従OFFの間は位置を動かさない(ドラッグかタップで動く)
+    var vt = view.t;
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx.clearRect(0, 0, cw, ch);
+    // 時間目盛り
+    var step = pps >= 90 ? 1 : pps >= 45 ? 2 : 5;
+    cx.font = "10px system-ui, sans-serif"; cx.textAlign = "left"; cx.textBaseline = "alphabetic";
+    var ts = Math.max(0, Math.floor((vt - px / pps) / step) * step), te = vt + (cw - px) / pps;
+    for (var s = ts; s <= te; s += step) {
+      var x = px + (s - vt) * pps;
+      cx.fillStyle = C.faint; cx.fillRect(Math.round(x), 16, 1, ch - 16 - 4);
+      cx.fillStyle = C.muted; cx.fillText(fmtT(s), x + 3, 11);
+    }
+    // マーカー(Markersの印)
+    try {
+      if (typeof pins !== "undefined") pins.forEach(function (p) {
+        if (p.enabled === false) return;
+        var mx = px + (p.t - vt) * pps;
+        if (mx < -2 || mx > cw + 2) return;
+        cx.fillStyle = p.color || C.accent; cx.globalAlpha = 0.55; cx.fillRect(Math.round(mx), 16, 2, ch - 20); cx.globalAlpha = 1;
+      });
+    } catch (e) {}
+    // 弦
+    cx.fillStyle = C.line;
+    for (var i = 0; i < 6; i++) cx.fillRect(0, Y0 + i * LG, cw, 1);
+    // 再生位置(音より下に描く)
+    cx.fillStyle = C.accent; cx.fillRect(Math.round(px) - 1, 14, 2, ch - 16);
+    // 音
+    cx.font = "600 13px system-ui, sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle";
+    visible(function (n, x, y) {
+      var on = cur >= n.t && cur < n.t + Math.max(n.d, 0.12), past = n.t + n.d < cur;
+      if (n.d * pps > 6) { cx.fillStyle = C.accent; cx.globalAlpha = past ? 0.25 : 0.6; cx.fillRect(x, y - 1, Math.min(n.d * pps, cw), 2); cx.globalAlpha = 1; }
+      var label = String(n.fret), w = Math.max(18, cx.measureText(label).width + 8);
+      cx.globalAlpha = n.hidden ? 0.4 : (past && !on ? 0.5 : (n.vel < 0.3 ? 0.7 : 1));
+      cx.fillStyle = on ? C.accent : C.bg;
+      cx.fillRect(x - w / 2, y - 9, w, 18);
+      if (n.hidden) { cx.strokeStyle = C.muted; cx.setLineDash([3, 2]); cx.strokeRect(x - w / 2 + 0.5, y - 8.5, w - 1, 17); cx.setLineDash([]); }
+      cx.fillStyle = on ? "#fff" : C.text;
+      cx.fillText(label, x, y + 0.5);
+      cx.globalAlpha = 1;
+      if (n.edited) { cx.fillStyle = C.accent; cx.beginPath(); cx.arc(x + w / 2 - 1, y - 8, 2.5, 0, 6.2832); cx.fill(); }
+      if (st.edit && n.id === st.sel) { cx.strokeStyle = C.accent; cx.lineWidth = 2; cx.strokeRect(x - w / 2 - 2, y - 11, w + 4, 22); cx.lineWidth = 1; }
+    });
+  }
+  function loop() {
+    raf = 0;
+    if (!root || !root.isConnected) return;
+    try { draw(); } catch (e) {}
+    raf = requestAnimationFrame(loop);
+  }
+
+  // ---------- 操作(タップ=シーク/選択、ドラッグ=横スクロール) ----------
+  function seekTo(t) {
+    var a = A(); if (!a) return;
+    if (typeof beginSeek === "function") beginSeek();
+    a.currentTime = Math.max(0, Math.min(isFinite(a.duration) ? a.duration : t, t));
+  }
+  function attachPointer() {
+    var down = null;
+    cv.addEventListener("pointerdown", function (e) {
+      if (!st.rec) return;
+      down = { x: e.clientX, y: e.clientY, lx: e.clientX, moved: false, id: e.pointerId };
+      try { cv.setPointerCapture(e.pointerId); } catch (er) {}
+    });
+    cv.addEventListener("pointermove", function (e) {
+      if (!down || e.pointerId !== down.id) return;
+      if (!down.moved && Math.abs(e.clientX - down.x) < 6) return;
+      if (!down.moved) { down.moved = true; view.free = true; }
+      var pps = ZOOMS[st.zi], dur = st.rec.dur || 0;
+      view.t = Math.max(0, Math.min(dur || 1e9, view.t - (e.clientX - down.lx) / pps));
+      down.lx = e.clientX;
+      var a = A(); view.until = a && !a.paused ? Date.now() + 6000 : 0;
+    });
+    function end(e) {
+      if (!down || e.pointerId !== down.id) return;
+      var d = down; down = null;
+      if (d.moved || e.type === "pointercancel") return;
+      var r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top, best = null, bd = 1e9;
+      visible(function (n, x, y) {
+        var dx = Math.abs(mx - x), dy = Math.abs(my - y);
+        if (dx <= 16 && dy <= LG / 2 && dx + dy < bd) { bd = dx + dy; best = n; }
+      });
+      if (st.edit) { st.sel = best ? best.id : 0; renderEdit(); return; }
+      seekTo(best ? best.t : view.t + (mx - cw * PLAY_X) / ZOOMS[st.zi]);
+      view.free = false;
+    }
+    cv.addEventListener("pointerup", end);
+    cv.addEventListener("pointercancel", end);
+  }
+
+  // ---------- Settings>一般 の「Tab」行(グローバル設定。解析時に読む) ----------
+  function settingsRows() {
+    return [
+      { label: "Tab sensitivity", hint: "Higher picks up more notes but also more mistakes. Applies the next time you analyze.", type: "stepper",
+        values: function () { return ["low", "normal", "high"]; }, get: function () { var v = lsGet(K_SENS, "normal"); return SENS[v] ? v : "normal"; },
+        set: function (v) { lsSet(K_SENS, v); }, fmt: function (v) { return SENS_LABEL[v]; } },
+      { label: "Tab shortest note", hint: "Notes shorter than this are dropped.", type: "stepper",
+        values: function () { return ["30", "60", "90", "120"]; }, get: function () { var v = lsGet(K_MINLEN, "60"); return MINLEN[v] ? v : "60"; },
+        set: function (v) { lsSet(K_MINLEN, v); }, fmt: function (v) { return v + " ms"; } },
+      { label: "Tab overtone filter", hint: "Remove weak notes an octave or more above a louder note.", type: "switch",
+        get: function () { return lsGet(K_OVER, "1") !== "0"; }, set: function (on) { lsSet(K_OVER, on ? "1" : "0"); } }
+    ];
+  }
+
+  window.QNTab = {
+    mount: function (host) {
+      if (!root) build();
+      host.appendChild(root);
+      wire();
+      colors = null;
+      onTrackChange();
+      render();
+      els.ui.sync();
+      resize();
+      if (!raf) raf = requestAnimationFrame(loop);
+    },
+    settingsRows: settingsRows,
+    state: st
+  };
+})();

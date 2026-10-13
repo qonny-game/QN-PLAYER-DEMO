@@ -225,3 +225,8 @@
 - 設定行の`hiddenWhen()`は行を非表示にする(`disabledWhen`は薄くするだけ)。stepperの`tap:true`は「‹ ›」ではなく押すたびに次の値へ進むボタン(波形エリアの帯のView用)。
 ## 速度変更の方式(v4.47.0)
 - 自動はキー変更なし＆iOS以外のとき、`audio.preservesPitch=true`のブラウザ標準伸縮を使い、SoundTouchは素通し(playbackRate=1, pitch=1)。スマホでSoundTouchの処理が間に合わず音がスライスされるのを避ける。キー変更中とiOS(標準だと隙間が空く)はSoundTouch。切替は`?stretch=auto|native|st`か Settings>一般>再生。
+
+## Tab(v4.54.0)
+- Basic Pitch 1.0.1の`evaluateModel`は**22050Hzモノラル**のFloat32Array/AudioBufferしか受けない(READMEと違い自動リサンプルしない)。デコードは`OfflineAudioContext(1,1,22050)`でメインスレッド、Workerへ転送。
+- TF.jsを軽量化したバンドルでは、`tfjs-core`のchained ops(register_all_chained_opsのモジュール)を明示的にimportしないと`t.slice is not a function`になる(`build_basic_pitch.py`に入っている)。
+- panelTypeの`"tab"`は既存の`.mobile-tab-panel`用。Tabパネルは`"guitartab"`。

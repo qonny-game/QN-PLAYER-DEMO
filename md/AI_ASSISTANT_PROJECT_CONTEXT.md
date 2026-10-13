@@ -39,6 +39,7 @@ JS/
   qn-settings-ui.js           設定パネルの共通部品（QNSettingsUI。PLAYERとアプリが共用）
   player-text.js              Textタブ
   player-lyrics.js            歌詞表示(Textメモの行に時刻→シークバー下に現在行。CSS/style-lyrics.css)
+  player-tab.js               Tabパネル(`QNTab.mount`/`settingsRows`)。再生中のローカル曲をBasic Pitchで採譜しギターTABを描画。qn-tab-core.js=計算(DOMなし)、player-tab-worker.js=解析ワーカー、JS/basic-pitch/=Basic Pitch(Apache-2.0)。詳細`md/TAB_MODE.md`
   player-stem.js              Stem(分離UI/4・6パート再生。PC専用)とRec(録音トラック=クリップ配列。SPでも使える)の2パネル。`QNStem.mount`/`mountRec`、保存はIndexedDB。起動時から`wire()`で録音の再生は曲に追従(パネルを開かなくても鳴る)。player-stem-worker.js=Demucs実行ワーカー、JS/stem/=demucs-web(MIT)
   player-ui-pc-v2.js          【最大】唯一のUI実装。DOM組み立て・パネル・下段バー・波形（IIFE）。目次はPC_V2_FILE_INDEX.md
   player-quickpop.js          下部コントロールの長押しクイック設定
@@ -76,7 +77,7 @@ guide/                        アプリ内ガイド（静的HTML8枚＋guide.css
 
 **読み込み順（`index.html`）。順序で上書きが決まる／グローバルでつながるので変えない：**
 - CSS：core → playlist → markers → control-eq → controls → export → text → layout-sp → layout-pc-v2 → **layout-pc-v2-sp** → pcv2-panels → **bars** → settings → stem → quickpop → auth → shareware → theme → apps → **youtube** → tuner → pitch
-- JS：qn-i18n → qn-i18n-apps → qn-i18n-ja → jszip.min → player-shareware → qn-marker-core → player-core → **player-bars** → player-ui-shared → player-normalize → **qn-chord-core → player-chords → player-chord-edit → player-grid-click** → player-id3 → player-playlist → player-track-backup → player-sync → player-p2p → player-markers → **player-marker-presets** → player-control-eq → player-controls → qn-settings-ui → player-text → player-stem → player-ui-pc-v2 → player-quickpop → qn-wakelock → qn-apps → player-swipe → qn-app-youtube → qn-pitch-core → qn-app-tuner → qn-pitch-filters → qn-app-pitch → player-theme → player-auth
+- JS：qn-i18n → qn-i18n-apps → qn-i18n-ja → jszip.min → player-shareware → qn-marker-core → player-core → **player-bars** → player-ui-shared → player-normalize → **qn-chord-core → player-chords → player-chord-edit → player-grid-click** → player-id3 → player-playlist → player-track-backup → player-sync → player-p2p → player-markers → **player-marker-presets** → player-control-eq → player-controls → qn-settings-ui → player-text → player-stem → qn-tab-core → player-tab → player-ui-pc-v2 → player-quickpop → qn-wakelock → qn-apps → player-swipe → qn-app-youtube → qn-pitch-core → qn-app-tuner → qn-pitch-filters → qn-app-pitch → player-theme → player-auth
 
 新しい関数を他ファイルから使う時は「呼ぶ側より前に定義されているか」を確認する。共通ヘルパーは`player-core.js`が定位置。
 `player-ui-pc-v2.js`と`qn-app-youtube.js`は、それぞれ1つのIIFEの中で多数の変数を共有している。**ファイル分割はしない**（変数の持ち方から作り直しになるため）。
@@ -125,6 +126,7 @@ guide/                        アプリ内ガイド（静的HTML8枚＋guide.css
 | PITCH | localStorage／IndexedDB | `qn_pitch_filters` `qn_pitch_rec_meta`(録音の改名) `qn_pitch_panel_collapsed`／IndexedDB `qn_pitch_db`(録音実体。レコードは再putしない)（詳細は`PITCH_APP.md`） |
 | YouTube | localStorage | `qn_yt_items` `qn_yt_rate` `qn_yt_repeat` `qn_yt_preroll`（詳細は`YOUTUBE_APP.md`§4） |
 | 本体Library同期 | localStorage | `qn_libsync_meta_v1`（`player-sync.js`。詳細は`SYNC.md`） |
+| Tab | localStorage／IndexedDB | `qn_tab_sens`・`qn_tab_minlen`・`qn_tab_overtone`・`qn_tab_zoom`・`qn_tab_follow`／IndexedDB `qn_tab_db`(解析結果と修正。キーは`名前\|サイズ`、最大60曲)。バックアップ・同期の対象外 |
 | Stem／録音 | localStorage／IndexedDB／Cache API | `qn_stem_mode`(4\|6)・`qn_rec_offset_ms`／IndexedDB `qn_stem_db`(分離結果・録音トラック。キーは`名前\|サイズ`、6パートは`\|6`付き)／モデルはCache API `qn-stem-model-v1`。バックアップ・同期の対象外 |
 | 自動ノーマライズ | localStorage | `qn_norm_on` `qn_norm_target` `qn_norm_lv_<ファイル名>`（`player-normalize.js`） |
 | テーマ／Glow／EQ自作プリセット／伸縮方式 | localStorage | `qn_theme` `qn_glow`／`qnplayer_eq_custom_presets`／`qn_stretch_engine`(st\|native。URLの`?stretch=`でも切替) |

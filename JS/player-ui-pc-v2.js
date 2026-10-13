@@ -63,6 +63,13 @@
       icon: '<path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>'
     },
     {
+      // 【v4.54.0】Tab。再生中のローカル曲をBasic Pitchで採譜してギターTABを流す。SP幅でも使える。中身はplayer-tab.js(QNTab.mount)
+      id: "tab",
+      label: "Tab",
+      panelType: "guitartab",
+      icon: '<path d="M3 5h18v2H3V5zm0 4h18v2H3V9zm0 4h18v2H3v-2zm0 4h18v2H3v-2z"/>'
+    },
+    {
       id: "backup",
       label: "Backup",
       bottom: true,
@@ -1122,7 +1129,7 @@
     const rowsLook = [
       { label: "Background", hint: "Dark, or a light look (gray / beige). The accent color is set in Color", type: "stepper", values: () => window.QNBg.OPTIONS, get: () => window.QNBg.get(), set: v => window.QNBg.set(v), fmt: v => v === "dark" ? "Dark" : v === "gray" ? "Light gray" : "Light beige" }
     ];
-    const settingsSections = [{ title: "Appearance", rows: rowsLook }, { title: "Seek bar", rows: rowsBar }, { title: "Playback", rows: rowsPlay }, { title: "Language", rows: rowsLang }, { title: "Tips", rows: rowsTips }];
+    const settingsSections = [{ title: "Appearance", rows: rowsLook }, { title: "Seek bar", rows: rowsBar }, { title: "Playback", rows: rowsPlay }, { title: "Language", rows: rowsLang }, { title: "Tab", rows: window.QNTab ? window.QNTab.settingsRows() : [] }, { title: "Tips", rows: rowsTips }];
     settingsSections.onChange = () => { if (window.qnBarStripSync) window.qnBarStripSync(); };
     // 階層: Settings直下は一覧(General / Backup / Import / Color ...)。General=Seek bar・Playback・Language・Tipsの中身(generalBody)
     settingsUI = QNSettingsUI.build(settingsSections);
@@ -1269,6 +1276,8 @@
       if (window.QNStem) window.QNStem.mount(panelBody);
     } else if (item.panelType === "rec") {
       if (window.QNStem) window.QNStem.mountRec(panelBody);
+    } else if (item.panelType === "guitartab") {
+      if (window.QNTab) window.QNTab.mount(panelBody);
     } else if (item.panelType === "chords") {
       panelBody.appendChild(ensureChordsBody());
       chordsUI.sync(); chordsUI.refresh();
