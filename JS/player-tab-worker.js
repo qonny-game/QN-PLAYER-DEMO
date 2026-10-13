@@ -21,6 +21,8 @@ self.onmessage = function (e) {
     load();
     return L.tf.ready();
   }).then(function () {
+    return m.cpu ? L.tf.setBackend("cpu") : null; // GPUが応答しない時の切替用
+  }).then(function () {
     post({ type: "backend", name: L.tf.getBackend() });
     if (!bp) bp = new L.BasicPitch(BASE + "basic-pitch/model/model.json");
     return bp.evaluateModel(m.samples, function (f, o) {

@@ -1105,6 +1105,7 @@
     const rowsPlay = [
       { label: "Loop pre/post-roll", hint: "Seconds added around loop", type: "node", node: preCtl },
       { label: "Skip buttons", hint: "Seconds for back / forward", type: "stepper", values: () => SKIP_OPTIONS, get: () => skipSec, set: v => setSkipSec(v), fmt: v => v + "s" },
+      { label: "Keep screen on", hint: "Keep the screen awake while playing. Turn off to save battery; if playback stops when the screen turns off, turn it back on", type: "switch", get: () => !(window.QNWake && QNWake.isKeepOn && !QNWake.isKeepOn()), set: on => { if (window.QNWake && QNWake.setKeepOn) QNWake.setKeepOn(on); } },
       { label: "Auto normalize", hint: "Match volume across tracks", type: "switch", get: () => !!(window.QNNorm && QNNorm.isOn()), set: on => { if (window.QNNorm) QNNorm.setOn(on); } },
       { label: "Normalize level", hint: "Target loudness (higher = louder)", type: "stepper", values: () => (window.QNNorm ? QNNorm.TARGETS : [-18]),
         get: () => (window.QNNorm ? QNNorm.getTarget() : -18), set: v => { if (window.QNNorm) QNNorm.setTarget(v); }, fmt: v => v + " dB", disabledWhen: () => !(window.QNNorm && QNNorm.isOn()) },
@@ -1681,26 +1682,33 @@
     activate();
   }
 
-  let pcv2WaveRafId = null;
-
-  // 【v2.13.4 負荷対策】毎フレーム全再描画がiOSで強制再読み込みの原因だった。波形/シークバーの描画本体はQNBars.draw()(player-bars.js。署名が同じ行はスキップ、見えている行だけ描画)。ここはPCV2_WAVE_INTERVAL_MS間隔に間引いた呼び出しと再描画の合図だけ。rAFループを増やさない
-  const PCV2_WAVE_INTERVAL_MS = 100;
-  let pcv2LastDrawAt = 0;
+  // 【v4.55.0 省電力】60fpsのrAFで毎フレーム起きて100msに1回だけ描く方式をやめ、タイマーで間隔を直接決める。再生中=100ms / 停止中=300ms(ピン・色・波形の変化を拾う保険) / 非表示=停止(戻った時に再開)
+  const PCV2_WAVE_PLAY_MS = 100;
+  const PCV2_WAVE_IDLE_MS = 300;
+  let pcv2WaveTimer = 0;
 
   function pcv2DrawWaveform(force) {
     QNBars.draw(!!force);
   }
 
-  function pcv2WaveLoop(now) {
-    pcv2WaveRafId = requestAnimationFrame(pcv2WaveLoop);
+  function pcv2WaveLoop() {
+    pcv2WaveTimer = 0;
     if (document.hidden) return;
-    if (!document.body.classList.contains("pc-v2-active")) return;
-    if (now - pcv2LastDrawAt < PCV2_WAVE_INTERVAL_MS) return;
-    pcv2LastDrawAt = now;
-    pcv2DrawWaveform(false);
-    if (window.pcv2SyncBarMixer) window.pcv2SyncBarMixer();
+    if (document.body.classList.contains("pc-v2-active")) {
+      pcv2DrawWaveform(false);
+      if (window.pcv2SyncBarMixer) window.pcv2SyncBarMixer();
+    }
+    const playing = typeof audio !== "undefined" && audio && !audio.paused;
+    pcv2WaveTimer = setTimeout(pcv2WaveLoop, playing ? PCV2_WAVE_PLAY_MS : PCV2_WAVE_IDLE_MS);
   }
-  pcv2WaveRafId = requestAnimationFrame(pcv2WaveLoop);
+  function pcv2WaveKick() {
+    if (pcv2WaveTimer) clearTimeout(pcv2WaveTimer);
+    pcv2WaveTimer = 0;
+    if (!document.hidden) pcv2WaveTimer = setTimeout(pcv2WaveLoop, 0);
+  }
+  document.addEventListener("visibilitychange", pcv2WaveKick);
+  if (typeof audio !== "undefined" && audio) ["play", "pause", "loadedmetadata"].forEach(ev => audio.addEventListener(ev, pcv2WaveKick));
+  pcv2WaveKick();
 
   window.addEventListener("resize", () => {
     QNBars.markGeomDirty();

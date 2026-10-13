@@ -57,7 +57,7 @@
     });
     if (ptr >= lyIdx.length) ptr = Math.max(0, lyIdx.length - 1);
   }
-  function load() { ptr = 0; syncOn = false; rebuild(readStored()); render(); lastActive = -2; tick(true); }
+  function load() { ptr = 0; syncOn = false; rebuild(readStored()); render(); lastActive = -2; tick(true); if (typeof syncTimer === "function") syncTimer(); }
   function timedCount() { return lines.reduce(function (a, l) { return a + (l.ly && l.t != null ? 1 : 0); }, 0); }
 
   // ---------- Textパネル(行の一覧・タップ打ち) ----------
@@ -72,10 +72,10 @@
       if (!a) return;
       a.addEventListener("input", function () {
         if (a.value.length >= NOTE_MAX && Date.now() - warned > 3000) { warned = Date.now(); toast("Text limit reached (" + NOTE_MAX + " characters)"); }
-        if (a === ta) { rebuild(); save(); render(); lastActive = -2; tick(true); }
+        if (a === ta) { rebuild(); save(); render(); lastActive = -2; tick(true); syncTimer(); }
       });
     });
-    if (fs) fs.addEventListener("input", function () { setTimeout(function () { rebuild(); save(); render(); lastActive = -2; tick(true); }, 0); });
+    if (fs) fs.addEventListener("input", function () { setTimeout(function () { rebuild(); save(); render(); lastActive = -2; tick(true); syncTimer(); }, 0); });
 
     elBox = document.createElement("div"); elBox.id = "qnLyBox";
     elBar = document.createElement("div"); elBar.className = "qn-ly-bar";
@@ -203,7 +203,12 @@
     if (a < 0) dispLines[2].textContent = at(0);
     d.classList.toggle("is-pre", a < 0);
   }
-  function startTimer() { if (!timer) timer = setInterval(function () { tick(false); }, 120); }
+  // 【v4.55.0 省電力】120msタイマーは「再生中・表示中・時刻付きの歌詞がある」時だけ(以前は常時)。シークや曲の読み込みはイベントでtick(true)する
+  function syncTimer() {
+    var need = typeof audio !== "undefined" && !audio.paused && !document.hidden && showPref() && timedCount() > 0;
+    if (need && !timer) timer = setInterval(function () { tick(false); }, 120);
+    else if (!need && timer) { clearInterval(timer); timer = 0; }
+  }
 
   // ---------- バックアップ ----------
   function exportFor(n) {
@@ -218,7 +223,9 @@
   window.QNLyrics = { load: load, setEditing: setEditing, exportFor: exportFor, importFor: importFor, NOTE_MAX: NOTE_MAX };
 
   function init() {
-    build(); ensureDisp(); startTimer(); load();
+    build(); ensureDisp(); load(); syncTimer();
+    if (typeof audio !== "undefined") ["play", "playing", "pause", "ended"].forEach(function (ev) { audio.addEventListener(ev, function () { syncTimer(); tick(true); }); });
+    document.addEventListener("visibilitychange", syncTimer);
     if (typeof audio !== "undefined") ["seeked", "loadedmetadata"].forEach(function (ev) { audio.addEventListener(ev, function () { tick(true); }); });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", function () { setTimeout(init, 0); });

@@ -169,3 +169,7 @@
 - 4.53.1 iPhoneで別アプリ切替(画面下スワイプ)から戻った時に、Speed/Keyを入れ直して音程のずれを防止(原因はiOSのAudioContext一時停止→再開と推定)
 - 4.53.2 マーカーのメモ(Solo等)がtitle属性だけカタカナ翻訳される不具合を修正
 - 4.54.0 Tabパネルを追加(再生中のローカル曲をBasic Pitchでブラウザ内採譜しギターTABを流す。弦フレット自動割り当て+Editで修正。SPでも使える)。詳細はTAB_MODE.md
+- 4.54.1 Tab: WebGLの解析がWorkerで止まる不具合を修正(WebGLはメインスレッドで実行)。TUNER/PITCH: マイクが開けない時の原因表示を詳しくした
+- 4.54.2 TUNER/PITCH: マイクを開けない時の表示に失敗した段階(getUserMedia/analyser)を追加
+- 4.54.3 Tab: GPUの進捗が30秒動かない/失敗した時に自動でCPUへ切り替え。進捗%と処理方式の表示を追加
+- 4.55.0 省電力: 停止中の常時rAF/タイマーを撤去(再生中・イベント時だけ動作)、Tabの描画間引き、波形dpr上限2、Settings>Playbackに「Keep screen on」、power_check.py追加

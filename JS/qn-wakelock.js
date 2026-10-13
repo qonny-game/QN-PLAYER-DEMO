@@ -8,8 +8,12 @@
   var sentinel = null;
   var pending = false;
 
+  // 【v4.55.0】Settings>Playbackの「Keep screen on」。オフならPLAYERの再生中でも画面は自動で消えてよい(電池を節約)。YouTube等の他の理由は影響しない
+  var KEEP_KEY = "qn_keep_screen_on";
+  function keepOn() { try { return localStorage.getItem(KEEP_KEY) !== "0"; } catch (e) { return true; } }
+
   function wanted() {
-    for (var k in reasons) if (reasons[k]) return true;
+    for (var k in reasons) if (reasons[k] && !(k === "player" && !keepOn())) return true;
     return false;
   }
 
@@ -84,6 +88,10 @@
     if (ac && ac.addEventListener) ac.addEventListener("statechange", function () { if (ac.state === "running") reapplyRate(); });
   } catch (e) {}
 
-  window.QNWake = { set: set };
+  window.QNWake = {
+    set: set,
+    isKeepOn: keepOn,
+    setKeepOn: function (on) { try { localStorage.setItem(KEEP_KEY, on ? "1" : "0"); } catch (e) {} sync(); }
+  };
   if (!hookAudio()) document.addEventListener("DOMContentLoaded", hookAudio);
 })();

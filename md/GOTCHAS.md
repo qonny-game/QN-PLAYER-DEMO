@@ -229,4 +229,12 @@
 ## Tab(v4.54.0)
 - Basic Pitch 1.0.1の`evaluateModel`は**22050Hzモノラル**のFloat32Array/AudioBufferしか受けない(READMEと違い自動リサンプルしない)。デコードは`OfflineAudioContext(1,1,22050)`でメインスレッド、Workerへ転送。
 - TF.jsを軽量化したバンドルでは、`tfjs-core`のchained ops(register_all_chained_opsのモジュール)を明示的にimportしないと`t.slice is not a function`になる(`build_basic_pitch.py`に入っている)。
+- **TF.jsのWebGLバックエンドをWorkerで動かさない**(evaluateModelが進捗0のまま止まる)。WebGLはメインスレッド、CPU計算だけWorker(`player-tab.js`の`hasWebGL`)。
 - panelTypeの`"tab"`は既存の`.mobile-tab-panel`用。Tabパネルは`"guitartab"`。
+
+## 省電力(v4.55.0)
+- **常時回るrAF・setIntervalを新設しない。** 「何もしていない停止中」に毎秒動くコールバックが電池を食う(v4.54.xまでは停止中でも毎秒約220回)。ルール: 再生中だけ回す / イベント(play・pause・seeked・timeupdate等)で1回ずつ回す / 非表示(`document.hidden`)では止める。timer・rAFの登録・解除は`play/pause/visibilitychange`に合わせる(例: `kickUpdateBars` `syncBgLoopTimer` `armSync`(Stem) `syncTimer`(歌詞) `pcv2WaveKick`)。
+- 新しいループ/タイマーを足したら`python3 -I md/tools/power_check.py`で前後を比べる(停止中のコールバックが数回/秒以下であること)。
+- A-Bループ・スキップ区間・シーク中だけは折り返しの精度のため再生中にrAFを毎フレーム回す(`updateBarsNeedsFrames`)。それ以外の再生中は時刻表示だけなので100ms間隔。
+- `input[type=range]`のつまみ色(`--range-progress`)は、値の代入フック+inputイベント+1秒の保険で更新(`syncRangeProgressLoop`)。valueAsNumberやstepUpでの更新は即時には拾えない(最大1秒遅れ)。
+- 波形canvasのdprは2までに制限(`g.dpr`)。Settings>Playbackの「Keep screen on」(`qn_keep_screen_on`)をオフにするとPLAYERの再生中でもWake Lockを取らない(YouTube等は別)。

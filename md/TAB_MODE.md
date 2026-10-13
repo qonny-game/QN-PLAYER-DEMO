@@ -13,7 +13,7 @@
 
 ## 流れ
 1. Analyze → `file.arrayBuffer()` → `new OfflineAudioContext(1,1,22050).decodeAudioData()`でモノラル22050Hzにする（**Basic Pitch 1.0.1は22050Hz以外だと例外**。READMEの「自動リサンプル」は嘘）。上限900秒。
-2. `Float32Array`をWorkerへ転送（AudioBuffer/AudioContextはWorkerに無いので、デコードはメインスレッド）。Workerが起動できない時だけメインスレッドで同じ処理（重い）。
+2. WebGLが使える環境は**メインスレッド**で実行(`runMain`。GPU計算は非同期なので画面は固まりにくい)。WebGLが無い(CPU計算)時だけ`Float32Array`をWorkerへ転送して実行。**WorkerのWebGLは進捗0のまま止まる**(実機とソフトウェアGLで確認)。AudioBuffer/AudioContextはWorkerに無いので、デコードは常にメインスレッド。 GPUの進捗が30秒(`STALL_MS`)動かない/GPUで失敗した時は、自動でCPU(Workerに`cpu:true`)に切り替える(`toCpu`。古い実行は世代番号`j.run`で無視し、進捗コールバックの例外で中断)。
 3. `cleanup` → ID付与 → `fingering` → IndexedDB `qn_tab_db`（ストア`tabs`、キー`名前|サイズ`）。最大60曲、古い順に削除。
 4. 再解析は`mergeEdited`で、修正済み（`edited`/`hidden`）のノートを引き継ぐ。
 
@@ -30,5 +30,5 @@
 
 ## 精度と限界（実装時の確認）
 - 合成のプラック音（単音12個）で12/12検出。倍音の誤検出は`cleanup`で減らすが、実曲（歪み・和音・バンド）での精度は**未確認**。実曲で`W`（`qn-tab-core.js`のコスト重み）と感度の既定値を調整すること。
-- ヘッドレスChromiumにはWebGLが無くCPUで動く（7.6秒の音で約10秒）。実機ではWebGLの速度になるはずだが**未確認**（Worker内のWebGLが使えない環境ではCPUになり遅い。画面に「No GPU available」と出る）。
+- ヘッドレスChromiumはCPU(7.6秒の音で約10秒)。ソフトウェアGL(swiftshader: `--use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader`)でWebGL経路を確認(メインスレッドで完走、Workerだと止まる)。実GPUでの速度は**未確認**。
 - 未実装: Backup/Import・同期への組み込み、区間（A-B）だけの表示、Keyに連動した移調表示、小節線のGrid連携、チューニング/カポの画面、TAB譜のテキスト書き出し、WASMバックエンド。

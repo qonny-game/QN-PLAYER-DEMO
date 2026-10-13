@@ -156,8 +156,21 @@
       });
     });
   }
+  // 【v4.55.0 省電力】80msの追従タイマーは「再生中で、Stemのパートか録音クリップがある」間だけ(以前は起動時から常時)。
+  // 開始/停止は armSync() が毎回その場で判定する。パート/クリップを作る・壊す所と、マスターの再生イベントから呼ぶ
+  function syncNeeded() {
+    var m = A();
+    if (!m || m.paused) return false;
+    if (st.els) return true;
+    return rec.tracks.some(function (t) { return t.clips.some(function (c) { return !!c.el; }); });
+  }
+  function armSync() {
+    var need = syncNeeded();
+    if (need && !syncTimer) syncTimer = setInterval(function () { if (syncNeeded()) followAll(false); else armSync(); }, 80);
+    else if (!need && syncTimer) { clearInterval(syncTimer); syncTimer = 0; }
+  }
   var masterEvents = ["play", "pause", "seeked", "ratechange", "waiting", "playing"];
-  function onMaster(ev) { if (ev.type === "play") busResume(); followAll(ev.type === "seeked" || ev.type === "play"); }
+  function onMaster(ev) { if (ev.type === "play") busResume(); followAll(ev.type === "seeked" || ev.type === "play"); armSync(); }
   function enable() {
     var m = A();
     if (!m || !st.blobs || st.active) return;
@@ -174,6 +187,7 @@
     m.muted = true;
     applyVol();
     followAll(true);
+    armSync();
   }
   function disable() {
     var m = A();
@@ -182,6 +196,7 @@
     if (st.els) parts().forEach(function (p) { try { st.els[p.id].pause(); st.els[p.id].removeAttribute("src"); st.els[p.id].load(); } catch (x) {} });
     if (st.urls) parts().forEach(function (p) { URL.revokeObjectURL(st.urls[p.id]); });
     st.els = st.urls = null; st.active = false;
+    armSync();
   }
 
   // ---------- 録音トラック(4本)。1トラック=クリップ(WAV1本+曲上の開始位置)の並び。新しい録音が重なった部分は古い方を切る(パンチイン) ----------
@@ -199,6 +214,7 @@
     if (c.el) { try { c.el.pause(); } catch (x) {} unwireEl(c.el); try { c.el.removeAttribute("src"); c.el.load(); } catch (x) {} }
     if (c.url) URL.revokeObjectURL(c.url);
     c.el = null; c.url = "";
+    armSync();
   }
   function clipMakeEl(c) {
     clipFree(c);
@@ -206,6 +222,7 @@
     c.el = new Audio(); c.el.preload = "auto"; c.el.src = c.url;
     try { c.el.preservesPitch = true; } catch (x) {}
     wireEl(c.el);
+    armSync();
   }
   function sortClips(t) { t.clips.sort(function (a, b) { return a.startPos - b.startPos; }); }
   function recTotal() { var s = 0; rec.tracks.forEach(function (t) { t.clips.forEach(function (c) { s += c.dur; }); }); return s; }
@@ -533,7 +550,6 @@
     wired = true;
     ["loadedmetadata", "emptied"].forEach(function (n) { m.addEventListener(n, function () { setTimeout(onTrackChange, 0); }); });
     masterEvents.forEach(function (n) { m.addEventListener(n, onMaster); });
-    syncTimer = setInterval(function () { followAll(false); }, 80);
     m.addEventListener("ended", function () { if (rec.cur >= 0) recStop(); });
   }
 

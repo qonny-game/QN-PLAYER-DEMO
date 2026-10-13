@@ -91,12 +91,25 @@
       } catch (err) {
         try { ctx.close(); } catch (e) {}
         ctx = null;
+        if (err && !err.step) err.step = "getUserMedia";
         throw err;
       }
-      var src = ctx.createMediaStreamSource(stream);
-      analyser = ctx.createAnalyser();
-      analyser.fftSize = fftSize;
-      src.connect(analyser);
+      var src;
+      try {
+        // 使える音声トラックが無い(端末側でマイクが切られた/他アプリが占有など)と、createMediaStreamSourceがInvalidStateErrorになる
+        var trk = stream.getAudioTracks();
+        if (!trk.length || trk[0].readyState !== "live") { var ne = new Error("no live audio track"); ne.name = "NotReadableError"; throw ne; }
+        src = ctx.createMediaStreamSource(stream);
+        analyser = ctx.createAnalyser();
+        analyser.fftSize = fftSize;
+        src.connect(analyser);
+      } catch (err2) {
+        stream.getTracks().forEach(function (t) { t.stop(); }); stream = null;
+        try { ctx.close(); } catch (e) {}
+        ctx = null;
+        if (err2 && !err2.step) err2.step = "analyser";
+        throw err2;
+      }
       dataBuf = new Float32Array(analyser.fftSize);
       corrBuf = new Float32Array(analyser.fftSize);
       running = true;
@@ -128,7 +141,7 @@
     if (name === "NotFoundError" || name === "OverconstrainedError") return "マイクが見つかりません";
     if (name === "NotAllowedError" || name === "SecurityError") return "マイクが許可されていません（端末の設定で、このブラウザのマイクを許可してください）";
     if (name === "NotReadableError" || name === "AbortError") return "マイクを使えません（他のアプリが使用中の可能性があります）";
-    return "マイクを開始できませんでした（" + (name || "unknown") + "）";
+    return "マイクを開始できませんでした（" + (name || "unknown") + (err && err.step ? " / " + err.step : "") + (msg ? ": " + msg : "") + "）";
   }
 
   window.QNPitchCore = {

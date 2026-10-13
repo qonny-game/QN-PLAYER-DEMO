@@ -13,6 +13,7 @@
   var TUNING = QNTabCore.STD_TUNING, CAPO = 0;
   var LG = 22, Y0 = 34, VIEW_H = Y0 + LG * 5 + 26; // 弦の間隔 / 1弦のy / キャンバス高さ
   var PLAY_X = 0.3;                               // 再生位置の横位置(幅に対する割合)
+  var STALL_MS = 30000; // GPU(WebGL)の進捗がこの間動かなければCPUに切り替える
   var NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
   function lsGet(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
@@ -21,12 +22,13 @@
   var st = {
     key: "", name: "", phase: "idle", // idle | decoding | working | ready | error
     prog: 0, backend: "", msg: "", rec: null,
-    sel: 0, edit: false,
+    sel: 0, edit: false, ver: 0,
     follow: lsGet(K_FOLLOW, "1") !== "0",
     zi: Math.max(0, Math.min(ZOOMS.length - 1, parseInt(lsGet(K_ZOOM, "3"), 10) || 3))
   };
   var view = { t: 0, free: false, until: 0 };
   var job = null, root = null, els = null, wired = false, raf = 0, saveTimer = 0, maxD = 1;
+  var lastSig = "", dragging = false;
   var cv = null, cx = null, cw = 0, ch = VIEW_H, dpr = 1, colors = null, ro = null;
 
   function A() { return document.getElementById("audio") || (typeof audio !== "undefined" ? audio : null); }
@@ -89,6 +91,9 @@
     for (var j = 0; j < n; j++) out[j] /= ab.numberOfChannels;
     return out;
   }
+  function hasWebGL() {
+    try { var c = document.createElement("canvas"); return !!(c.getContext("webgl2") || c.getContext("webgl")); } catch (e) { return false; }
+  }
   function loadScript(src) {
     return new Promise(function (res, rej) {
       var s = document.createElement("script");
@@ -98,7 +103,7 @@
   }
   // Workerが使えない時の予備(メインスレッドで同じ処理。重い曲では画面が固まる)
   function runMain(j, samples, p) {
-    var frames = [], onsets = [];
+    var frames = [], onsets = [], my = j.run = (j.run || 0) + 1; // 世代番号: 切り替えた後の古い実行の結果・エラーは無視する
     loadScript("JS/basic-pitch/qn-basic-pitch.js").then(function () {
       var L = window.QNBasicPitchLib;
       return L.tf.ready().then(function () {
@@ -106,24 +111,36 @@
         var bp = new L.BasicPitch("JS/basic-pitch/model/model.json");
         return bp.evaluateModel(samples, function (f, o) {
           for (var i = 0; i < f.length; i++) { frames.push(f[i]); onsets.push(o[i]); }
-        }, function (pr) { j.prog = pr; sync(j); });
+        }, function (pr) {
+          if (my !== j.run) throw new Error("aborted"); // evaluateModelは進捗コールバックの例外で止められる
+          if (pr !== j.prog) j.lastAt = Date.now();
+          j.prog = pr; sync(j);
+        });
       }).then(function () {
+        if (my !== j.run) return;
         var nn = L.noteFramesToTime(L.outputToNotesPoly(frames, onsets, p.onset, p.frame, p.minFrames));
         finish(j, nn.map(function (n) { return [n.startTimeSeconds, n.durationSeconds, n.pitchMidi, n.amplitude]; }));
       });
-    }).catch(function (e) { fail(j, e); });
+    }).catch(function (e) {
+      if (my !== j.run) return;
+      // GPU(WebGL)での実行が失敗した時はCPUでやり直す
+      if (j.backend === "webgl" && !j.cpuTried) { toCpu(j, "The GPU failed. Using the CPU, which is slower."); return; }
+      fail(j, e);
+    });
   }
   function sync(j) { // ジョブの状態を画面へ(表示中の曲のジョブだけ)
     if (st.key !== j.key) return;
-    st.phase = j.phase; st.prog = j.prog; st.backend = j.backend || st.backend;
+    st.phase = j.phase; st.prog = j.prog; st.backend = j.backend || st.backend; st.note = j.note || "";
     renderStatus();
   }
   function fail(j, e) {
+    if (j.timer) { clearInterval(j.timer); j.timer = 0; }
     if (j.cancel) return;
     job = null;
     if (st.key === j.key) { st.phase = st.rec ? "ready" : "error"; st.msg = (e && e.message) || "Analysis failed"; render(); }
   }
   function finish(j, raw) {
+    if (j.timer) { clearInterval(j.timer); j.timer = 0; }
     if (j.cancel) return;
     job = null;
     var p = j.params;
@@ -140,6 +157,35 @@
       if (st.key === j.key) { setRec(rec); st.phase = "ready"; st.msg = ""; render(); }
     });
   }
+  // CPU計算(またはWebGLが無い環境)用。Workerで実行して画面を止めない。cpu=trueならバックエンドをCPUに固定
+  function runWorker(j, samples, cpu) {
+    var w = null, got = false, my = j.run = (j.run || 0) + 1;
+    try { w = new Worker("JS/player-tab-worker.js"); } catch (e) { w = null; }
+    if (!w) { runMain(j, samples, j.params); return; }
+    j.worker = w; j.backend = cpu ? "cpu" : j.backend;
+    w.onmessage = function (ev) {
+      var m = ev.data; got = true;
+      if (my !== j.run) return;
+      if (m.type === "backend") { j.backend = m.name; sync(j); }
+      else if (m.type === "progress") { if (m.p !== j.prog) j.lastAt = Date.now(); j.prog = m.p; sync(j); }
+      else if (m.type === "done") { w.terminate(); j.worker = null; finish(j, m.notes); }
+      else if (m.type === "error") { w.terminate(); j.worker = null; fail(j, new Error(m.message)); }
+    };
+    // 転送するとsamplesが空になるので、Workerが起動できなかった時(メインスレッドで解析し直す)用に控えを複製しておく
+    var spare = samples.slice(0);
+    w.onerror = function (ev) {
+      w.terminate(); j.worker = null;
+      if (!got && !j.cancel) runMain(j, spare, j.params); else fail(j, new Error((ev && ev.message) || "Analysis failed"));
+    };
+    w.postMessage({ type: "run", samples: samples, params: j.params, cpu: !!cpu }, [samples.buffer]);
+  }
+  function toCpu(j, note) {
+    if (j.cpuTried || j.cancel || !j.samples) return;
+    j.cpuTried = true; j.prog = 0; j.lastAt = Date.now(); j.note = note; j.backend = "cpu";
+    if (j.timer) { clearInterval(j.timer); j.timer = 0; }
+    sync(j);
+    runWorker(j, j.samples.slice(0), true); // 世代番号が進むので、止まったWebGLの実行は次の進捗コールバックで中断される
+  }
   function analyze() {
     var tr = curTrack();
     if (job || !tr || !tr.file || !st.key) return;
@@ -153,29 +199,24 @@
       j.dur = buf.duration;
       var samples = toMono(buf);
       j.phase = "working"; sync(j);
-      var w = null, got = false;
-      try { w = new Worker("JS/player-tab-worker.js"); } catch (e) { w = null; }
-      if (!w) { runMain(j, samples, j.params); return; }
-      j.worker = w;
-      w.onmessage = function (ev) {
-        var m = ev.data; got = true;
-        if (m.type === "backend") { j.backend = m.name; sync(j); }
-        else if (m.type === "progress") { j.prog = m.p; sync(j); }
-        else if (m.type === "done") { w.terminate(); j.worker = null; finish(j, m.notes); }
-        else if (m.type === "error") { w.terminate(); j.worker = null; fail(j, new Error(m.message)); }
-      };
-      // 転送するとsamplesが空になるので、Workerが起動できなかった時(メインスレッドで解析し直す)用に控えを複製しておく
-      var spare = samples.slice(0);
-      w.onerror = function (ev) {
-        w.terminate(); j.worker = null;
-        if (!got && !j.cancel) runMain(j, spare, j.params); else fail(j, new Error((ev && ev.message) || "Analysis failed"));
-      };
-      w.postMessage({ type: "run", samples: samples, params: j.params }, [samples.buffer]);
+      // WebGLが使える環境はメインスレッドで実行する(WebGLの計算自体はGPU側で非同期に進む)。WorkerのWebGLは進まず止まる環境があった(実機・ソフトウェアGLで確認)ので、Workerは使わない。
+      // WebGLが無い環境(CPU計算)だけ、画面を止めないようWorkerで実行する
+      j.samples = samples; j.lastAt = Date.now();
+      if (hasWebGL()) {
+        runMain(j, samples, j.params);
+        // GPUが応答しない(進捗が30秒動かない)時はCPUに切り替える
+        j.timer = setInterval(function () {
+          if (job === j && !j.cpuTried && j.backend !== "cpu" && Date.now() - j.lastAt > STALL_MS) toCpu(j, "The GPU is not responding. Using the CPU, which is slower.");
+        }, 2000);
+        return;
+      }
+      runWorker(j, samples, false);
     }).catch(function (e) { fail(j, e); });
   }
   function cancel() {
     if (!job) return;
     job.cancel = true;
+    if (job.timer) { clearInterval(job.timer); job.timer = 0; }
     if (job.worker) { job.worker.terminate(); job.worker = null; }
     job = null;
     st.phase = st.rec ? "ready" : "idle"; st.msg = "";
@@ -190,7 +231,7 @@
   }
 
   function setRec(rec) {
-    st.rec = rec; st.sel = 0;
+    st.rec = rec; st.sel = 0; st.ver++; lastSig = "";
     maxD = 1;
     rec.notes.forEach(function (n) { if (n.d > maxD) maxD = Math.min(n.d, 12); });
   }
@@ -225,6 +266,7 @@
     return null;
   }
   function refinger() {
+    st.ver++;
     QNTabCore.fingering(st.rec.notes, { tuning: st.rec.tuning || TUNING, capo: st.rec.capo || 0 });
     saveSoon();
   }
@@ -274,7 +316,9 @@
     if (ph === "decoding" || ph === "working") {
       box.appendChild(h("div", "qn-stem-label", ph === "decoding" ? "Decoding audio…" : (st.prog > 0 ? "Analyzing…" : "Loading model…")));
       var bar = h("div", "qn-stem-bar"), fill = h("i"); fill.style.width = Math.round((ph === "decoding" ? 0.02 : st.prog) * 100) + "%"; bar.appendChild(fill); box.appendChild(bar);
-      if (ph === "working" && st.backend) box.appendChild(h("p", "qn-stem-note", st.backend === "webgl" ? "Using the GPU." : "No GPU available, so this will be slower."));
+      if (ph === "working" && st.prog > 0) box.appendChild(h("p", "qn-stem-note", Math.round(st.prog * 1000) / 10 + "%"));
+      if (ph === "working" && st.note) box.appendChild(h("p", "qn-stem-note", st.note));
+      else if (ph === "working" && st.backend) box.appendChild(h("p", "qn-stem-note", st.backend === "webgl" ? "Using the GPU." : "Using the CPU, which is slower."));
       var cb = h("button", "qn-stem-btn", "Cancel"); cb.type = "button"; cb.addEventListener("click", cancel); box.appendChild(cb);
       return;
     }
@@ -318,7 +362,7 @@
     cv.style.touchAction = "pan-y";
     attachPointer();
     if (window.ResizeObserver) { ro = new ResizeObserver(resize); ro.observe(vw); }
-    document.addEventListener("qn-bg-change", function () { colors = null; });
+    document.addEventListener("qn-bg-change", function () { colors = null; lastSig = ""; });
   }
   function resize() {
     if (!els) return;
@@ -360,6 +404,10 @@
     if (view.free && view.until && Date.now() > view.until) view.free = false;
     if (st.follow && !view.free) view.t = cur; // 追従OFFの間は位置を動かさない(ドラッグかタップで動く)
     var vt = view.t;
+    // 【省電力】見た目に効く値が前回と同じなら描き直さない(停止中・操作なしは何もしない)
+    var sig = [cur.toFixed(3), vt.toFixed(3), st.zi, st.edit ? 1 : 0, st.sel, cw, ch, dpr, st.ver, st.rec.notes.length, pins.length].join("|");
+    if (sig === lastSig) return;
+    lastSig = sig;
     cx.setTransform(dpr, 0, 0, dpr, 0, 0);
     cx.clearRect(0, 0, cw, ch);
     // 時間目盛り
@@ -406,7 +454,11 @@
     raf = 0;
     if (!root || !root.isConnected) return;
     try { draw(); } catch (e) {}
-    raf = requestAnimationFrame(loop);
+    // 【省電力】ドラッグ中=rAF / 再生中=約30fps / 停止中=250ms / 非表示=1秒(以前は常に60fps)
+    var a = A(), playing = a && !a.paused;
+    if (document.hidden) raf = setTimeout(loop, 1000);
+    else if (dragging) raf = requestAnimationFrame(loop);
+    else raf = setTimeout(loop, playing ? 33 : 250);
   }
 
   // ---------- 操作(タップ=シーク/選択、ドラッグ=横スクロール) ----------
@@ -420,6 +472,7 @@
     cv.addEventListener("pointerdown", function (e) {
       if (!st.rec) return;
       down = { x: e.clientX, y: e.clientY, lx: e.clientX, moved: false, id: e.pointerId };
+      dragging = true;
       try { cv.setPointerCapture(e.pointerId); } catch (er) {}
     });
     cv.addEventListener("pointermove", function (e) {
@@ -433,7 +486,7 @@
     });
     function end(e) {
       if (!down || e.pointerId !== down.id) return;
-      var d = down; down = null;
+      var d = down; down = null; dragging = false;
       if (d.moved || e.type === "pointercancel") return;
       var r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top, best = null, bd = 1e9;
       visible(function (n, x, y) {
@@ -472,9 +525,10 @@
       render();
       els.ui.sync();
       resize();
-      if (!raf) raf = requestAnimationFrame(loop);
+      lastSig = ""; if (!raf) raf = setTimeout(loop, 0);
     },
     settingsRows: settingsRows,
+    _setStallMs: function (v) { STALL_MS = v; }, // 動作確認用
     state: st
   };
 })();
