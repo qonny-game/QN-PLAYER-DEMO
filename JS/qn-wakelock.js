@@ -88,7 +88,20 @@
     if (ac && ac.addEventListener) ac.addEventListener("statechange", function () { if (ac.state === "running") reapplyRate(); });
   } catch (e) {}
 
+  // 【v4.55.1】マイク使用中だけaudioSessionを"play-and-record"にする(iOSは"playback"のままだとgetUserMediaが"AudioSession category is not compatible with audio capture"で失敗する)。使い終わったら"playback"へ戻す。複数の使用元の数を数え、0になった時だけ戻す
+  var micCount = 0;
+  function micOn() {
+    micCount++;
+    try { if (navigator.audioSession) navigator.audioSession.type = "play-and-record"; } catch (e) {}
+  }
+  function micOff() {
+    if (micCount > 0) micCount--;
+    if (micCount === 0) { try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) {} }
+  }
+
   window.QNWake = {
+    micOn: micOn,
+    micOff: micOff,
     set: set,
     isKeepOn: keepOn,
     setKeepOn: function (on) { try { localStorage.setItem(KEEP_KEY, on ? "1" : "0"); } catch (e) {} sync(); }

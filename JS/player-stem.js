@@ -311,7 +311,10 @@
     clearInterval(rec.tick);
     if (rec.stream) { rec.stream.getTracks().forEach(function (x) { x.stop(); }); }
     rec.stream = null; rec.mr = null; rec.cur = -1;
+    recMicRelease();
   }
+  var recMicHeld = false; // iOS: 録音中だけaudioSessionを"play-and-record"にする(qn-wakelock.js)。"playback"のままだとマイクを開けない
+  function recMicRelease() { if (recMicHeld) { recMicHeld = false; try { QNWake.micOff(); } catch (e) {} } }
   function recAbort() {
     var mr = rec.mr;
     if (mr) { mr.onstop = null; try { mr.stop(); } catch (x) {} }
@@ -323,6 +326,7 @@
     if (!navigator.mediaDevices || !window.MediaRecorder) { st.recMsg = "Recording is not supported in this browser"; render(); return; }
     if (recTotal() >= REC_LIMIT_SEC) { st.recMsg = "Recording limit reached (" + fmtT(REC_LIMIT_SEC) + " per song). Delete a clip to record more."; render(); return; }
     st.recMsg = "";
+    if (!recMicHeld && window.QNWake && QNWake.micOn) { recMicHeld = true; QNWake.micOn(); }
     navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } }).then(function (stream) {
       var chunks = [], mr = new MediaRecorder(stream), sp = 0, rt = 1;
       rec.stream = stream; rec.mr = mr; rec.cur = i; rec.t0 = Date.now();
@@ -354,6 +358,7 @@
       }, 500);
       render();
     }).catch(function (err) {
+      recMicRelease();
       st.recMsg = (err && err.name === "NotAllowedError") ? "Microphone access was denied" : "Could not access the microphone";
       render();
     });

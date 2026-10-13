@@ -68,7 +68,10 @@
     var fftSize = opts.fftSize || 2048;
     var onFrame = typeof opts.onFrame === "function" ? opts.onFrame : function () {};
     var ctx = null, stream = null, analyser = null, dataBuf = null, corrBuf = null;
-    var rafId = 0, lastAt = 0, running = false;
+    var rafId = 0, lastAt = 0, running = false, micHeld = false;
+    // iOS: audioSessionが"playback"のままだとマイクを開けない。使っている間だけ"play-and-record"にする(qn-wakelock.js)
+    function micHold() { if (!micHeld && window.QNWake && QNWake.micOn) { micHeld = true; QNWake.micOn(); } }
+    function micRelease() { if (micHeld) { micHeld = false; try { QNWake.micOff(); } catch (e) {} } }
 
     function tick(now) {
       if (!running) return;
@@ -84,6 +87,7 @@
       var Ctx = window.AudioContext || window.webkitAudioContext;
       ctx = new Ctx();
       if (ctx.state === "suspended") { try { ctx.resume(); } catch (e) {} }
+      micHold();
       try {
         stream = await navigator.mediaDevices.getUserMedia(constraints || {
           audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
@@ -91,6 +95,7 @@
       } catch (err) {
         try { ctx.close(); } catch (e) {}
         ctx = null;
+        micRelease();
         if (err && !err.step) err.step = "getUserMedia";
         throw err;
       }
@@ -107,6 +112,7 @@
         stream.getTracks().forEach(function (t) { t.stop(); }); stream = null;
         try { ctx.close(); } catch (e) {}
         ctx = null;
+        micRelease();
         if (err2 && !err2.step) err2.step = "analyser";
         throw err2;
       }
@@ -126,6 +132,7 @@
       if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
       if (ctx) { try { ctx.close(); } catch (e) {} ctx = null; }
       analyser = null; dataBuf = null; corrBuf = null;
+      micRelease();
     }
 
     // streamは録音(MediaRecorder)と共有する用。getUserMediaを二重に開かない

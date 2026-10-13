@@ -238,3 +238,8 @@
 - A-Bループ・スキップ区間・シーク中だけは折り返しの精度のため再生中にrAFを毎フレーム回す(`updateBarsNeedsFrames`)。それ以外の再生中は時刻表示だけなので100ms間隔。
 - `input[type=range]`のつまみ色(`--range-progress`)は、値の代入フック+inputイベント+1秒の保険で更新(`syncRangeProgressLoop`)。valueAsNumberやstepUpでの更新は即時には拾えない(最大1秒遅れ)。
 - 波形canvasのdprは2までに制限(`g.dpr`)。Settings>Playbackの「Keep screen on」(`qn_keep_screen_on`)をオフにするとPLAYERの再生中でもWake Lockを取らない(YouTube等は別)。
+
+## iOSのaudioSessionとマイク(v4.55.1)
+- `qn-wakelock.js`は起動時に`navigator.audioSession.type="playback"`にする(バックグラウンド再生用)。この状態でgetUserMediaすると、iOSは`InvalidStateError: AudioSession category is not compatible with audio capture.`で失敗する(v4.5x以前のTUNER/PITCH/Recのマイク不具合の原因)。
+- マイクを開く処理は必ず`QNWake.micOn()`(開く前)と`QNWake.micOff()`(停止・失敗時)で挟む。中で"play-and-record"と"playback"を切り替え、使用元の数を数えて0になった時だけ戻す。新しくgetUserMediaを足す時も同じにする。現在の呼び出し元: `qn-pitch-core.js`(TUNER/PITCH)、`player-stem.js`(Rec)。
+- ヘッドレスChromiumにはaudioSessionが無く実機では確認できない。`md/tools/e2e_audiosession.py`が擬似audioSessionで切り替えだけ確認する。実機iOSでの確認は別。
