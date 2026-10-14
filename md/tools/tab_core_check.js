@@ -146,5 +146,22 @@ function makePhrase(n) {
   ok("assign speed (" + notes.length + " notes)", ms < 3000, ms + " ms");
 })();
 
+// 8) ベース(4弦)・五線紙(ヴォーカル)
+(function () {
+  var B = [28, 33, 38, 43];
+  var bn = [{ id: 1, t: 0, d: 0.5, midi: 28, vel: 0.8 }, { id: 2, t: 1, d: 0.5, midi: 43, vel: 0.8 }, { id: 3, t: 2, d: 0.5, midi: 55, vel: 0.8 }];
+  var pos = Core.assign(bn, { tuning: B, maxFret: 24 });
+  ok("bass: E1 -> string 4 open, G2 -> string 1 fret 0, G3 -> string 1 fret 12", pos[0].s === 4 && pos[0].f === 0 && pos[1].s === 1 && pos[1].f === 0 && pos[2].s === 1 && pos[2].f === 12, JSON.stringify(pos));
+  var r = Core.cleanup([{ t: 0, d: 1, midi: 20, vel: 1 }, { t: 0, d: 1, midi: 70, vel: 1 }], { tuning: B, maxFret: 24 });
+  ok("bass: out-of-range notes dropped (below E1, above 24th fret)", r.notes.length === 0 && r.dropped.range === 2, JSON.stringify(r.dropped));
+  var c2 = Core.cleanup([{ t: 0, d: 1, midi: 36, vel: 1 }, { t: 0, d: 1, midi: 100, vel: 1 }], { lo: 40, hi: 88 });
+  ok("staff: lo/hi range", c2.notes.length === 0, JSON.stringify(c2.dropped));
+  var sp = Core.staffPos(64), sc = Core.staffPos(60), ss = Core.staffPos(61), sb = Core.staffPos(71);
+  ok("staffPos: E4=30 (bottom line), C4=28, C#4 same line with sharp, B4=34", sp.d === 30 && sc.d === 28 && ss.d === 28 && ss.acc === 1 && sb.d === 34 && sp.acc === 0);
+  var m = Core.monophonic([{ t: 0, d: 1, midi: 60, vel: 0.8 }, { t: 0.5, d: 0.2, midi: 72, vel: 0.2 }, { t: 0.9, d: 1, midi: 62, vel: 0.8 }]);
+  ok("monophonic: weak overlap dropped, overlapping next note cuts the previous", m.length === 2 && Math.abs(m[0].d - 0.9) < 1e-9, JSON.stringify(m));
+  ok("staffShift: low voice shifts up an octave", Core.staffShift([{ midi: 48 }, { midi: 50 }, { midi: 52 }]) === 12 && Core.staffShift([{ midi: 62 }, { midi: 64 }]) === 0);
+})();
+
 console.log(fails ? "\nFAILED: " + fails : "\nALL OK");
 process.exit(fails ? 1 : 0);

@@ -845,6 +845,12 @@
       onTrackChange();
       render();
     },
+    // 【v4.57.0】Tabが使う: 分離済みのパート(WAVのBlob)を返す。無ければnull。key=keyOf(ファイル)。表示中の分離結果→6パート版の保存→4パート版の保存の順に探す
+    getPart: function (id, key) {
+      var pick = function (b) { return b && b[id] ? b[id] : null; };
+      if (st.key === key && pick(st.blobs)) return Promise.resolve(pick(st.blobs));
+      return cacheGet(key + "|6").then(function (r) { return pick(r && r.stems) || cacheGet(key).then(function (r2) { return pick(r2 && r2.stems); }); }).catch(function () { return null; });
+    },
     state: st
   };
   // 録音の再生はパネルを開かなくても曲に追従させる(Recパネルを開く前から、保存済みの録音が鳴る)

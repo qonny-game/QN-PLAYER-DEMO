@@ -1,17 +1,28 @@
 // player-tab.js — Tabパネル(v4.54.0)。再生中のローカル曲の音をブラウザ内で採譜(Basic Pitch)し、ギターTABとして再生位置に合わせて流す。
+// 【v4.57.0】ソース切替: Mix(曲全体) / Bass(4弦TAB) / Guitar(6弦TAB) / Vocals(五線紙)。Bass/Guitar/VocalsはStemパネルで分けたパート(QNStem.getPart)を採譜する。保存キーは 曲|パート。
 // 流れ: ファイルを22050Hzモノラルにデコード(メインスレッド) → Worker(player-tab-worker.js)でBasic Pitch → qn-tab-core.jsで整理・弦フレット割り当て → IndexedDB(qn_tab_db)に保存。
 // 中身はswitchPanel("tab"系 panelType:"guitartab")がQNTab.mount(host)で呼ぶ。グローバル設定(感度など)はSettings>一般の「Tab」(QNTab.settingsRows())。
 // 注意: 解析結果は曲の長さと別に持つので、Speed(再生速度)を変えても audio.currentTime(=原曲の秒)にそのまま合う。YouTube(ファイルが無い曲)は非対応。
 (function () {
   "use strict";
   var DB_NAME = "qn_tab_db", STORE = "tabs", REC_LIMIT = 60, MAX_SEC = 900, SR = 22050;
-  var K_SENS = "qn_tab_sens", K_MINLEN = "qn_tab_minlen", K_OVER = "qn_tab_overtone", K_ZOOM = "qn_tab_zoom", K_FOLLOW = "qn_tab_follow";
+  var K_SENS = "qn_tab_sens", K_MINLEN = "qn_tab_minlen", K_OVER = "qn_tab_overtone", K_ZOOM = "qn_tab_zoom", K_FOLLOW = "qn_tab_follow", K_SRC = "qn_tab_src";
   var SENS = { low: { onset: 0.4, frame: 0.35 }, normal: { onset: 0.25, frame: 0.25 }, high: { onset: 0.15, frame: 0.2 } };
   var SENS_LABEL = { low: "Low", normal: "Normal", high: "High" };
   var MINLEN = { 30: 3, 60: 5, 90: 8, 120: 10 }; // ms → フレーム数(86.13fps)
   var ZOOMS = [30, 45, 60, 90, 135, 200];         // 1秒あたりのpx
   var TUNING = QNTabCore.STD_TUNING, CAPO = 0;
   var LG = 22, Y0 = 34, VIEW_H = Y0 + LG * 5 + 26; // 弦の間隔 / 1弦のy / キャンバス高さ
+  // ソースごとの設定。kind: tab=弦とフレット / staff=五線紙。Stemのパート名はpart
+  var SOURCES = ["mix", "bass", "guitar", "vocals"];
+  var SRC_LABEL = { mix: "Mix", bass: "Bass", guitar: "Guitar", vocals: "Vocals" };
+  var INST = {
+    mix: { kind: "tab", tuning: QNTabCore.STD_TUNING, maxFret: 21 },
+    guitar: { kind: "tab", part: "guitar", tuning: QNTabCore.STD_TUNING, maxFret: 21 },
+    bass: { kind: "tab", part: "bass", tuning: [28, 33, 38, 43], maxFret: 24, overtoneRatio: 0.9 }, // 低音は倍音が強く出るので、倍音とみなす強さの上限を上げる(再検出のつなぎはゆるめない: 同じ音の8分連打までつながってしまう)
+    vocals: { kind: "staff", part: "vocals", lo: 40, hi: 88 }
+  };
+  var HS = 6, SD_LO = 22, SD_HI = 46, STAFF_TOP = 26; // 五線紙: 半音階でなく全音階の1段(=線と間の半分)のpx / 表示する段の範囲(D3〜G6) / 最上段のy。第1線(E4)がd=30
   var PLAY_X = 0.3;                               // 再生位置の横位置(幅に対する割合)
   var STALL_MS = 30000; // GPU(WebGL)の進捗がこの間動かなければCPUに切り替える
   var NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -23,6 +34,7 @@
     key: "", name: "", phase: "idle", // idle | decoding | working | ready | error
     prog: 0, backend: "", msg: "", rec: null,
     sel: 0, edit: false, ver: 0,
+    src: (function () { var v = lsGet(K_SRC, "mix"); return INST[v] ? v : "mix"; })(),
     follow: lsGet(K_FOLLOW, "1") !== "0",
     zi: Math.max(0, Math.min(ZOOMS.length - 1, parseInt(lsGet(K_ZOOM, "3"), 10) || 3))
   };
@@ -39,6 +51,7 @@
   function h(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function fmtT(s) { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2); }
   function fmtD(s) { var d = Math.floor(Math.max(0, s) * 10); return Math.floor(d / 600) + ":" + ("0" + Math.floor(d / 10) % 60).slice(-2) + "." + (d % 10); }
+  function viewH(rec) { return rec && rec.kind === "staff" ? STAFF_TOP + (SD_HI - SD_LO) * HS + 18 : Y0 + LG * ((rec && rec.tuning ? rec.tuning.length : 6) - 1) + 26; }
   function noteName(m) { return NAMES[m % 12] + (Math.floor(m / 12) - 1); }
 
   // ---------- IndexedDB(解析結果。音声は入れない) ----------
@@ -144,15 +157,18 @@
     if (j.cancel) return;
     job = null;
     var p = j.params;
+    var I = j.inst, staff = I.kind === "staff";
     var cl = QNTabCore.cleanup(raw.map(function (n) { return { t: n[0], d: n[1], midi: n[2], vel: Math.min(1, n[3]) }; }),
-      { tuning: TUNING, capo: CAPO, minVel: 0.1, minLen: p.minLenSec, overtones: p.overtones });
-    var fresh = cl.notes.map(function (n) { return { id: 0, t: n.t, d: n.d, midi: n.midi, vel: n.vel, string: 0, fret: 0, edited: false, hidden: false }; });
+      staff ? { lo: I.lo, hi: I.hi, minVel: 0.1, minLen: p.minLenSec, overtones: p.overtones }
+        : { tuning: I.tuning, capo: CAPO, maxFret: I.maxFret, minVel: 0.1, minLen: p.minLenSec, overtones: p.overtones, overtoneRatio: I.overtoneRatio, mergeGap: I.mergeGap });
+    var base = staff ? QNTabCore.monophonic(cl.notes) : cl.notes;
+    var fresh = base.map(function (n) { return { id: 0, t: n.t, d: n.d, midi: n.midi, vel: n.vel, string: 0, fret: 0, edited: false, hidden: false }; });
     recGet(j.key).then(function (old) {
-      var notes = old && old.notes ? QNTabCore.mergeEdited(fresh, old.notes) : fresh;
+      var notes = old && old.notes && !staff ? QNTabCore.mergeEdited(fresh, old.notes) : fresh;
       notes.forEach(function (n, i) { n.id = i + 1; });
-      QNTabCore.fingering(notes, { tuning: TUNING, capo: CAPO });
-      var rec = { key: j.key, name: j.name, v: 1, dur: j.dur, params: { onset: p.onset, frame: p.frame, minFrames: p.minFrames, overtones: p.overtones },
-        tuning: TUNING, capo: CAPO, notes: notes, dropped: cl.dropped, backend: j.backend || "" };
+      if (!staff) QNTabCore.fingering(notes, { tuning: I.tuning, capo: CAPO, maxFret: I.maxFret });
+      var rec = { key: j.key, name: j.name, v: 2, src: j.src, kind: I.kind, dur: j.dur, params: { onset: p.onset, frame: p.frame, minFrames: p.minFrames, overtones: p.overtones },
+        tuning: staff ? null : I.tuning, maxFret: I.maxFret, shift: staff ? QNTabCore.staffShift(notes) : 0, capo: CAPO, notes: notes, dropped: cl.dropped, backend: j.backend || "" };
       recPut(rec);
       if (st.key === j.key) { setRec(rec); st.phase = "ready"; st.msg = ""; render(); }
     });
@@ -189,9 +205,15 @@
   function analyze() {
     var tr = curTrack();
     if (job || !tr || !tr.file || !st.key) return;
-    var j = { key: st.key, name: st.name, phase: "decoding", prog: 0, backend: "", cancel: false, worker: null, params: params(), dur: 0 };
+    var src = st.src, I = INST[src];
+    var j = { key: st.key, name: st.name, src: src, inst: I, phase: "decoding", prog: 0, backend: "", cancel: false, worker: null, params: params(), dur: 0 };
     job = j; st.msg = ""; sync(j); render();
-    tr.file.arrayBuffer().then(function (ab) {
+    // Mixは曲のファイルそのもの。Bass/Guitar/VocalsはStemで分けたパート(未分離ならメッセージを出して止める)
+    var getAb = !I.part ? tr.file.arrayBuffer() : (window.QNStem && QNStem.getPart ? QNStem.getPart(I.part, keyOf(tr.file)) : Promise.resolve(null)).then(function (b) {
+      if (!b) throw new Error(src === "guitar" ? "Separate this track in the Stem panel first (Guitar needs the 6-part mode)." : "Separate this track in the Stem panel first.");
+      return b.arrayBuffer();
+    });
+    getAb.then(function (ab) {
       return new OfflineAudioContext(1, 1, SR).decodeAudioData(ab);
     }).then(function (buf) {
       if (j.cancel) return;
@@ -234,11 +256,19 @@
     st.rec = rec; st.sel = 0; st.ver++; lastSig = "";
     maxD = 1;
     rec.notes.forEach(function (n) { if (n.d > maxD) maxD = Math.min(n.d, 12); });
+    if (els) resize();
+  }
+  function setSrc(v) {
+    if (!INST[v] || v === st.src) return;
+    st.src = v; lsSet(K_SRC, v);
+    onTrackChange(); // 保存キーが 曲|パート に変わるので、そのソースの結果(あれば)を読み直す
+    if (els) { resize(); els.ui.sync(); }
+    lastSig = ""; render();
   }
 
   // ---------- 曲の切替追従 ----------
   function onTrackChange() {
-    var tr = curTrack(), key = tr && tr.file ? keyOf(tr.file) : "";
+    var tr = curTrack(), key = tr && tr.file ? keyOf(tr.file) + (st.src === "mix" ? "" : "|" + st.src) : "";
     if (key === st.key) return;
     st.key = key; st.name = tr ? (tr.name || (tr.file && tr.file.name) || "") : "";
     st.rec = null; st.sel = 0; st.msg = ""; st.phase = "idle"; view.free = false;
@@ -267,16 +297,16 @@
   }
   function refinger() {
     st.ver++;
-    QNTabCore.fingering(st.rec.notes, { tuning: st.rec.tuning || TUNING, capo: st.rec.capo || 0 });
+    QNTabCore.fingering(st.rec.notes, { tuning: st.rec.tuning || TUNING, capo: st.rec.capo || 0, maxFret: st.rec.maxFret == null ? QNTabCore.MAX_FRET : st.rec.maxFret });
     saveSoon();
   }
   function renderEdit() {
     if (!els) return;
     els.edit.textContent = "";
-    var n = st.edit && st.rec ? noteById(st.sel) : null;
+    var n = st.edit && st.rec && st.rec.kind !== "staff" ? noteById(st.sel) : null;
     els.edit.hidden = !n;
     if (!n) return;
-    var cands = QNTabCore.candidates(n.midi, st.rec.tuning || TUNING, st.rec.capo || 0, QNTabCore.MAX_FRET);
+    var cands = QNTabCore.candidates(n.midi, st.rec.tuning || TUNING, st.rec.capo || 0, st.rec.maxFret == null ? QNTabCore.MAX_FRET : st.rec.maxFret);
     var keyOfC = function (c) { return c.s + ":" + c.f; };
     els.edit.appendChild(h("div", "qn-tab-selnote", noteName(n.midi) + "  ·  " + fmtD(n.t)));
     var ui = QNSettingsUI.build([{ title: "", rows: [
@@ -332,17 +362,31 @@
       box.appendChild(row);
       return;
     }
-    box.appendChild(h("p", "qn-stem-note", "Turn the notes in this track into guitar tab. Analysis runs in your browser and the audio is not uploaded."));
-    box.appendChild(h("p", "qn-stem-note", "It works best on a single guitar or a simple mix. Chords and busy mixes will have mistakes, and you can fix notes in Edit mode."));
+    var si = INST[st.src];
+    if (si.kind === "staff") {
+      box.appendChild(h("p", "qn-stem-note", "Turn the vocal part into sheet music. It uses the Vocals part separated in the Stem panel, and the audio is not uploaded."));
+      box.appendChild(h("p", "qn-stem-note", "Notes are placed by time and are not rounded to a rhythm. Bar lines show only after the chord analysis has run."));
+    } else if (si.part) {
+      box.appendChild(h("p", "qn-stem-note", st.src === "guitar" ? "Turn the guitar part into tab. It uses the Guitar part separated in the Stem panel (6-part mode), and the audio is not uploaded." : "Turn the bass part into 4-string tab. It uses the Bass part separated in the Stem panel, and the audio is not uploaded."));
+      box.appendChild(h("p", "qn-stem-note", "Separate the track in the Stem panel first. You can fix notes in Edit mode."));
+    } else {
+      box.appendChild(h("p", "qn-stem-note", "Turn the notes in this track into guitar tab. Analysis runs in your browser and the audio is not uploaded."));
+      box.appendChild(h("p", "qn-stem-note", "It works best on a single guitar or a simple mix. Chords and busy mixes will have mistakes, and you can fix notes in Edit mode."));
+    }
     var ab = h("button", "qn-stem-btn is-primary", "Analyze"); ab.type = "button"; ab.disabled = !!job;
     ab.addEventListener("click", analyze);
     box.appendChild(ab);
-    if (job && job.key !== st.key) box.appendChild(h("p", "qn-stem-note", "Another track is being analyzed."));
+    if (job && job.key !== st.key) box.appendChild(h("p", "qn-stem-note", "Another analysis is running."));
   }
 
   function build() {
     root = h("div", "qn-stem qn-tab");
     var t = h("div", "qn-stem-track"); t.appendChild(h("small", null, "Track")); var nm = h("span"); t.appendChild(nm); root.appendChild(t);
+    var srcUi = QNSettingsUI.build([{ title: "", rows: [
+      { label: "Source", hint: "Bass, Guitar and Vocals use the parts separated in the Stem panel.", type: "stepper",
+        values: function () { return SOURCES; }, get: function () { return st.src; }, set: setSrc, fmt: function (v) { return SRC_LABEL[v]; } }
+    ] }]);
+    root.appendChild(srcUi.el);
     var status = h("div", "qn-tab-status"); root.appendChild(status);
     var vw = h("div", "qn-tab-view"); cv = h("canvas"); vw.appendChild(cv); root.appendChild(vw);
     var edit = h("div", "qn-tab-editbox"); root.appendChild(edit);
@@ -353,11 +397,11 @@
       { label: "Zoom", type: "stepper", values: function () { return ZOOMS.map(function (z, i) { return i; }); },
         get: function () { return st.zi; }, set: function (v) { st.zi = v; lsSet(K_ZOOM, v); },
         fmt: function (v) { return "x" + (ZOOMS[v] / 90).toFixed(1).replace(/\.0$/, ""); } },
-      { label: "Edit", hint: "Tap a note to change where it is played, or hide it.", type: "switch",
+      { label: "Edit", hint: "Tap a note to change where it is played, or hide it.", type: "switch", hiddenWhen: function () { return st.src === "vocals"; },
         get: function () { return st.edit; }, set: function (on) { st.edit = !!on; if (!on) st.sel = 0; renderEdit(); } }
     ] }]);
     ctl.appendChild(ui.el); root.appendChild(ctl);
-    els = { track: nm, status: status, viewWrap: vw, edit: edit, ctl: ctl, ui: ui };
+    els = { track: nm, status: status, viewWrap: vw, edit: edit, ctl: ctl, ui: { sync: function () { ui.sync(); srcUi.sync(); } } };
     cx = cv.getContext("2d");
     cv.style.touchAction = "pan-y";
     attachPointer();
@@ -368,7 +412,7 @@
     if (!els) return;
     var w = els.viewWrap.clientWidth;
     if (!w) return;
-    dpr = window.devicePixelRatio || 1; cw = w; ch = VIEW_H;
+    dpr = window.devicePixelRatio || 1; cw = w; ch = viewH(st.rec);
     cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
     cv.style.width = cw + "px"; cv.style.height = ch + "px";
   }
@@ -387,15 +431,82 @@
     return lo;
   }
   function visible(fn) {
-    var ns = st.rec.notes, pps = ZOOMS[st.zi], px = cw * PLAY_X, vt = view.t;
+    var ns = st.rec.notes, pps = ZOOMS[st.zi], px = cw * PLAY_X, vt = view.t, staff = st.rec.kind === "staff";
     var t0 = vt - px / pps - 0.1, t1 = vt + (cw - px) / pps + 0.1;
     for (var i = lowerBound(ns, t0 - maxD); i < ns.length && ns[i].t <= t1; i++) {
       var n = ns[i];
       if (n.hidden && !st.edit) continue;
+      if (staff) {
+        if (n.t + n.d < t0) continue;
+        fn(n, px + (n.t - vt) * pps, staffY(Math.max(SD_LO, Math.min(SD_HI, QNTabCore.staffPos(n.midi + (st.rec.shift || 0)).d))));
+        continue;
+      }
       if (!n.string) continue;
       if (n.t + n.d < t0) continue;
       fn(n, px + (n.t - vt) * pps, Y0 + (n.string - 1) * LG);
     }
+  }
+  function staffY(d) { return STAFF_TOP + (SD_HI - d) * HS; }
+  // ト音記号(線画)。g=第2線(G)のy。x=左端
+  function drawClef(x, g, C) {
+    var u = HS;
+    cx.save(); cx.translate(x, g); cx.strokeStyle = C.text; cx.fillStyle = C.text; cx.lineWidth = 1.7; cx.lineCap = "round"; cx.lineJoin = "round";
+    cx.beginPath();
+    cx.moveTo(1.2 * u, -5.2 * u);                              // 上の山の頂点
+    cx.bezierCurveTo(2.3 * u, -7.4 * u, 0.2 * u, -8.6 * u, -0.5 * u, -6.4 * u); // 山の左側(上端)
+    cx.bezierCurveTo(-1.1 * u, -4.2 * u, 0.3 * u, -1.6 * u, 0.9 * u, 0.3 * u);  // 山から下へ(縦のS字の上半分)
+    cx.lineTo(0.6 * u, 5.2 * u);                                // 縦線(下へ)
+    cx.bezierCurveTo(0.45 * u, 7.6 * u, -1.9 * u, 7.4 * u, -1.9 * u, 5.8 * u);  // 下の巻き
+    cx.stroke();
+    cx.beginPath();                                             // 中央の渦(G線を巻く)
+    cx.moveTo(0.9 * u, 0.3 * u);
+    cx.bezierCurveTo(-2.7 * u, 1.9 * u, -2.2 * u, -1.9 * u, 0.5 * u, -1.5 * u);
+    cx.bezierCurveTo(2.6 * u, -1.2 * u, 2.6 * u, 2.4 * u, 0.2 * u, 3.0 * u);
+    cx.stroke();
+    cx.beginPath(); cx.arc(-1.9 * u, 5.9 * u, 0.5 * u, 0, 6.2832); cx.fill();
+    cx.restore();
+  }
+  function drawSharp(x, y, color) {
+    cx.fillStyle = color;
+    cx.fillRect(x - 2.6, y - 7.5, 1.3, 14); cx.fillRect(x + 1.6, y - 8.5, 1.3, 14);
+    cx.beginPath(); cx.moveTo(x - 5, y - 2.2); cx.lineTo(x + 5, y - 4.6); cx.lineTo(x + 5, y - 2.4); cx.lineTo(x - 5, y + 0.1); cx.closePath(); cx.fill();
+    cx.beginPath(); cx.moveTo(x - 5, y + 2.6); cx.lineTo(x + 5, y + 0.2); cx.lineTo(x + 5, y + 2.4); cx.lineTo(x - 5, y + 4.9); cx.closePath(); cx.fill();
+  }
+  // 五線紙の本体(線・小節線・音)。ノートは時間に比例して置く(リズムは丸めない)
+  function drawStaffBody(cur, vt, pps, px, C) {
+    var rec = st.rec, shift = rec.shift || 0, w2 = cw, i;
+    cx.fillStyle = C.line;
+    for (i = 0; i < 5; i++) cx.fillRect(0, Math.round(staffY(30 + i * 2)), w2, 1);
+    // 小節線(拍の解析があれば)
+    try {
+      var gd = window.QNChords && QNChords.grid ? QNChords.grid() : null;
+      if (gd && gd.times && gd.bar) {
+        var T = gd.times, B = gd.bar, t0 = vt - px / pps - 0.1, t1 = vt + (cw - px) / pps + 0.1, lo = 0, hi = T.length;
+        while (lo < hi) { var mid = (lo + hi) >> 1; if (T[mid] < t0) lo = mid + 1; else hi = mid; }
+        cx.fillStyle = C.line;
+        for (i = lo; i < T.length && T[i] <= t1; i++) if (B[i] === 0) cx.fillRect(Math.round(px + (T[i] - vt) * pps), Math.round(staffY(38)), 1, Math.round(staffY(30) - staffY(38)) + 1);
+      }
+    } catch (e) {}
+    // 再生位置
+    cx.fillStyle = C.accent; cx.fillRect(Math.round(px) - 1, 14, 2, ch - 16);
+    // 音(左の音部記号の領域には入れない)
+    cx.save(); cx.beginPath(); cx.rect(40, 0, cw, ch); cx.clip();
+    visible(function (n, x, y) {
+      var on = cur >= n.t && cur < n.t + Math.max(n.d, 0.12), past = n.t + n.d < cur;
+      var p = QNTabCore.staffPos(n.midi + shift), d = Math.max(SD_LO, Math.min(SD_HI, p.d));
+      cx.globalAlpha = past && !on ? 0.45 : (n.vel < 0.3 ? 0.7 : 1);
+      if (n.d * pps > 6) { cx.fillStyle = C.accent; cx.globalAlpha *= 0.55; cx.fillRect(x, y - 1, Math.min(n.d * pps, cw), 2); cx.globalAlpha = past && !on ? 0.45 : (n.vel < 0.3 ? 0.7 : 1); }
+      cx.fillStyle = C.line;
+      if (d < 30) for (var l = 28; l >= d - (d % 2 ? 1 : 0); l -= 2) { if (l < d) break; cx.fillRect(x - 10, Math.round(staffY(l)), 20, 1); }
+      if (d > 38) for (var m = 40; m <= d; m += 2) cx.fillRect(x - 10, Math.round(staffY(m)), 20, 1);
+      cx.fillStyle = on ? C.accent : C.text;
+      cx.beginPath(); cx.ellipse(x, y, 6.2, 4.4, -0.35, 0, 6.2832); cx.fill();
+      if (p.acc) drawSharp(x - 13, y, on ? C.accent : C.text);
+      cx.globalAlpha = 1;
+    });
+    cx.restore();
+    drawClef(8, staffY(32), C);
+    if (shift) { cx.fillStyle = C.muted; cx.font = "10px system-ui, sans-serif"; cx.textAlign = "left"; cx.textBaseline = "alphabetic"; cx.fillText("8", 12, staffY(28) + 12); }
   }
   function draw() {
     if (!st.rec || !cw || els.viewWrap.hidden) return;
@@ -428,9 +539,11 @@
         cx.fillStyle = p.color || C.accent; cx.globalAlpha = 0.55; cx.fillRect(Math.round(mx), 16, 2, ch - 20); cx.globalAlpha = 1;
       });
     } catch (e) {}
+    if (st.rec.kind === "staff") { drawStaffBody(cur, vt, pps, px, C); return; }
     // 弦
     cx.fillStyle = C.line;
-    for (var i = 0; i < 6; i++) cx.fillRect(0, Y0 + i * LG, cw, 1);
+    var nStr = (st.rec.tuning || TUNING).length;
+    for (var i = 0; i < nStr; i++) cx.fillRect(0, Y0 + i * LG, cw, 1);
     // 再生位置(音より下に描く)
     cx.fillStyle = C.accent; cx.fillRect(Math.round(px) - 1, 14, 2, ch - 16);
     // 音
@@ -493,7 +606,7 @@
         var dx = Math.abs(mx - x), dy = Math.abs(my - y);
         if (dx <= 16 && dy <= LG / 2 && dx + dy < bd) { bd = dx + dy; best = n; }
       });
-      if (st.edit) { st.sel = best ? best.id : 0; renderEdit(); return; }
+      if (st.edit && st.rec.kind !== "staff") { st.sel = best ? best.id : 0; renderEdit(); return; }
       seekTo(best ? best.t : view.t + (mx - cw * PLAY_X) / ZOOMS[st.zi]);
       view.free = false;
     }

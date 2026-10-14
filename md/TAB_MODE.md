@@ -32,3 +32,14 @@
 - 合成のプラック音（単音12個）で12/12検出。倍音の誤検出は`cleanup`で減らすが、実曲（歪み・和音・バンド）での精度は**未確認**。実曲で`W`（`qn-tab-core.js`のコスト重み）と感度の既定値を調整すること。
 - ヘッドレスChromiumはCPU(7.6秒の音で約10秒)。ソフトウェアGL(swiftshader: `--use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader`)でWebGL経路を確認(メインスレッドで完走、Workerだと止まる)。実GPUでの速度は**未確認**。
 - 未実装: Backup/Import・同期への組み込み、区間（A-B）だけの表示、Keyに連動した移調表示、小節線のGrid連携、チューニング/カポの画面、TAB譜のテキスト書き出し、WASMバックエンド。
+
+## ソース切替(v4.57.0): Mix / Bass / Guitar / Vocals
+- パネル上部の「Source」で切り替える（`st.src`、設定は`qn_tab_src`）。Mix=曲全体（従来どおり）、Bass/Guitar/Vocals=Stemパネルで分けたパートを採譜する。
+- パートの取り出し口は`QNStem.getPart(id, key)`（表示中の分離結果→`key|6`→`key`の順に探し、WAVのBlobかnull）。Guitarは6パート版のみ。未分離なら「先にStemで分けて」というメッセージで止まる。**StemはPC専用なので、スマホでは同じ端末で分けた結果が無く、Mix以外は使えない**。
+- 保存キーは`曲|パート`（Mixは従来のまま）。レコードに`src`/`kind`("tab"|"staff")/`tuning`/`maxFret`/`shift`が入る(v2)。古い記録(v1)は`kind`が無く「tab」扱い。
+- Bass: 4弦(E1 A1 D2 G2=28/33/38/43)、24フレットまで。倍音とみなす強さの上限を0.9に上げる(低音は倍音が強く出る)。同じ音の再検出をつなぐ幅は広げない(8分連打までつながるため)。
+- Vocals(五線紙): `cleanup`(音域は`lo`/`hi`=E2〜E6)→`monophonic`(重なりは後の音が前を切る。弱く内側に収まる音は捨てる)→五線紙描画。ト音記号、黒鍵は#表記、加線あり。中央値がG3未満の声は表示を1オクターブ上げ「8」を付ける(`shift`)。編集(Edit)は無し。
+- **五線紙はリズムを丸めない**: 音は時間の位置どおりに置き、長さは細線で示す(PCV2のTABと同じ流し方)。小節線は`QNChords.grid()`があれば小節頭に引く（コードの解析をした曲だけ）。拍に合わせた符頭・符尾・休符・拍子の整形は未実装(次の段階)。
+- 未実装: Piano(五線紙)、Drums(打楽器譜)。Synth/Brassは分離モデルに無いので対象外。
+- 確認: `md/tools/e2e_tab_sources.py`（合成した分離結果で通しを見る）、`md/tools/tab_core_check.js`（bass/staff/monophonicの計算）。
+

@@ -139,14 +139,32 @@
     return out;
   }
 
+  // 同じ音が前の音の終わり際から続く時は1つにつなぐ(再検出)。gapが大きい設定(低音楽器)では、前より少し強いくらいの再検出もつなぐ
+  function mergeRepeats(list, gap, drop) {
+    var lastByMidi = {}, out = [];
+    list.forEach(function (nt) {
+      var p = lastByMidi[nt.midi];
+      if (p && nt.t <= p.t + p.d + gap && nt.vel <= p.vel * (gap > 0.04 ? 1.3 : 0.95)) {
+        p.d = Math.max(p.d, nt.t + nt.d - p.t);
+        if (drop) drop.merged++;
+        return;
+      }
+      var c = { t: nt.t, d: nt.d, midi: nt.midi, vel: nt.vel };
+      out.push(c);
+      lastByMidi[nt.midi] = c;
+    });
+    return out;
+  }
+
   // 生のノート({t,d,midi,vel})を整える。opts: tuning,capo,maxFret,minVel,overtones(既定true),minLen(秒)
   function cleanup(raw, opts) {
     opts = opts || {};
     var tuning = opts.tuning || STD_TUNING, capo = opts.capo | 0;
-    var rg = range(tuning, capo, opts.maxFret == null ? MAX_FRET : opts.maxFret);
-    var minVel = opts.minVel || 0, minLen = opts.minLen || 0;
+    var rg = opts.lo != null ? { lo: opts.lo, hi: opts.hi } : range(tuning, capo, opts.maxFret == null ? MAX_FRET : opts.maxFret); // lo/hi=弦楽器でない譜(五線紙)用の音域
+    var minVel = opts.minVel || 0, minLen = opts.minLen || 0, ratio = opts.overtoneRatio || 0.6, mergeGap = opts.mergeGap || 0.04; // ratio: 倍音とみなす強さの上限(低音楽器は倍音が強く出るので大きめ) / mergeGap: 余韻の再検出とみなす隙間(秒)
     var drop = { range: 0, weak: 0, overtone: 0, merged: 0 };
     var list = raw.slice().sort(function (a, b) { return a.t - b.t || a.midi - b.midi; });
+    if (mergeGap > 0.04) list = mergeRepeats(list, mergeGap, drop); // 低音楽器: 倍音の判定の前に、再検出でちぎれた音をつないでおく
 
     // 倍音: 鳴っている低い音の倍音(+12/+19/+24/+28/+31/+34/+36)にあたる、弱く短い音。倍音は後から立ち上がることもあるので、低い音が鳴っている間(最大8秒遡る)を見る
     var removed = new Array(list.length);
@@ -158,7 +176,7 @@
         for (var j = lo; j < list.length && list[j].t <= n.t + 0.06; j++) {
           var m = list[j];
           if (j === i || m.t + m.d < n.t - 0.02) continue;
-          if (HARMONICS.indexOf(n.midi - m.midi) >= 0 && n.vel < m.vel * 0.6 && n.d <= m.d + 0.02) { removed[i] = "overtone"; break; }
+          if (HARMONICS.indexOf(n.midi - m.midi) >= 0 && n.vel < m.vel * ratio && n.d <= m.d + 0.02) { removed[i] = "overtone"; break; }
         }
       }
     }
@@ -172,17 +190,7 @@
     }
 
     // 余韻の再検出: 同じ音が前の音の終わり際から連続し、強さが前より弱くない場合だけ(再アタックは残す)
-    var lastByMidi = {}, merged = [];
-    kept.forEach(function (nt) {
-      var p = lastByMidi[nt.midi];
-      if (p && nt.t <= p.t + p.d + 0.04 && nt.vel <= p.vel * 0.95) {
-        p.d = Math.max(p.d, nt.t + nt.d - p.t);
-        drop.merged++;
-        return;
-      }
-      merged.push(nt);
-      lastByMidi[nt.midi] = nt;
-    });
+    var merged = mergeRepeats(kept, mergeGap, drop);
     return { notes: merged, dropped: drop };
   }
 
@@ -218,7 +226,34 @@
     return notes;
   }
 
-  var api = { STD_TUNING: STD_TUNING, MAX_FRET: MAX_FRET, candidates: candidates, range: range, assign: assign, cleanup: cleanup, mergeEdited: mergeEdited, fingering: fingering, openOf: openOf };
+  // 単音(ヴォーカルなど)に整える。重なった音は、あとから始まる音が前の音を切る。ただし後の音が前よりかなり弱く前の音の中に収まる時(倍音・にじみ)は捨てる
+  function monophonic(notes) {
+    var list = notes.slice().sort(function (a, b) { return a.t - b.t || b.vel - a.vel; }), out = [];
+    list.forEach(function (n) {
+      var p = out.length ? out[out.length - 1] : null;
+      if (p && n.t < p.t + p.d - 0.03) {
+        if (n.vel < p.vel * 0.6 && n.t + n.d <= p.t + p.d + 0.03) return;
+        p.d = Math.max(0.03, n.t - p.t);
+      }
+      out.push({ t: n.t, d: n.d, midi: n.midi, vel: n.vel });
+    });
+    return out;
+  }
+
+  // 五線紙の位置。d=全音階の通し番号(E4=30が第1線)、acc=1なら#。黒鍵は常に#で表す
+  var PC_STEP = [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6], PC_ACC = [0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0];
+  function staffPos(midi) {
+    var pc = ((midi % 12) + 12) % 12;
+    return { d: (Math.floor(midi / 12) - 1) * 7 + PC_STEP[pc], acc: PC_ACC[pc] };
+  }
+  // 表示用のオクターブずらし: 中央値が低い(男声など)ときは1オクターブ上げて書く(ト音記号の慣習)
+  function staffShift(notes) {
+    if (!notes.length) return 0;
+    var m = notes.map(function (n) { return n.midi; }).sort(function (a, b) { return a - b; })[notes.length >> 1];
+    return m < 55 ? 12 : 0;
+  }
+
+  var api = { monophonic: monophonic, staffPos: staffPos, staffShift: staffShift, STD_TUNING: STD_TUNING, MAX_FRET: MAX_FRET, candidates: candidates, range: range, assign: assign, cleanup: cleanup, mergeEdited: mergeEdited, fingering: fingering, openOf: openOf };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.QNTabCore = api;
 })(typeof self !== "undefined" ? self : this);

@@ -243,3 +243,9 @@
 - `qn-wakelock.js`は起動時に`navigator.audioSession.type="playback"`にする(バックグラウンド再生用)。この状態でgetUserMediaすると、iOSは`InvalidStateError: AudioSession category is not compatible with audio capture.`で失敗する(v4.5x以前のTUNER/PITCH/Recのマイク不具合の原因)。
 - マイクを開く処理は必ず`QNWake.micOn()`(開く前)と`QNWake.micOff()`(停止・失敗時)で挟む。中で"play-and-record"と"playback"を切り替え、使用元の数を数えて0になった時だけ戻す。新しくgetUserMediaを足す時も同じにする。現在の呼び出し元: `qn-pitch-core.js`(TUNER/PITCH)、`player-stem.js`(Rec)。
 - ヘッドレスChromiumにはaudioSessionが無く実機では確認できない。`md/tools/e2e_audiosession.py`が擬似audioSessionで切り替えだけ確認する。実機iOSでの確認は別。
+
+## Tabのソース切替(v4.57.0)
+- Tabの保存キーは`曲|パート`。`st.key`は保存キー、曲そのものは`keyOf(file)`。ジョブ(`job.key`)も保存キーなので、ソースを切り替えても別ソースの解析は止まらず走り続ける(完了するとそのキーに保存される)。
+- Bass/Guitar/Vocalsは`QNStem.getPart`が頼り。Stemの保存キー形式(`name|size`、6パートは`|6`)を変える時はTab側も見る。StemはPC専用なので、スマホではMix以外は未分離扱いになる。
+- 五線紙(`kind:"staff"`)はTABと描画経路が別(`drawStaffBody`)。高さは`viewH(rec)`で決め、`setRec`→`resize`で更新する。弦の数やキャンバス高さを固定値で書かない。
+
