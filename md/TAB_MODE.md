@@ -43,3 +43,8 @@
 - 未実装: Piano(五線紙)、Drums(打楽器譜)。Synth/Brassは分離モデルに無いので対象外。
 - 確認: `md/tools/e2e_tab_sources.py`（合成した分離結果で通しを見る）、`md/tools/tab_core_check.js`（bass/staff/monophonicの計算）。
 
+## 大きな譜面表示(v4.58.0, PC幅のみ)
+- Tabパネルを開いている間、右の波形エリア(`#pcV2WaveArea`)に、**この曲で解析済みのパートを1段ずつ**並べる。波形(`#vbarContainer`)と設定帯(View/Bar length/Rows/Follow)は隠れる(クリック音・吸着のボタンは残る)。並びは上から Vocals / Guitar / Bass / Mix。パネルを閉じる・他のパネルへ移ると波形に戻る。SP幅はパネル内の小さな表示のまま。
+- 仕組み: `st.recs`(この曲の全ソースの結果。`loadAll`が読む)→`syncScore()`が`pcv2-score-mode`クラスと`#pcV2ScoreView`(レーンのDOM)を整える。描画は`paintLane(L,…)`が`cx/cw/ch/R`を差し替えて既存の描画(`paintBody`)を使い回す。タップ=シーク、ドラッグ=横スクロールはレーンごとに`attachPointer`。Editは選択中のソースのレーンでだけ効く(`L.rec === st.rec`)。
+- `switchPanel`(player-ui-pc-v2.js)が先頭でクラスを外し、Tabの`mount`が必要なら付け直す。波形のループは隠れても動き続ける(止めていない)。
+

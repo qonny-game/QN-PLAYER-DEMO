@@ -8,3 +8,15 @@
 .qn-tab-editbox { display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid var(--border-subtle); border-radius: var(--radius-popup, 8px); background: var(--bg-1b1b23); }
 .qn-tab-selnote { font-size: var(--fs-body); color: var(--text-bright); font-variant-numeric: tabular-nums; }
 .qn-tab-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* 【v4.58.0】PC幅: Tabパネルを開いている間、波形エリアに解析済みのパートを1段ずつ並べる(波形は隠す)。SP幅は従来どおりパネル内の表示 */
+#pcV2ScoreView { display: none; }
+@media screen and (min-width: 901px) {
+  #pcV2WaveArea.pcv2-score-mode #vbarContainer, #pcV2WaveArea.pcv2-score-mode .qn-wave-bar-strip { display: none; }
+  #pcV2WaveArea.pcv2-score-mode #pcV2ScoreView { display: flex; flex-direction: column; gap: 14px; flex: 1 1 0; min-height: 0; overflow-y: auto; padding-top: 12px; }
+}
+.qn-score-lane { flex: 0 0 auto; border-radius: var(--radius-popup, 8px); background: var(--bg-0e0e13); border: 1px solid var(--border-subtle); overflow: hidden; }
+.qn-score-label { padding: 8px 12px 0; font-size: var(--fs-small); font-weight: 600; color: var(--icon-muted); }
+.qn-score-lane canvas { display: block; cursor: grab; user-select: none; -webkit-user-select: none; }
+.qn-score-lane canvas:active { cursor: grabbing; }
+

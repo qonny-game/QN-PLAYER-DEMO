@@ -176,3 +176,4 @@
 - 4.55.1 iPhoneでTUNER/PITCH/Recのマイクが開けない不具合を修正(audioSessionをマイク使用中だけplay-and-recordにする)
 - 4.56.0 PCの波形右下にクリック音(メトロノーム)と吸着のON/OFFボタンを追加
 - 4.57.0 Tabにソース切替を追加(Bass 4弦TAB / Guitar TAB / Vocals 五線紙。Stemで分けたパートを採譜)
+- 4.58.0 Tabを開いている間、解析済みのパートの譜面を波形エリアに並べて表示(PC幅)

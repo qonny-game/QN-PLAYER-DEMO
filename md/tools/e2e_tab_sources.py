@@ -54,4 +54,17 @@ with QNBrowser(".") as qb:
         print("notes:", pg.evaluate("(QNTab.state.rec?QNTab.state.rec.notes:[]).map(n=>[n.midi,n.string,n.fret,+n.t.toFixed(2),+n.d.toFixed(2)].join(':')).join(' ')"))
         pg.evaluate("audio.currentTime=1.3"); pg.wait_for_timeout(800)
         pg.screenshot(path="/tmp/qnshots/tabsrc_%s.png" % src)
+    # 大きな譜面表示(PC幅): 解析済みのパートが波形エリアに並び、波形は隠れる。他のパネルへ移ると波形が戻る
+    pg.wait_for_timeout(600)
+    print("score mode:", pg.evaluate("document.getElementById('pcV2WaveArea').classList.contains('pcv2-score-mode')"),
+          "lanes:", pg.evaluate("[...document.querySelectorAll('.qn-score-label')].map(e=>e.textContent).join(',')"),
+          "vbar hidden:", pg.evaluate("getComputedStyle(document.getElementById('vbarContainer')).display"))
+    pg.screenshot(path="/tmp/qnshots/tabsrc_score.png")
+    pg.evaluate("audio.currentTime=1.0"); pg.wait_for_timeout(500)
+    box = pg.locator(".qn-score-lane canvas").first.bounding_box()
+    pg.mouse.click(box["x"] + box["width"] * 0.3 + 90, box["y"] + 60); pg.wait_for_timeout(300)
+    print("seek by tap on big view -> currentTime", round(pg.evaluate("audio.currentTime"), 2))
+    qb.open_panel(pg, "Library", 600)
+    print("after leaving Tab: score mode:", pg.evaluate("document.getElementById('pcV2WaveArea').classList.contains('pcv2-score-mode')"),
+          "vbar display:", pg.evaluate("getComputedStyle(document.getElementById('vbarContainer')).display"))
     print("errors", qb.errors(pg))

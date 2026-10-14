@@ -1200,6 +1200,7 @@
     const panelBody = document.getElementById("pcV2PanelBody");
     const panelHeader = document.getElementById("pcV2PanelHeader");
     if (!panelBody || !panelHeader) return;
+    { const wa = document.getElementById("pcV2WaveArea"); if (wa) wa.classList.remove("pcv2-score-mode"); } // Tab(guitartab)のmountが必要なら付け直す(波形⇔譜面の切替)
 
     const textControlsHolder = document.getElementById("pcV2TextControlsHolder");
     if (textControlsHolder) {

@@ -31,7 +31,7 @@
   function lsSet(k, v) { try { localStorage.setItem(k, String(v)); } catch (e) {} }
 
   var st = {
-    key: "", name: "", phase: "idle", // idle | decoding | working | ready | error
+    key: "", tkey: "", recs: {}, name: "", phase: "idle", // key=保存キー(曲|パート) / tkey=曲 / recs=この曲の全ソースの結果 / phase: idle | decoding | working | ready | error
     prog: 0, backend: "", msg: "", rec: null,
     sel: 0, edit: false, ver: 0,
     src: (function () { var v = lsGet(K_SRC, "mix"); return INST[v] ? v : "mix"; })(),
@@ -42,6 +42,9 @@
   var job = null, root = null, els = null, wired = false, raf = 0, saveTimer = 0, maxD = 1;
   var lastSig = "", dragging = false;
   var cv = null, cx = null, cw = 0, ch = VIEW_H, dpr = 1, colors = null, ro = null;
+  var R = null;                 // いま描いている譜面(パネルの小さな表示もPC幅の大きな表示も、描画は同じ関数。レーンごとにcx/cw/ch/Rを差し替える)
+  var LANE_ORDER = ["vocals", "guitar", "bass", "mix"]; // 大きな表示の並び(上から)
+  var score = null;             // PC幅で波形エリアに出す譜面表示 {el, lanes:[{src,wrap,cv,cx,cw,ch,rec}], key, ro}
 
   function A() { return document.getElementById("audio") || (typeof audio !== "undefined" ? audio : null); }
   function curTrack() {
@@ -170,7 +173,9 @@
       var rec = { key: j.key, name: j.name, v: 2, src: j.src, kind: I.kind, dur: j.dur, params: { onset: p.onset, frame: p.frame, minFrames: p.minFrames, overtones: p.overtones },
         tuning: staff ? null : I.tuning, maxFret: I.maxFret, shift: staff ? QNTabCore.staffShift(notes) : 0, capo: CAPO, notes: notes, dropped: cl.dropped, backend: j.backend || "" };
       recPut(rec);
+      if (st.tkey === j.tkey) { st.recs[j.src] = rec; st.ver++; }
       if (st.key === j.key) { setRec(rec); st.phase = "ready"; st.msg = ""; render(); }
+      syncScore();
     });
   }
   // CPU計算(またはWebGLが無い環境)用。Workerで実行して画面を止めない。cpu=trueならバックエンドをCPUに固定
@@ -206,7 +211,7 @@
     var tr = curTrack();
     if (job || !tr || !tr.file || !st.key) return;
     var src = st.src, I = INST[src];
-    var j = { key: st.key, name: st.name, src: src, inst: I, phase: "decoding", prog: 0, backend: "", cancel: false, worker: null, params: params(), dur: 0 };
+    var j = { key: st.key, tkey: st.tkey, name: st.name, src: src, inst: I, phase: "decoding", prog: 0, backend: "", cancel: false, worker: null, params: params(), dur: 0 };
     job = j; st.msg = ""; sync(j); render();
     // Mixは曲のファイルそのもの。Bass/Guitar/VocalsはStemで分けたパート(未分離ならメッセージを出して止める)
     var getAb = !I.part ? tr.file.arrayBuffer() : (window.QNStem && QNStem.getPart ? QNStem.getPart(I.part, keyOf(tr.file)) : Promise.resolve(null)).then(function (b) {
@@ -248,8 +253,9 @@
     if (!st.rec || job) return;
     if (!window.confirm("Delete the Tab for this track, including your edits?")) return;
     recDel(st.key);
+    delete st.recs[st.src];
     st.rec = null; st.sel = 0; st.phase = "idle"; st.msg = "";
-    render();
+    render(); syncScore();
   }
 
   function setRec(rec) {
@@ -267,18 +273,26 @@
   }
 
   // ---------- 曲の切替追従 ----------
+  function loadAll(tkey) { // この曲の全ソースの結果を読む(大きな譜面表示は全ソースのレーンを並べる)
+    SOURCES.forEach(function (src) {
+      var sfx = src === "mix" ? "" : "|" + src;
+      recGet(tkey + sfx).then(function (rec) {
+        if (!rec || st.tkey !== tkey || st.recs[src]) return;
+        st.recs[src] = rec; st.ver++;
+        if (src === st.src && !st.rec && st.key === tkey + sfx) { setRec(rec); if (st.phase === "idle") st.phase = "ready"; render(); }
+        syncScore();
+      });
+    });
+  }
   function onTrackChange() {
-    var tr = curTrack(), key = tr && tr.file ? keyOf(tr.file) + (st.src === "mix" ? "" : "|" + st.src) : "";
+    var tr = curTrack(), tkey = tr && tr.file ? keyOf(tr.file) : "", key = tkey ? tkey + (st.src === "mix" ? "" : "|" + st.src) : "";
     if (key === st.key) return;
     st.key = key; st.name = tr ? (tr.name || (tr.file && tr.file.name) || "") : "";
     st.rec = null; st.sel = 0; st.msg = ""; st.phase = "idle"; view.free = false;
-    if (job && job.key === key) { st.phase = job.phase; st.prog = job.prog; }
-    else if (key) {
-      recGet(key).then(function (rec) {
-        if (rec && st.key === key && !st.rec) { setRec(rec); if (st.phase === "idle") st.phase = "ready"; render(); }
-      });
-    }
-    render();
+    if (tkey !== st.tkey) { st.tkey = tkey; st.recs = {}; if (tkey) loadAll(tkey); }
+    if (job && job.key === key) { st.phase = job.phase; st.prog = job.prog; if (st.recs[st.src]) setRec(st.recs[st.src]); }
+    else if (st.recs[st.src]) { setRec(st.recs[st.src]); st.phase = "ready"; }
+    render(); syncScore();
   }
   function wire() {
     if (wired) return;
@@ -404,9 +418,11 @@
     els = { track: nm, status: status, viewWrap: vw, edit: edit, ctl: ctl, ui: { sync: function () { ui.sync(); srcUi.sync(); } } };
     cx = cv.getContext("2d");
     cv.style.touchAction = "pan-y";
-    attachPointer();
+    attachPointer(cv, function () { return { cx: cx, cw: cw, ch: ch, rec: st.rec }; });
     if (window.ResizeObserver) { ro = new ResizeObserver(resize); ro.observe(vw); }
     document.addEventListener("qn-bg-change", function () { colors = null; lastSig = ""; });
+    var rsT = 0; // 画面幅がPC⇔SPで変わった時に、大きな譜面表示の出し入れをやり直す
+    window.addEventListener("resize", function () { clearTimeout(rsT); rsT = setTimeout(syncScore, 150); });
   }
   function resize() {
     if (!els) return;
@@ -431,14 +447,14 @@
     return lo;
   }
   function visible(fn) {
-    var ns = st.rec.notes, pps = ZOOMS[st.zi], px = cw * PLAY_X, vt = view.t, staff = st.rec.kind === "staff";
+    var ns = R.notes, pps = ZOOMS[st.zi], px = cw * PLAY_X, vt = view.t, staff = R.kind === "staff";
     var t0 = vt - px / pps - 0.1, t1 = vt + (cw - px) / pps + 0.1;
     for (var i = lowerBound(ns, t0 - maxD); i < ns.length && ns[i].t <= t1; i++) {
       var n = ns[i];
       if (n.hidden && !st.edit) continue;
       if (staff) {
         if (n.t + n.d < t0) continue;
-        fn(n, px + (n.t - vt) * pps, staffY(Math.max(SD_LO, Math.min(SD_HI, QNTabCore.staffPos(n.midi + (st.rec.shift || 0)).d))));
+        fn(n, px + (n.t - vt) * pps, staffY(Math.max(SD_LO, Math.min(SD_HI, QNTabCore.staffPos(n.midi + (R.shift || 0)).d))));
         continue;
       }
       if (!n.string) continue;
@@ -474,7 +490,7 @@
   }
   // 五線紙の本体(線・小節線・音)。ノートは時間に比例して置く(リズムは丸めない)
   function drawStaffBody(cur, vt, pps, px, C) {
-    var rec = st.rec, shift = rec.shift || 0, w2 = cw, i;
+    var rec = R, shift = rec.shift || 0, w2 = cw, i;
     cx.fillStyle = C.line;
     for (i = 0; i < 5; i++) cx.fillRect(0, Math.round(staffY(30 + i * 2)), w2, 1);
     // 小節線(拍の解析があれば)
@@ -508,17 +524,14 @@
     drawClef(8, staffY(32), C);
     if (shift) { cx.fillStyle = C.muted; cx.font = "10px system-ui, sans-serif"; cx.textAlign = "left"; cx.textBaseline = "alphabetic"; cx.fillText("8", 12, staffY(28) + 12); }
   }
-  function draw() {
-    if (!st.rec || !cw || els.viewWrap.hidden) return;
-    if (!colors) readColors();
-    var a = A(), cur = a ? a.currentTime : 0, pps = ZOOMS[st.zi], px = cw * PLAY_X, C = colors;
-    if (view.free && view.until && Date.now() > view.until) view.free = false;
-    if (st.follow && !view.free) view.t = cur; // 追従OFFの間は位置を動かさない(ドラッグかタップで動く)
-    var vt = view.t;
-    // 【省電力】見た目に効く値が前回と同じなら描き直さない(停止中・操作なしは何もしない)
-    var sig = [cur.toFixed(3), vt.toFixed(3), st.zi, st.edit ? 1 : 0, st.sel, cw, ch, dpr, st.ver, st.rec.notes.length, pins.length].join("|");
-    if (sig === lastSig) return;
-    lastSig = sig;
+  // 1レーン(パネルの小さな表示、または大きな表示の1段)を描く。cx/cw/ch/Rを差し替えて同じ描画関数を使う
+  function paintLane(L, cur, vt, pps) {
+    var scx = cx, scw = cw, sch = ch, sR = R;
+    cx = L.cx; cw = L.cw; ch = L.ch; R = L.rec;
+    try { paintBody(cur, vt, pps); } finally { cx = scx; cw = scw; ch = sch; R = sR; }
+  }
+  function paintBody(cur, vt, pps) {
+    var px = cw * PLAY_X, C = colors;
     cx.setTransform(dpr, 0, 0, dpr, 0, 0);
     cx.clearRect(0, 0, cw, ch);
     // 時間目盛り
@@ -539,10 +552,10 @@
         cx.fillStyle = p.color || C.accent; cx.globalAlpha = 0.55; cx.fillRect(Math.round(mx), 16, 2, ch - 20); cx.globalAlpha = 1;
       });
     } catch (e) {}
-    if (st.rec.kind === "staff") { drawStaffBody(cur, vt, pps, px, C); return; }
+    if (R.kind === "staff") { drawStaffBody(cur, vt, pps, px, C); return; }
     // 弦
     cx.fillStyle = C.line;
-    var nStr = (st.rec.tuning || TUNING).length;
+    var nStr = (R.tuning || TUNING).length;
     for (var i = 0; i < nStr; i++) cx.fillRect(0, Y0 + i * LG, cw, 1);
     // 再生位置(音より下に描く)
     cx.fillStyle = C.accent; cx.fillRect(Math.round(px) - 1, 14, 2, ch - 16);
@@ -560,8 +573,23 @@
       cx.fillText(label, x, y + 0.5);
       cx.globalAlpha = 1;
       if (n.edited) { cx.fillStyle = C.accent; cx.beginPath(); cx.arc(x + w / 2 - 1, y - 8, 2.5, 0, 6.2832); cx.fill(); }
-      if (st.edit && n.id === st.sel) { cx.strokeStyle = C.accent; cx.lineWidth = 2; cx.strokeRect(x - w / 2 - 2, y - 11, w + 4, 22); cx.lineWidth = 1; }
+      if (st.edit && R === st.rec && n.id === st.sel) { cx.strokeStyle = C.accent; cx.lineWidth = 2; cx.strokeRect(x - w / 2 - 2, y - 11, w + 4, 22); cx.lineWidth = 1; }
     });
+  }
+  function draw() {
+    var panelOk = st.rec && cw && !els.viewWrap.hidden, big = score && score.lanes.length && score.on;
+    if (!panelOk && !big) return;
+    if (!colors) readColors();
+    var a = A(), cur = a ? a.currentTime : 0, pps = ZOOMS[st.zi];
+    if (view.free && view.until && Date.now() > view.until) view.free = false;
+    if (st.follow && !view.free) view.t = cur; // 追従OFFの間は位置を動かさない(ドラッグかタップで動く)
+    var vt = view.t;
+    // 【省電力】見た目に効く値が前回と同じなら描き直さない(停止中・操作なしは何もしない)
+    var sig = [cur.toFixed(3), vt.toFixed(3), st.zi, st.edit ? 1 : 0, st.sel, cw, ch, dpr, st.ver, st.rec ? st.rec.notes.length : 0, pins.length, big ? score.sig : ""].join("|");
+    if (sig === lastSig) return;
+    lastSig = sig;
+    if (panelOk) paintLane({ cx: cx, cw: cw, ch: ch, rec: st.rec }, cur, vt, pps);
+    if (big) score.lanes.forEach(function (L) { if (L.cw) paintLane(L, cur, vt, pps); });
   }
   function loop() {
     raf = 0;
@@ -580,19 +608,26 @@
     if (typeof beginSeek === "function") beginSeek();
     a.currentTime = Math.max(0, Math.min(isFinite(a.duration) ? a.duration : t, t));
   }
-  function attachPointer() {
+  function withLane(L, fn) {
+    var scx = cx, scw = cw, sch = ch, sR = R;
+    cx = L.cx; cw = L.cw; ch = L.ch; R = L.rec;
+    try { return fn(); } finally { cx = scx; cw = scw; ch = sch; R = sR; }
+  }
+  // cvEl=キャンバス、getLane=そのキャンバスの {cx,cw,ch,rec}。パネルの小さな表示も大きな表示の各レーンも同じ操作(タップ=シーク/選択、ドラッグ=横スクロール)
+  function attachPointer(cvEl, getLane) {
     var down = null;
-    cv.addEventListener("pointerdown", function (e) {
-      if (!st.rec) return;
+    cvEl.addEventListener("pointerdown", function (e) {
+      var L = getLane();
+      if (!L || !L.rec) return;
       down = { x: e.clientX, y: e.clientY, lx: e.clientX, moved: false, id: e.pointerId };
       dragging = true;
-      try { cv.setPointerCapture(e.pointerId); } catch (er) {}
+      try { cvEl.setPointerCapture(e.pointerId); } catch (er) {}
     });
-    cv.addEventListener("pointermove", function (e) {
+    cvEl.addEventListener("pointermove", function (e) {
       if (!down || e.pointerId !== down.id) return;
       if (!down.moved && Math.abs(e.clientX - down.x) < 6) return;
       if (!down.moved) { down.moved = true; view.free = true; }
-      var pps = ZOOMS[st.zi], dur = st.rec.dur || 0;
+      var L = getLane(), pps = ZOOMS[st.zi], dur = (L && L.rec && L.rec.dur) || 0;
       view.t = Math.max(0, Math.min(dur || 1e9, view.t - (e.clientX - down.lx) / pps));
       down.lx = e.clientX;
       var a = A(); view.until = a && !a.paused ? Date.now() + 6000 : 0;
@@ -601,17 +636,68 @@
       if (!down || e.pointerId !== down.id) return;
       var d = down; down = null; dragging = false;
       if (d.moved || e.type === "pointercancel") return;
-      var r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top, best = null, bd = 1e9;
-      visible(function (n, x, y) {
-        var dx = Math.abs(mx - x), dy = Math.abs(my - y);
-        if (dx <= 16 && dy <= LG / 2 && dx + dy < bd) { bd = dx + dy; best = n; }
+      var L = getLane(); if (!L || !L.rec) return;
+      var r = cvEl.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top, best = null, bd = 1e9, lcw = L.cw;
+      withLane(L, function () {
+        visible(function (n, x, y) {
+          var dx = Math.abs(mx - x), dy = Math.abs(my - y);
+          if (dx <= 16 && dy <= (R.kind === "staff" ? HS * 1.5 : LG / 2) && dx + dy < bd) { bd = dx + dy; best = n; }
+        });
       });
-      if (st.edit && st.rec.kind !== "staff") { st.sel = best ? best.id : 0; renderEdit(); return; }
-      seekTo(best ? best.t : view.t + (mx - cw * PLAY_X) / ZOOMS[st.zi]);
+      if (st.edit && L.rec === st.rec && L.rec.kind !== "staff") { st.sel = best ? best.id : 0; renderEdit(); return; }
+      seekTo(best ? best.t : view.t + (mx - lcw * PLAY_X) / ZOOMS[st.zi]);
       view.free = false;
     }
-    cv.addEventListener("pointerup", end);
-    cv.addEventListener("pointercancel", end);
+    cvEl.addEventListener("pointerup", end);
+    cvEl.addEventListener("pointercancel", end);
+  }
+
+  // ---------- 大きな譜面表示(PC幅。波形エリアに、解析済みのパートを1段ずつ並べる。Tabパネルを開いている間は波形を隠す) ----------
+  function isPcWidth() { return !(window.matchMedia && window.matchMedia("(max-width: 900px)").matches); }
+  function syncScore() {
+    var wa = document.getElementById("pcV2WaveArea"), srcs = LANE_ORDER.filter(function (k) { return st.recs[k]; });
+    var on = !!(wa && root && root.isConnected && isPcWidth() && srcs.length);
+    if (wa) wa.classList.toggle("pcv2-score-mode", on);
+    if (!on) { if (score) score.on = false; return; }
+    if (!score) {
+      score = { el: h("div", "qn-score"), lanes: [], key: "", on: false, sig: "", ro: null };
+      score.el.id = "pcV2ScoreView";
+      if (window.ResizeObserver) { score.ro = new ResizeObserver(resizeScore); score.ro.observe(score.el); }
+    }
+    if (score.el.parentNode !== wa) wa.appendChild(score.el);
+    score.on = true;
+    var key = srcs.join(",");
+    if (key !== score.key) { // 並びが変わった時だけDOMを作り直す
+      score.key = key; score.el.textContent = ""; score.lanes = [];
+      srcs.forEach(function (src) {
+        var wrap = h("div", "qn-score-lane"), lab = h("div", "qn-score-label", SRC_LABEL[src]), c = h("canvas");
+        wrap.appendChild(lab); wrap.appendChild(c); score.el.appendChild(wrap);
+        var L = { src: src, wrap: wrap, cv: c, cx: c.getContext("2d"), cw: 0, ch: 0, rec: null };
+        c.style.touchAction = "pan-y";
+        attachPointer(c, function () { return L; });
+        score.lanes.push(L);
+      });
+    }
+    score.lanes.forEach(function (L) { L.rec = st.recs[L.src]; });
+    resizeScore();
+    lastSig = "";
+  }
+  function resizeScore() {
+    if (!score || !score.on) return;
+    var sig = [];
+    score.lanes.forEach(function (L) {
+      var w = L.wrap.clientWidth;
+      if (!w || !L.rec) return;
+      var d = window.devicePixelRatio || 1, hgt = viewH(L.rec);
+      if (L.cw !== w || L.ch !== hgt || dpr !== d) {
+        dpr = d; L.cw = w; L.ch = hgt;
+        L.cv.width = Math.round(w * d); L.cv.height = Math.round(hgt * d);
+        L.cv.style.width = w + "px"; L.cv.style.height = hgt + "px";
+      }
+      sig.push(L.src + ":" + w + "x" + hgt + ":" + L.rec.notes.length);
+    });
+    score.sig = sig.join(",");
+    lastSig = "";
   }
 
   // ---------- Settings>一般 の「Tab」行(グローバル設定。解析時に読む) ----------
@@ -638,6 +724,7 @@
       render();
       els.ui.sync();
       resize();
+      syncScore();
       lastSig = ""; if (!raf) raf = setTimeout(loop, 0);
     },
     settingsRows: settingsRows,
