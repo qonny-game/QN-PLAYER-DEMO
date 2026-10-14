@@ -174,3 +174,4 @@
 - 4.54.3 Tab: GPUの進捗が30秒動かない/失敗した時に自動でCPUへ切り替え。進捗%と処理方式の表示を追加
 - 4.55.0 省電力: 停止中の常時rAF/タイマーを撤去(再生中・イベント時だけ動作)、Tabの描画間引き、波形dpr上限2、Settings>Playbackに「Keep screen on」、power_check.py追加
 - 4.55.1 iPhoneでTUNER/PITCH/Recのマイクが開けない不具合を修正(audioSessionをマイク使用中だけplay-and-recordにする)
+- 4.56.0 PCの波形右下にクリック音(メトロノーム)と吸着のON/OFFボタンを追加

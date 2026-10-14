@@ -498,7 +498,12 @@ html {
 
 
 /* ---------- 【v4.11.0】SPの再配置: Moreはドックの上に開く(設定帯のみ)/ 前次トラック・リピートは波形ヘッダー右端 / AudioはA・Bと同じ行で小さく ---------- */
-#pcV2MorePanel, #pcV2WaveHeadBtns, #pcV2WaveFabRow .pcv2-fab-ab { display: none; } /* PC幅では出さない(.panel-fab-btnのdisplay:flexに勝つためidを付ける) */
+#pcV2MorePanel, #pcV2WaveHeadBtns, #pcV2WaveFabRow .pcv2-fab-ab:not(.pcv2-fab-tg) { display: none; } /* PC幅では出さない(.panel-fab-btnのdisplay:flexに勝つためidを付ける) */
+/* 【v4.56.0】PC幅: 設定帯の右にクリック音(Grid click)と吸着(Marker snap)のON/OFF。SP幅は下の@mediaで既存のA/Bと同じ見た目になる */
+#pcV2WaveFabRow .pcv2-fab-tg { display: flex; flex: 0 0 auto; align-items: center; justify-content: center; width: 48px; height: 56px; padding: 0; background: var(--bg-0e0e13); border: 1px solid var(--border-subtle); border-radius: var(--radius-popup); color: var(--icon-muted); box-shadow: none; pointer-events: auto; cursor: pointer; }
+#pcV2WaveFabRow .pcv2-fab-tg svg { width: 22px; height: 22px; fill: currentColor; }
+#pcV2WaveFabRow .pcv2-fab-tg:hover { color: var(--text-primary, #fff); }
+#pcV2WaveFabRow .pcv2-fab-tg.has-point { color: var(--accent-primary); border-color: var(--accent-primary); }
 @media screen and (max-width: 900px) {
   /* DOM順は波形→MorePanel→下段バー→ドック→アイコンバー(JS: syncBottomBarPosition)。orderも合わせる */
   /* 【v4.21.1】Moreは波形を縮めず、ドックの上に重ねて開く(外枠は高さ0・中身を上方向へ張り出す) */
